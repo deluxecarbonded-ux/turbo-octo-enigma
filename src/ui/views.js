@@ -169,6 +169,49 @@
     }
   }
 
+  function syncThemeButtonsUI() {
+    const isDark = window.ExoticTheme.getMode() === 'dark';
+    const themeIcon = window.ExoticIcons.get(isDark ? 'sun' : 'moon');
+    const themeLabel = isDark ? 'Light Mode' : 'Dark Mode';
+    const switchHint = `Switch to ${themeLabel}`;
+
+    const fullPillIds = [
+      'header-theme-btn',
+      'signup-theme-btn',
+      'signin-theme-btn',
+      'splash-theme-btn',
+      'pause-theme-btn'
+    ];
+    for (const id of fullPillIds) {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.innerHTML = `${themeIcon}<span>${themeLabel}</span>`;
+        btn.setAttribute('title', switchHint);
+        btn.setAttribute('aria-label', switchHint);
+      }
+    }
+
+    const playThemeBtn = document.getElementById('play-theme-btn');
+    if (playThemeBtn) {
+      playThemeBtn.innerHTML = `${themeIcon}<span class="play-theme-text">${themeLabel}</span>`;
+      playThemeBtn.setAttribute('title', switchHint);
+      playThemeBtn.setAttribute('aria-label', switchHint);
+    }
+
+    const themeDarkBtn = document.getElementById('set-theme-dark');
+    const themeLightBtn = document.getElementById('set-theme-light');
+    if (themeDarkBtn && themeLightBtn) {
+      themeDarkBtn.className = `ex-pill-btn ${
+        isDark ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      themeDarkBtn.setAttribute('aria-pressed', String(isDark));
+      themeLightBtn.className = `ex-pill-btn ${
+        !isDark ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      themeLightBtn.setAttribute('aria-pressed', String(!isDark));
+    }
+  }
+
   function updateGlobalHeader() {
     const state = window.ExoticStorage.getState();
     const coinsEl = document.getElementById('header-coins');
@@ -187,26 +230,7 @@
       headerUsername.textContent = `@${uname}`;
     }
 
-    const themeBtn = document.getElementById('header-theme-btn');
-    const playThemeBtn = document.getElementById('play-theme-btn');
-    const signupThemeBtn = document.getElementById('signup-theme-btn');
-    const signinThemeBtn = document.getElementById('signin-theme-btn');
-    const isDark = window.ExoticTheme.getMode() === 'dark';
-    const themeIcon = window.ExoticIcons.get(isDark ? 'sun' : 'moon');
-    const themeLabel = isDark ? 'Light Mode' : 'Dark Mode';
-    if (themeBtn) {
-      themeBtn.innerHTML = `${themeIcon}<span>${themeLabel}</span>`;
-    }
-    if (signupThemeBtn) {
-      signupThemeBtn.innerHTML = `${themeIcon}<span>${themeLabel}</span>`;
-    }
-    if (signinThemeBtn) {
-      signinThemeBtn.innerHTML = `${themeIcon}<span>${themeLabel}</span>`;
-    }
-    if (playThemeBtn) {
-      playThemeBtn.innerHTML = themeIcon;
-      playThemeBtn.setAttribute('title', `Switch to ${themeLabel}`);
-    }
+    syncThemeButtonsUI();
 
     const muteBtn = document.getElementById('header-mute-btn');
     const isMuted = window.ExoticAudio.isMuted();
@@ -920,18 +944,7 @@
   function renderSettingsView() {
     const state = window.ExoticStorage.getState();
     const s = state.settings;
-    const isDark = window.ExoticTheme.getMode() === 'dark';
-
-    const themeDarkBtn = document.getElementById('set-theme-dark');
-    const themeLightBtn = document.getElementById('set-theme-light');
-    if (themeDarkBtn && themeLightBtn) {
-      themeDarkBtn.className = `ex-pill-btn ${
-        isDark ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
-      } ex-pill-btn--sm`;
-      themeLightBtn.className = `ex-pill-btn ${
-        !isDark ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
-      } ex-pill-btn--sm`;
-    }
+    syncThemeButtonsUI();
 
     const muteBtn = document.getElementById('set-audio-toggle');
     if (muteBtn) {
@@ -2022,15 +2035,20 @@
       window.ExoticRouter.navigate('settings');
     });
 
-    const handleAuthThemeToggle = () => {
+    const handleThemeToggleClick = () => {
       window.ExoticAudio.unlock();
       window.ExoticAudio.click();
       const mode = window.ExoticTheme.toggle();
       window.ExoticStorage.updateSettings({ theme: mode });
       updateGlobalHeader();
+      if (window.ExoticRouter.getCurrent() === 'settings') renderSettingsView();
     };
-    document.getElementById('signup-theme-btn')?.addEventListener('click', handleAuthThemeToggle);
-    document.getElementById('signin-theme-btn')?.addEventListener('click', handleAuthThemeToggle);
+    document.getElementById('signup-theme-btn')?.addEventListener('click', handleThemeToggleClick);
+    document.getElementById('signin-theme-btn')?.addEventListener('click', handleThemeToggleClick);
+    document.getElementById('splash-theme-btn')?.addEventListener('click', handleThemeToggleClick);
+    document.getElementById('header-theme-btn')?.addEventListener('click', handleThemeToggleClick);
+    document.getElementById('play-theme-btn')?.addEventListener('click', handleThemeToggleClick);
+    document.getElementById('pause-theme-btn')?.addEventListener('click', handleThemeToggleClick);
 
     document.getElementById('signup-switch-signin-btn')?.addEventListener('click', () => {
       window.ExoticAudio.unlock();
@@ -2513,21 +2531,6 @@
         setAuthValidationUI('signin', 'invalid', 'username is invalid', 'INVALID', 'skull');
         input.reportValidity();
       }
-    });
-
-    document.getElementById('header-theme-btn')?.addEventListener('click', () => {
-      window.ExoticAudio.click();
-      const mode = window.ExoticTheme.toggle();
-      window.ExoticStorage.updateSettings({ theme: mode });
-      updateGlobalHeader();
-      if (window.ExoticRouter.getCurrent() === 'settings') renderSettingsView();
-    });
-
-    document.getElementById('play-theme-btn')?.addEventListener('click', () => {
-      window.ExoticAudio.click();
-      const mode = window.ExoticTheme.toggle();
-      window.ExoticStorage.updateSettings({ theme: mode });
-      updateGlobalHeader();
     });
 
     document.getElementById('header-mute-btn')?.addEventListener('click', () => {
@@ -3176,6 +3179,10 @@
       window.ExoticAuth?.subscribe(() => {
         updateGlobalHeader();
         refreshCurrentRouteInPlace();
+      });
+
+      window.ExoticTheme?.onChange(() => {
+        syncThemeButtonsUI();
       });
 
       window.ExoticRouter.onNavigate((route) => {

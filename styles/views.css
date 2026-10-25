@@ -41,6 +41,11 @@
   flex-wrap: wrap;
 }
 
+.ex-topbar-right {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
 .ex-brand-pill {
   display: inline-flex;
   align-items: center;
@@ -77,15 +82,24 @@
   overflow-x: hidden;
   padding: 8px 28px 40px;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
   transform: translateY(10px);
-  transition: opacity 200ms var(--ease-snappy), transform 220ms var(--ease-snappy);
+  transition:
+    opacity 200ms var(--ease-snappy),
+    transform 220ms var(--ease-snappy),
+    visibility 0s linear 200ms;
 }
 
 .ex-view.is-active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
   transform: translateY(0);
+  transition:
+    opacity 200ms var(--ease-snappy),
+    transform 220ms var(--ease-snappy),
+    visibility 0s linear 0s;
 }
 
 .ex-container {
@@ -105,6 +119,18 @@
   justify-content: center;
   background-color: var(--bg-app);
   z-index: 50;
+}
+
+.splash-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 16px 28px;
+  z-index: 2;
 }
 
 .splash-box {
@@ -413,8 +439,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  pointer-events: auto;
+  pointer-events: none;
   flex-wrap: wrap;
+}
+
+#view-play.is-active .play-hud-group {
+  pointer-events: auto;
+}
+
+.play-hud-group:last-child {
+  justify-content: flex-end;
+  margin-left: auto;
 }
 
 .game-stage-wrapper {
@@ -513,6 +548,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  pointer-events: none;
+}
+
+#view-play.is-active .touch-cluster {
   pointer-events: auto;
 }
 
@@ -747,27 +786,32 @@
 }
 
 /* Username-Only Auth Views (Sign Up & Sign In) */
-#view-signup.is-active,
-#view-signin.is-active {
-  min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  padding: 24px 20px;
-}
-
-.auth-shell {
-  width: 100%;
-  max-width: 492px;
+#view-signup,
+#view-signin {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  padding: 0;
 }
 
 .auth-topbar {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 16px 28px;
+  flex-shrink: 0;
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 532px;
+  margin: auto;
+  padding: 8px 20px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .auth-card {
@@ -1217,7 +1261,17 @@
     display: none;
   }
 
-  .play-fs-text {
+  .play-fs-text,
+  .play-theme-text {
     display: none;
+  }
+
+  .auth-topbar,
+  .splash-topbar {
+    padding: 12px 16px;
+  }
+
+  .auth-shell {
+    padding: 4px 16px 28px;
   }
 }

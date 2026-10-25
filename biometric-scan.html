@@ -4,21 +4,49 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC — Biometric Sensor</title>
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c14" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c14" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c15" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c15" />
   <style>
     body {
       min-height: 100vh;
+      overflow-y: auto;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background-color: var(--bg-canvas);
+      padding: 0;
+      background-color: var(--bg-app);
       color: var(--fg-primary);
     }
-    .bio-bridge-card {
+    .bio-bridge-topbar {
       width: 100%;
-      max-width: 368px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 24px;
+      flex-shrink: 0;
+    }
+    .bio-bridge-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      height: 38px;
+      padding: 0 16px;
+      border-radius: var(--radius-pill);
+      background-color: var(--bg-surface-2);
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .bio-bridge-brand svg {
+      width: 18px;
+      height: 18px;
+    }
+    .bio-bridge-card {
+      width: calc(100% - 32px);
+      max-width: 392px;
+      margin: auto;
       background-color: var(--bg-surface-1);
       border-radius: var(--radius-panel);
       padding: 28px 24px;
@@ -77,6 +105,17 @@
   </style>
 </head>
 <body>
+  <header class="bio-bridge-topbar">
+    <div class="bio-bridge-brand">
+      <span id="bridge-brand-logo"></span>
+      <span>EXOTIC</span>
+    </div>
+    <button type="button" id="bridge-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch Theme">
+      <span id="bridge-theme-icon"></span>
+      <span id="bridge-theme-label">Light Mode</span>
+    </button>
+  </header>
+
   <main class="bio-bridge-card">
     <div id="bridge-emblem" class="bio-bridge-emblem"></div>
     <div>
@@ -101,8 +140,8 @@
     </div>
   </main>
 
-  <script src="src/core/icons.js?v=20261025c14"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c14"></script>
+  <script src="src/core/icons.js?v=20261025c15"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c15"></script>
   <script>
     (function () {
       const qs = new URLSearchParams(window.location.search);
@@ -113,9 +152,50 @@
       const username = qs.get('username') || 'runner';
       let activeChallenge = qs.get('challenge') || '';
       const credentialId = qs.get('credId') || '';
-      const theme = qs.get('theme') === 'light' ? 'light' : 'dark';
+      let currentTheme = qs.get('theme') === 'light' ? 'light' : 'dark';
+      try {
+        if (!qs.has('theme')) {
+          const saved = JSON.parse(localStorage.getItem('exotic_save_state_v1') || '{}');
+          if (saved?.settings?.theme === 'light') currentTheme = 'light';
+        }
+      } catch {
+        // Ignore storage read error
+      }
 
-      document.documentElement.setAttribute('data-theme', theme);
+      const brandLogoEl = document.getElementById('bridge-brand-logo');
+      const themeBtnEl = document.getElementById('bridge-theme-btn');
+      if (brandLogoEl) brandLogoEl.innerHTML = window.ExoticIcons.get('logo');
+
+      function applyBridgeTheme(nextMode) {
+        currentTheme = nextMode === 'light' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        if (themeBtnEl) {
+          const isDark = currentTheme === 'dark';
+          const nextLabel = isDark ? 'Light Mode' : 'Dark Mode';
+          themeBtnEl.innerHTML = `${window.ExoticIcons.get(isDark ? 'sun' : 'moon')}<span>${nextLabel}</span>`;
+          themeBtnEl.setAttribute('title', `Switch to ${nextLabel}`);
+          themeBtnEl.setAttribute('aria-label', `Switch to ${nextLabel}`);
+        }
+      }
+
+      applyBridgeTheme(currentTheme);
+
+      if (themeBtnEl) {
+        themeBtnEl.addEventListener('click', () => {
+          const next = currentTheme === 'dark' ? 'light' : 'dark';
+          applyBridgeTheme(next);
+          try {
+            const raw = localStorage.getItem('exotic_save_state_v1');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              parsed.settings = { ...(parsed.settings || {}), theme: next };
+              localStorage.setItem('exotic_save_state_v1', JSON.stringify(parsed));
+            }
+          } catch {
+            // Ignore storage write error
+          }
+        });
+      }
 
       const label = method === 'faceid' ? 'Face ID' : 'Fingerprint';
       const iconName = method === 'faceid' ? 'faceid' : 'fingerprint';

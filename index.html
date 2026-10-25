@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC — Monochrome Troll Platformer</title>
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c14" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c14" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c14" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c15" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c15" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c15" />
 </head>
 <body>
   <div id="app">
@@ -55,6 +55,12 @@
     <main class="ex-views">
       <!-- 1. SPLASH LOADING SCREEN -->
       <section id="view-splash" class="ex-view is-active" aria-label="Splash Loading Screen">
+        <div class="splash-topbar">
+          <button type="button" id="splash-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
+            <span data-icon="sun"></span>
+            <span>Light Mode</span>
+          </button>
+        </div>
         <div class="splash-box">
           <canvas id="splash-logo-canvas"></canvas>
           <div>
@@ -79,18 +85,18 @@
 
       <!-- 1b. SIGN UP ROUTE -->
       <section id="view-signup" class="ex-view" aria-label="Sign Up">
-        <div class="auth-shell">
-          <div class="auth-topbar">
-            <div class="ex-brand-pill">
-              <span data-icon="logo"></span>
-              <span>EXOTIC</span>
-            </div>
-            <button type="button" id="signup-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
-              <span data-icon="sun"></span>
-              <span>Light Mode</span>
-            </button>
+        <div class="auth-topbar">
+          <div class="ex-brand-pill">
+            <span data-icon="logo"></span>
+            <span>EXOTIC</span>
           </div>
+          <button type="button" id="signup-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
+            <span data-icon="sun"></span>
+            <span>Light Mode</span>
+          </button>
+        </div>
 
+        <div class="auth-shell">
           <div class="auth-card">
             <div class="auth-header">
               <span class="ex-chip ex-chip--subtle" style="align-self:flex-start;">
@@ -265,18 +271,18 @@
 
       <!-- 1c. SIGN IN ROUTE -->
       <section id="view-signin" class="ex-view" aria-label="Sign In">
-        <div class="auth-shell">
-          <div class="auth-topbar">
-            <div class="ex-brand-pill">
-              <span data-icon="logo"></span>
-              <span>EXOTIC</span>
-            </div>
-            <button type="button" id="signin-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
-              <span data-icon="sun"></span>
-              <span>Light Mode</span>
-            </button>
+        <div class="auth-topbar">
+          <div class="ex-brand-pill">
+            <span data-icon="logo"></span>
+            <span>EXOTIC</span>
           </div>
+          <button type="button" id="signin-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
+            <span data-icon="sun"></span>
+            <span>Light Mode</span>
+          </button>
+        </div>
 
+        <div class="auth-shell">
           <div class="auth-card">
             <div class="auth-header">
               <span class="ex-chip ex-chip--subtle" style="align-self:flex-start;">
@@ -573,8 +579,9 @@
               <span data-icon="fullscreen"></span>
               <span class="play-fs-text">Full Screen (F)</span>
             </button>
-            <button type="button" id="play-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--icon" aria-label="Switch Theme">
+            <button type="button" id="play-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
               <span data-icon="sun"></span>
+              <span class="play-theme-text">Light Mode</span>
             </button>
             <button type="button" id="play-pause-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" title="Pause (Esc)">
               <span data-icon="pause"></span>
@@ -698,9 +705,15 @@
                   <span class="settings-row-title">Monochrome Theme</span>
                   <span class="settings-row-desc">Switch between pure neutral Dark Mode and Light Mode.</span>
                 </div>
-                <div style="display:flex; gap:6px;">
-                  <button type="button" id="set-theme-dark" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">Dark</button>
-                  <button type="button" id="set-theme-light" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">Light</button>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                  <button type="button" id="set-theme-dark" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" aria-pressed="true" title="Switch to Dark Mode">
+                    <span data-icon="moon"></span>
+                    <span>Dark</span>
+                  </button>
+                  <button type="button" id="set-theme-light" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" title="Switch to Light Mode">
+                    <span data-icon="sun"></span>
+                    <span>Light</span>
+                  </button>
                 </div>
               </div>
 
@@ -1089,6 +1102,10 @@
             <span data-icon="fullscreen"></span>
             <span>Enter Full Screen (F)</span>
           </button>
+          <button type="button" id="pause-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full" aria-label="Switch to Light Mode">
+            <span data-icon="sun"></span>
+            <span>Light Mode</span>
+          </button>
           <button type="button" id="pause-restart-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
             <span data-icon="retry"></span>
             <span>Restart Stage</span>
@@ -1160,28 +1177,28 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c14"></script>
-  <script src="src/core/theme.js?v=20261025c14"></script>
-  <script src="src/core/audio.js?v=20261025c14"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c14"></script>
-  <script src="src/core/storage.js?v=20261025c14"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c14"></script>
-  <script src="src/core/auth.js?v=20261025c14"></script>
-  <script src="src/data/shopItems.js?v=20261025c14"></script>
-  <script src="src/data/achievements.js?v=20261025c14"></script>
-  <script src="src/data/levels.js?v=20261025c14"></script>
-  <script src="src/core/realtime.js?v=20261025c14"></script>
-  <script src="src/graphics/characters.js?v=20261025c14"></script>
-  <script src="src/graphics/auras.js?v=20261025c14"></script>
-  <script src="src/graphics/trails.js?v=20261025c14"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c14"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c14"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c14"></script>
-  <script src="src/game/traps.js?v=20261025c14"></script>
-  <script src="src/game/physics.js?v=20261025c14"></script>
-  <script src="src/game/engine.js?v=20261025c14"></script>
-  <script src="src/ui/router.js?v=20261025c14"></script>
-  <script src="src/ui/views.js?v=20261025c14"></script>
-  <script src="src/ui/main.js?v=20261025c14"></script>
+  <script src="src/core/icons.js?v=20261025c15"></script>
+  <script src="src/core/theme.js?v=20261025c15"></script>
+  <script src="src/core/audio.js?v=20261025c15"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c15"></script>
+  <script src="src/core/storage.js?v=20261025c15"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c15"></script>
+  <script src="src/core/auth.js?v=20261025c15"></script>
+  <script src="src/data/shopItems.js?v=20261025c15"></script>
+  <script src="src/data/achievements.js?v=20261025c15"></script>
+  <script src="src/data/levels.js?v=20261025c15"></script>
+  <script src="src/core/realtime.js?v=20261025c15"></script>
+  <script src="src/graphics/characters.js?v=20261025c15"></script>
+  <script src="src/graphics/auras.js?v=20261025c15"></script>
+  <script src="src/graphics/trails.js?v=20261025c15"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c15"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c15"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c15"></script>
+  <script src="src/game/traps.js?v=20261025c15"></script>
+  <script src="src/game/physics.js?v=20261025c15"></script>
+  <script src="src/game/engine.js?v=20261025c15"></script>
+  <script src="src/ui/router.js?v=20261025c15"></script>
+  <script src="src/ui/views.js?v=20261025c15"></script>
+  <script src="src/ui/main.js?v=20261025c15"></script>
 </body>
 </html>
