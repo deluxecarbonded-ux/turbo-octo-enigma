@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>EXOTIC — Biometric Sensor</title>
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c11" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c11" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background-color: var(--bg-canvas);
+      color: var(--fg-primary);
+    }
+    .bio-bridge-card {
+      width: 100%;
+      max-width: 368px;
+      background-color: var(--bg-surface-1);
+      border-radius: var(--radius-panel);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 18px;
+    }
+    .bio-bridge-emblem {
+      width: 68px;
+      height: 68px;
+      border-radius: var(--radius-pill);
+      background-color: var(--pill-primary-bg);
+      color: var(--pill-primary-fg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bio-bridge-emblem svg {
+      width: 34px;
+      height: 34px;
+    }
+    .bio-bridge-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+    .bio-bridge-sub {
+      font-size: 13px;
+      color: var(--fg-secondary);
+      line-height: 1.5;
+    }
+    .bio-bridge-canvas-wrap {
+      display: none;
+      width: 220px;
+      height: 220px;
+      border-radius: 24px;
+      overflow: hidden;
+      background-color: var(--bg-surface-2);
+    }
+    .bio-bridge-canvas-wrap.is-open {
+      display: block;
+    }
+    .bio-bridge-canvas-wrap canvas {
+      display: block;
+      width: 220px;
+      height: 220px;
+    }
+    .bio-bridge-actions {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="bio-bridge-card">
+    <div id="bridge-emblem" class="bio-bridge-emblem"></div>
+    <div>
+      <h1 id="bridge-title" class="bio-bridge-title">Biometric Verification</h1>
+      <p id="bridge-sub" class="bio-bridge-sub" style="margin-top:6px;">
+        Checking device biometric hardware...
+      </p>
+    </div>
+
+    <div id="bridge-canvas-wrap" class="bio-bridge-canvas-wrap">
+      <canvas id="bridge-face-canvas" width="220" height="220"></canvas>
+    </div>
+
+    <div class="bio-bridge-actions">
+      <button type="button" id="bridge-scan-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+        <span id="bridge-btn-icon"></span>
+        <span id="bridge-btn-text">Start Sensor Scan</span>
+      </button>
+      <button type="button" id="bridge-cancel-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
+        <span>Cancel</span>
+      </button>
+    </div>
+  </main>
+
+  <script src="src/core/icons.js?v=20261025c11"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c11"></script>
+  <script>
+    (function () {
+      const qs = new URLSearchParams(window.location.search);
+      const reqId = qs.get('reqId') || '';
+      const mode = qs.get('mode') === 'signin' ? 'signin' : 'signup';
+      const method = qs.get('method') === 'faceid' ? 'faceid' : 'fingerprint';
+      const requestedBioMode = qs.get('bioMode') || 'auto';
+      const username = qs.get('username') || 'runner';
+      let activeChallenge = qs.get('challenge') || '';
+      const credentialId = qs.get('credId') || '';
+      const theme = qs.get('theme') === 'light' ? 'light' : 'dark';
+
+      document.documentElement.setAttribute('data-theme', theme);
+
+      const label = method === 'faceid' ? 'Face ID' : 'Fingerprint';
+      const iconName = method === 'faceid' ? 'faceid' : 'fingerprint';
+
+      const emblemEl = document.getElementById('bridge-emblem');
+      const titleEl = document.getElementById('bridge-title');
+      const subEl = document.getElementById('bridge-sub');
+      const canvasWrap = document.getElementById('bridge-canvas-wrap');
+      const faceCanvas = document.getElementById('bridge-face-canvas');
+      const scanBtn = document.getElementById('bridge-scan-btn');
+      const btnIcon = document.getElementById('bridge-btn-icon');
+      const btnText = document.getElementById('bridge-btn-text');
+      const cancelBtn = document.getElementById('bridge-cancel-btn');
+
+      emblemEl.innerHTML = window.ExoticIcons.get(iconName);
+      btnIcon.innerHTML = window.ExoticIcons.get(iconName);
+      titleEl.textContent = mode === 'signup' ? `Enroll ${label}` : `Verify ${label}`;
+      btnText.textContent = `Scan ${label}`;
+
+      function sendResultAndClose(result) {
+        const message = {
+          type: 'EXOTIC_BIOMETRIC_RESULT',
+          reqId,
+          result
+        };
+        try {
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage(message, window.location.origin);
+          }
+        } catch {
+          // Ignore opener error
+        }
+        try {
+          if (typeof window.BroadcastChannel === 'function') {
+            const bc = new window.BroadcastChannel(window.ExoticBiometrics.BRIDGE_CHANNEL);
+            bc.postMessage(message);
+            setTimeout(() => bc.close(), 120);
+          }
+        } catch {
+          // Ignore BroadcastChannel error
+        }
+        setTimeout(() => {
+          window.close();
+        }, 160);
+      }
+
+      let resolvedBioMode = 'webauthn';
+
+      async function runCameraScan() {
+        scanBtn.disabled = true;
+        canvasWrap.classList.add('is-open');
+        emblemEl.style.display = 'none';
+        subEl.textContent = 'Starting front camera for Face ID...';
+
+        if (!activeChallenge) {
+          const fresh = await window.ExoticBiometrics.prefetchChallenge(username);
+          activeChallenge = fresh?.challenge || '';
+        }
+
+        const res = await window.ExoticBiometrics.scanCameraFace({
+          canvas: faceCanvas,
+          challenge: activeChallenge,
+          onProgress(info) {
+            subEl.textContent = info.hint;
+          }
+        });
+
+        if (res && res.ok) {
+          subEl.textContent = 'Face ID captured!';
+          sendResultAndClose(res);
+          return;
+        }
+
+        scanBtn.disabled = false;
+        if (res?.unsupported) {
+          sendResultAndClose(res);
+          return;
+        }
+        subEl.textContent = res?.reason || 'Could not complete Face ID scan — try again.';
+        btnText.textContent = 'Retry Face ID Scan';
+      }
+
+      function handleWebAuthnClick() {
+        if (!activeChallenge) {
+          subEl.textContent = 'Preparing security token — tap Scan again...';
+          window.ExoticBiometrics.prefetchChallenge(username).then((c) => {
+            if (c?.challenge) activeChallenge = c.challenge;
+          });
+          return;
+        }
+
+        scanBtn.disabled = true;
+        subEl.textContent = `Complete ${label} verification on your device...`;
+
+        const p =
+          mode === 'signup'
+            ? window.ExoticBiometrics.startInlineWebAuthnEnrollSync({
+                username,
+                method,
+                challenge: activeChallenge
+              })
+            : window.ExoticBiometrics.startInlineWebAuthnVerifySync({
+                username,
+                method,
+                challenge: activeChallenge,
+                credentialId
+              });
+
+        p.then((res) => {
+          if (res && res.ok) {
+            emblemEl.innerHTML = window.ExoticIcons.get('check');
+            subEl.textContent = `${label} verified!`;
+            sendResultAndClose(res);
+            return;
+          }
+          scanBtn.disabled = false;
+          if (res?.unsupported) {
+            sendResultAndClose(res);
+            return;
+          }
+          // Pre-fetch fresh challenge for retry
+          window.ExoticBiometrics.prefetchChallenge(username).then((c) => {
+            if (c?.challenge) activeChallenge = c.challenge;
+          });
+          subEl.textContent = res?.reason || `${label} scan did not complete — tap to retry.`;
+          btnText.textContent = `Retry ${label}`;
+        });
+      }
+
+      scanBtn.addEventListener('click', () => {
+        if (resolvedBioMode === 'camera_face') {
+          runCameraScan();
+        } else {
+          handleWebAuthnClick();
+        }
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        window.ExoticBiometrics.stopActiveCamera();
+        sendResultAndClose({
+          ok: false,
+          canceled: true,
+          reason: `${label} scan canceled`
+        });
+      });
+
+      (async () => {
+        const [, freshChallenge] = await Promise.all([
+          window.ExoticBiometrics.detectCapabilities(),
+          activeChallenge
+            ? Promise.resolve({ challenge: activeChallenge })
+            : window.ExoticBiometrics.prefetchChallenge(username)
+        ]);
+        if (freshChallenge?.challenge) {
+          activeChallenge = freshChallenge.challenge;
+        }
+
+        const support = window.ExoticBiometrics.getMethodSupport(method);
+        if (!support.supported) {
+          subEl.textContent = support.reason || `${label} is not supported on this device.`;
+          scanBtn.disabled = true;
+          setTimeout(() => {
+            sendResultAndClose({
+              ok: false,
+              unsupported: true,
+              reason: support.reason || `${label} hardware is not supported on this device`
+            });
+          }, 950);
+          return;
+        }
+
+        if (requestedBioMode === 'webauthn' || requestedBioMode === 'camera_face') {
+          resolvedBioMode = requestedBioMode;
+        } else {
+          resolvedBioMode = support.mode || 'webauthn';
+        }
+
+        if (resolvedBioMode === 'camera_face') {
+          runCameraScan();
+        } else {
+          subEl.textContent = `Tap below to trigger your device's ${label} sensor for @${username}.`;
+          scanBtn.focus();
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>

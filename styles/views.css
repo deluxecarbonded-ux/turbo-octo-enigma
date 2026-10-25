@@ -1004,6 +1004,26 @@
   transition: background-color 160ms var(--ease-snappy);
 }
 
+.auth-face-viewport {
+  display: none;
+  align-self: center;
+  width: 220px;
+  height: 220px;
+  border-radius: 22px;
+  overflow: hidden;
+  background-color: var(--bg-surface-2);
+}
+
+.auth-face-viewport.is-open {
+  display: block;
+}
+
+.auth-face-viewport canvas {
+  display: block;
+  width: 220px;
+  height: 220px;
+}
+
 .auth-bio-card.is-verified {
   background-color: var(--bg-surface-3);
 }

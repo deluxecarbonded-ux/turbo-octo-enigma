@@ -15,6 +15,7 @@
   let signupBioEnrollment = null;
   let signinBioAssertion = null;
   let signinExpectedMethod = null;
+  let signinExpectedBioMode = null;
   let signinExpectedBioId = null;
   let signinManualMethodOverride = false;
 
@@ -980,7 +981,7 @@
     }
 
     const delConfirmBox = document.getElementById('set-delete-confirm-box');
-    if (delConfirmBox) {
+    if (delConfirmBox && !window.ExoticAuth?.isSignedIn?.()) {
       delConfirmBox.classList.remove('is-open');
     }
 
@@ -1114,6 +1115,9 @@
     const method = isSignup ? signupAuthMethod : signinAuthMethod;
     if (method !== 'fingerprint' && method !== 'faceid') return;
 
+    const support = window.ExoticAuth
+      ? window.ExoticAuth.getMethodSupport(method)
+      : { supported: true };
     const labelText = window.ExoticAuth
       ? window.ExoticAuth.formatMethodLabel(method)
       : method === 'faceid'
@@ -1130,23 +1134,49 @@
     );
 
     const lblEl = document.getElementById(`${prefix}-bio-label`);
+    const tagEl = document.getElementById(`${prefix}-bio-tag`);
     const emblemEl = document.getElementById(`${prefix}-bio-emblem`);
     const titleEl = document.getElementById(`${prefix}-bio-title`);
     const descEl = document.getElementById(`${prefix}-bio-desc`);
     const cardEl = document.getElementById(`${prefix}-bio-card`);
+    const scanBtn = document.getElementById(`${prefix}-bio-scan-btn`);
     const btnIconEl = document.getElementById(`${prefix}-bio-btn-icon`);
     const btnLblEl = document.getElementById(`${prefix}-bio-btn-label`);
+    const viewportEl = document.getElementById(`${prefix}-face-viewport`);
+
+    if (viewportEl && !cardEl?.classList.contains('is-scanning')) {
+      viewportEl.classList.remove('is-open');
+    }
 
     if (lblEl) lblEl.textContent = `${labelText} Passkey`;
+    if (tagEl) {
+      tagEl.textContent = !support.supported ? 'UNSUPPORTED' : 'HARDWARE SENSOR';
+    }
     if (emblemEl) {
-      emblemEl.innerHTML = window.ExoticIcons.get(isVerified ? 'check' : iconName);
+      emblemEl.innerHTML = window.ExoticIcons.get(
+        !support.supported ? 'skull' : isVerified ? 'check' : iconName
+      );
     }
     if (btnIconEl) {
       btnIconEl.innerHTML = window.ExoticIcons.get(isVerified ? 'check' : iconName);
     }
     if (cardEl) {
       cardEl.classList.remove('is-scanning');
-      cardEl.classList.toggle('is-verified', isVerified);
+      cardEl.classList.toggle('is-verified', isVerified && support.supported);
+    }
+    if (scanBtn) {
+      scanBtn.disabled = !support.supported;
+    }
+
+    if (!support.supported) {
+      const msg =
+        support.reason ||
+        `${labelText} hardware sensor is not available on this device — choose Password or PIN`;
+      if (titleEl) titleEl.textContent = `${labelText} Unavailable`;
+      if (descEl) descEl.textContent = msg;
+      if (btnLblEl) btnLblEl.textContent = 'Unavailable';
+      setCredentialValidationUI(prefix, 'invalid', msg, 'NO SENSOR', 'skull');
+      return;
     }
 
     if (isSignup) {
@@ -1157,17 +1187,17 @@
       }
       if (descEl) {
         descEl.textContent = isVerified
-          ? `${labelText} passkey is ready for account creation.`
-          : `Scan your ${labelText} now, or press Create Account to scan automatically.`;
+          ? `Hardware ${labelText} scan verified and ready for account creation.`
+          : `Scan your ${labelText} on your device sensor now, or press Create Account to scan automatically.`;
       }
       if (btnLblEl) btnLblEl.textContent = isVerified ? 'Re-scan' : 'Scan';
       setCredentialValidationUI(
         'signup',
         isVerified ? 'valid' : 'neutral',
         isVerified
-          ? `${labelText} enrolled and ready`
-          : `Tap Scan or Create Account to enroll ${labelText}`,
-        isVerified ? 'ENROLLED' : 'BIOMETRIC',
+          ? `Hardware ${labelText} verified and ready`
+          : `Tap Scan or Create Account to scan ${labelText}`,
+        isVerified ? 'VERIFIED' : 'SENSOR',
         isVerified ? 'check' : iconName
       );
     } else {
@@ -1178,23 +1208,24 @@
       }
       if (descEl) {
         descEl.textContent = isVerified
-          ? `${labelText} passkey verified — press Sign In to enter.`
-          : `Verify your ${labelText} passkey, or press Sign In to scan automatically.`;
+          ? `Hardware ${labelText} verified — press Sign In to enter.`
+          : `Scan your ${labelText} on your device sensor, or press Sign In to scan automatically.`;
       }
       if (btnLblEl) btnLblEl.textContent = isVerified ? 'Verified' : 'Verify';
       setCredentialValidationUI(
         'signin',
         isVerified ? 'valid' : 'neutral',
         isVerified
-          ? `${labelText} verified — ready to sign in`
-          : `Tap Verify or Sign In to check ${labelText}`,
-        isVerified ? 'VERIFIED' : 'BIOMETRIC',
+          ? `Hardware ${labelText} verified — ready to sign in`
+          : `Tap Verify or Sign In to scan ${labelText}`,
+        isVerified ? 'VERIFIED' : 'SENSOR',
         isVerified ? 'check' : iconName
       );
     }
   }
 
   function applyAuthMethodUI(prefix, nextMethod) {
+    window.ExoticAuth?.stopCameraScan?.();
     const clean = window.ExoticAuth
       ? window.ExoticAuth.normalizeMethod(nextMethod)
       : nextMethod || 'password';
@@ -1208,10 +1239,19 @@
     document.querySelectorAll(`[data-${prefix}-method]`).forEach((btn) => {
       const m = btn.getAttribute(`data-${prefix}-method`);
       const active = m === clean;
+      const sup =
+        m === 'fingerprint' || m === 'faceid'
+          ? window.ExoticAuth?.getMethodSupport?.(m) || { supported: true }
+          : { supported: true };
       btn.className = `ex-pill-btn ${
         active ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
       } ex-pill-btn--sm`;
       btn.setAttribute('aria-pressed', String(active));
+      if (!sup.supported) {
+        btn.title = sup.reason || 'Not supported on this device';
+      } else {
+        btn.removeAttribute('title');
+      }
     });
 
     const pwPanel = document.getElementById(`${prefix}-panel-password`);
@@ -1219,7 +1259,9 @@
     const bioPanel = document.getElementById(`${prefix}-panel-biometric`);
     const pwInput = document.getElementById(`${prefix}-password-input`);
     const pinInput = document.getElementById(`${prefix}-pin-input`);
+    const faceViewport = document.getElementById(`${prefix}-face-viewport`);
 
+    if (faceViewport) faceViewport.classList.remove('is-open');
     if (pwPanel) pwPanel.classList.toggle('is-active', clean === 'password');
     if (pinPanel) pinPanel.classList.toggle('is-active', clean === 'pin');
     if (bioPanel) {
@@ -1233,12 +1275,14 @@
     if (pwInput && clean !== 'password') pwInput.setCustomValidity('');
     if (pinInput && clean !== 'pin') pinInput.setCustomValidity('');
 
-    if (clean === 'password') {
-      validateCredentialFieldLive(prefix);
-    } else if (clean === 'pin') {
-      validateCredentialFieldLive(prefix);
-    } else {
+    if (clean === 'fingerprint' || clean === 'faceid') {
+      const unameVal = document
+        .getElementById(`${prefix}-username-input`)
+        ?.value?.trim();
+      window.ExoticAuth?.prefetchBiometricChallenge?.(unameVal || '');
       syncBiometricCardUI(prefix);
+    } else {
+      validateCredentialFieldLive(prefix);
     }
   }
 
@@ -1331,11 +1375,14 @@
     return true;
   }
 
-  async function runBiometricFlow(prefix) {
-    if (!window.ExoticAuth) return null;
+  // Must be called synchronously inside user click/submit event to preserve hardware WebAuthn gesture
+  function startBiometricFlowSync(prefix) {
+    if (!window.ExoticAuth) return Promise.resolve(null);
     const isSignup = prefix === 'signup';
     const method = isSignup ? signupAuthMethod : signinAuthMethod;
-    if (method !== 'fingerprint' && method !== 'faceid') return null;
+    if (method !== 'fingerprint' && method !== 'faceid') {
+      return Promise.resolve(null);
+    }
 
     const unameInput = document.getElementById(`${prefix}-username-input`);
     const username = unameInput ? unameInput.value.trim() : '';
@@ -1343,6 +1390,8 @@
     const iconName = getMethodIconName(method);
     const cardEl = document.getElementById(`${prefix}-bio-card`);
     const scanBtn = document.getElementById(`${prefix}-bio-scan-btn`);
+    const faceViewport = document.getElementById(`${prefix}-face-viewport`);
+    const faceCanvas = document.getElementById(`${prefix}-face-canvas`);
 
     if (!username || !window.ExoticAuth.isValidFormat(username)) {
       if (unameInput) {
@@ -1356,53 +1405,99 @@
         'USERNAME',
         'user'
       );
-      return null;
+      return Promise.resolve(null);
     }
 
+    const support = window.ExoticAuth.getMethodSupport(method);
+    if (!support.supported) {
+      syncBiometricCardUI(prefix);
+      return Promise.resolve(null);
+    }
+
+    const expectedBioMode = isSignup
+      ? support.mode
+      : signinExpectedBioMode || support.mode;
+    const caps = window.ExoticBiometrics?.getCapabilities?.() || {};
+    const willOpenInlineCamera =
+      method === 'faceid' &&
+      expectedBioMode === 'camera_face' &&
+      (!caps.isEmbeddedFrame || caps.inlineCameraAllowed);
+
+    if (faceViewport) {
+      faceViewport.classList.toggle('is-open', Boolean(willOpenInlineCamera));
+    }
     if (cardEl) {
       cardEl.classList.remove('is-verified');
       cardEl.classList.add('is-scanning');
     }
     if (scanBtn) scanBtn.disabled = true;
+
     setCredentialValidationUI(
       prefix,
       'neutral',
-      isSignup ? `Scanning ${labelText}...` : `Verifying ${labelText}...`,
+      isSignup
+        ? `Complete ${labelText} scan on your device...`
+        : `Verifying ${labelText} on your device...`,
       'SCAN',
       iconName
     );
 
-    const bioRes = isSignup
-      ? await window.ExoticAuth.enrollBiometric(method, username)
-      : await window.ExoticAuth.verifyBiometric(
-          method,
-          username,
-          signinExpectedBioId
-        );
-
-    if (cardEl) cardEl.classList.remove('is-scanning');
-    if (scanBtn) scanBtn.disabled = false;
-
-    if (!bioRes || !bioRes.ok) {
-      if (isSignup) signupBioEnrollment = null;
-      else signinBioAssertion = null;
-      const errMsg = bioRes?.reason || `${labelText} verification failed`;
-      setCredentialValidationUI(prefix, 'invalid', errMsg, 'FAILED', 'skull');
-      return null;
-    }
-
-    const record = {
+    // Synchronously start WebAuthn / Camera / Top-level Bridge inside user gesture!
+    const scanPromise = window.ExoticAuth.startHardwareBiometricScanSync({
+      flow: isSignup ? 'signup' : 'signin',
       method,
-      username: username.toLowerCase(),
-      credential: bioRes.credential,
-      biometricCredentialId: bioRes.biometricCredentialId
-    };
-    if (isSignup) signupBioEnrollment = record;
-    else signinBioAssertion = record;
+      username,
+      credentialId: isSignup ? null : signinExpectedBioId,
+      expectedBiometricMode: expectedBioMode,
+      canvasEl: faceCanvas,
+      onProgress(info) {
+        if (info && info.hint) {
+          setCredentialValidationUI(
+            prefix,
+            'neutral',
+            info.hint,
+            info.pct != null ? `${info.pct}%` : 'SCAN',
+            iconName
+          );
+        }
+      }
+    });
 
-    window.ExoticAudio.click();
-    syncBiometricCardUI(prefix);
-    return record;
+    return scanPromise.then((bioRes) => {
+      if (cardEl) cardEl.classList.remove('is-scanning');
+      if (faceViewport) faceViewport.classList.remove('is-open');
+      if (scanBtn) scanBtn.disabled = false;
+
+      if (!bioRes || !bioRes.ok) {
+        if (isSignup) signupBioEnrollment = null;
+        else signinBioAssertion = null;
+        if (bioRes?.unsupported) {
+          applyAuthMethodUI(prefix, method);
+          return null;
+        }
+        const errMsg = bioRes?.reason || `${labelText} scan did not complete`;
+        setCredentialValidationUI(prefix, 'invalid', errMsg, 'FAILED', 'skull');
+        return null;
+      }
+
+      const record = {
+        method,
+        username: username.toLowerCase(),
+        biometricMode: bioRes.biometricMode || 'webauthn',
+        biometricCredentialId: bioRes.biometricCredentialId || null,
+        webauthnAttestation: bioRes.webauthnAttestation || null,
+        webauthnAssertion: bioRes.webauthnAssertion || null,
+        faceDescriptor: bioRes.faceDescriptor || null,
+        challenge: bioRes.challenge || null
+      };
+
+      if (isSignup) signupBioEnrollment = record;
+      else signinBioAssertion = record;
+
+      window.ExoticAudio.click();
+      syncBiometricCardUI(prefix);
+      return record;
+    });
   }
 
   async function validateSignUpUsername(immediate = false) {
@@ -1541,6 +1636,7 @@
     }
 
     signinExpectedBioId = res.biometricCredentialId || null;
+    signinExpectedBioMode = res.biometricMode || null;
     if (res.authMethod && res.authMethod !== 'none') {
       signinExpectedMethod = res.authMethod;
       const mLabel = window.ExoticAuth.formatMethodLabel(res.authMethod);
@@ -1632,6 +1728,9 @@
     const bound = window.ExoticAuth ? window.ExoticAuth.getBoundUsername() : null;
     const boundMethod = window.ExoticAuth ? window.ExoticAuth.getBoundAuthMethod() : null;
 
+    if (hasBound && bound && input && !input.value.trim()) {
+      input.value = bound;
+    }
     if (hasBound && boundMethod && !signinManualMethodOverride) {
       signinAuthMethod = window.ExoticAuth.normalizeMethod(boundMethod);
     }
@@ -1834,16 +1933,22 @@
       validateCredentialFieldLive('signin');
     });
 
-    document.getElementById('signup-bio-scan-btn')?.addEventListener('click', async () => {
+    document.getElementById('signup-bio-scan-btn')?.addEventListener('click', () => {
       window.ExoticAudio.unlock();
       window.ExoticAudio.click();
-      await runBiometricFlow('signup');
+      startBiometricFlowSync('signup');
     });
 
-    document.getElementById('signin-bio-scan-btn')?.addEventListener('click', async () => {
+    document.getElementById('signin-bio-scan-btn')?.addEventListener('click', () => {
       window.ExoticAudio.unlock();
       window.ExoticAudio.click();
-      await runBiometricFlow('signin');
+      startBiometricFlowSync('signin');
+    });
+
+    window.addEventListener('exotic:biometric-capabilities', () => {
+      const cur = window.ExoticRouter?.getCurrent?.();
+      if (cur === 'signup') applyAuthMethodUI('signup', signupAuthMethod);
+      else if (cur === 'signin') applyAuthMethodUI('signin', signinAuthMethod);
     });
 
     const signupInput = document.getElementById('signup-username-input');
@@ -1920,15 +2025,33 @@
       const submitBtn = document.getElementById('signup-submit-btn');
       if (!input || !window.ExoticAuth) return;
 
+      const username = input.value.trim();
+
+      // Start hardware biometric scan synchronously BEFORE any network await to preserve user gesture!
+      let pendingBioPromise = null;
+      if (signupAuthMethod === 'fingerprint' || signupAuthMethod === 'faceid') {
+        if (
+          !signupBioEnrollment ||
+          signupBioEnrollment.method !== signupAuthMethod ||
+          signupBioEnrollment.username !== username.toLowerCase()
+        ) {
+          if (
+            !window.ExoticAuth.hasBoundAccount() &&
+            window.ExoticAuth.isValidFormat(username)
+          ) {
+            pendingBioPromise = startBiometricFlowSync('signup');
+          }
+        }
+      }
+
       const isValid = await validateSignUpUsername(true);
       if (!isValid || !input.checkValidity()) {
+        window.ExoticAuth.stopCameraScan?.();
         input.reportValidity();
         return;
       }
 
-      const username = input.value.trim();
-      let credential = '';
-      let biometricCredentialId = null;
+      let authPayload = { authMethod: signupAuthMethod };
 
       if (signupAuthMethod === 'password') {
         const pwInput = document.getElementById('signup-password-input');
@@ -1936,33 +2059,44 @@
           pwInput?.reportValidity();
           return;
         }
-        credential = pwInput.value;
+        authPayload.credential = pwInput.value;
       } else if (signupAuthMethod === 'pin') {
         const pinInput = document.getElementById('signup-pin-input');
         if (!validateCredentialFieldLive('signup') || !pinInput?.checkValidity()) {
           pinInput?.reportValidity();
           return;
         }
-        credential = pinInput.value.trim();
+        authPayload.credential = pinInput.value.trim();
       } else {
-        if (
+        if (pendingBioPromise) {
+          const enrolled = await pendingBioPromise;
+          if (!enrolled) return;
+        } else if (
           !signupBioEnrollment ||
           signupBioEnrollment.method !== signupAuthMethod ||
           signupBioEnrollment.username !== username.toLowerCase()
         ) {
-          const enrolled = await runBiometricFlow('signup');
-          if (!enrolled) return;
+          setCredentialValidationUI(
+            'signup',
+            'neutral',
+            `Tap Scan to enroll ${window.ExoticAuth.formatMethodLabel(signupAuthMethod)}`,
+            'SCAN',
+            getMethodIconName(signupAuthMethod)
+          );
+          return;
         }
-        credential = signupBioEnrollment.credential;
-        biometricCredentialId = signupBioEnrollment.biometricCredentialId;
+        authPayload = {
+          authMethod: signupAuthMethod,
+          biometricMode: signupBioEnrollment.biometricMode,
+          biometricCredentialId: signupBioEnrollment.biometricCredentialId,
+          webauthnAttestation: signupBioEnrollment.webauthnAttestation,
+          faceDescriptor: signupBioEnrollment.faceDescriptor,
+          challenge: signupBioEnrollment.challenge
+        };
       }
 
       if (submitBtn) submitBtn.disabled = true;
-      const res = await window.ExoticAuth.signUp(username, {
-        authMethod: signupAuthMethod,
-        credential,
-        biometricCredentialId
-      });
+      const res = await window.ExoticAuth.signUp(username, authPayload);
       if (submitBtn) submitBtn.disabled = false;
 
       if (res && res.ok) {
@@ -2055,15 +2189,30 @@
       const submitBtn = document.getElementById('signin-submit-btn');
       if (!input || !window.ExoticAuth) return;
 
+      const username = input.value.trim();
+
+      // Start hardware biometric scan synchronously BEFORE any network await to preserve user gesture!
+      let pendingBioPromise = null;
+      if (signinAuthMethod === 'fingerprint' || signinAuthMethod === 'faceid') {
+        if (
+          !signinBioAssertion ||
+          signinBioAssertion.method !== signinAuthMethod ||
+          signinBioAssertion.username !== username.toLowerCase()
+        ) {
+          if (window.ExoticAuth.isValidFormat(username)) {
+            pendingBioPromise = startBiometricFlowSync('signin');
+          }
+        }
+      }
+
       const isValid = await validateSignInUsername(true);
       if (!isValid || !input.checkValidity()) {
+        window.ExoticAuth.stopCameraScan?.();
         input.reportValidity();
         return;
       }
 
-      const username = input.value.trim();
-      let credential = '';
-      let biometricCredentialId = null;
+      let authPayload = { authMethod: signinAuthMethod };
 
       if (signinAuthMethod === 'password') {
         const pwInput = document.getElementById('signin-password-input');
@@ -2071,33 +2220,45 @@
           pwInput?.reportValidity();
           return;
         }
-        credential = pwInput.value;
+        authPayload.credential = pwInput.value;
       } else if (signinAuthMethod === 'pin') {
         const pinInput = document.getElementById('signin-pin-input');
         if (!validateCredentialFieldLive('signin') || !pinInput?.checkValidity()) {
           pinInput?.reportValidity();
           return;
         }
-        credential = pinInput.value.trim();
+        authPayload.credential = pinInput.value.trim();
       } else {
-        if (
+        if (pendingBioPromise) {
+          const verified = await pendingBioPromise;
+          if (!verified) return;
+        } else if (
           !signinBioAssertion ||
           signinBioAssertion.method !== signinAuthMethod ||
           signinBioAssertion.username !== username.toLowerCase()
         ) {
-          const verified = await runBiometricFlow('signin');
-          if (!verified) return;
+          setCredentialValidationUI(
+            'signin',
+            'neutral',
+            `Tap Verify to scan ${window.ExoticAuth.formatMethodLabel(signinAuthMethod)}`,
+            'SCAN',
+            getMethodIconName(signinAuthMethod)
+          );
+          return;
         }
-        credential = signinBioAssertion.credential;
-        biometricCredentialId = signinBioAssertion.biometricCredentialId;
+        authPayload = {
+          authMethod: signinAuthMethod,
+          biometricMode: signinBioAssertion.biometricMode,
+          biometricCredentialId: signinBioAssertion.biometricCredentialId,
+          webauthnAssertion: signinBioAssertion.webauthnAssertion,
+          webauthnAttestation: signinBioAssertion.webauthnAttestation,
+          faceDescriptor: signinBioAssertion.faceDescriptor,
+          challenge: signinBioAssertion.challenge
+        };
       }
 
       if (submitBtn) submitBtn.disabled = true;
-      const res = await window.ExoticAuth.signIn(username, {
-        authMethod: signinAuthMethod,
-        credential,
-        biometricCredentialId
-      });
+      const res = await window.ExoticAuth.signIn(username, authPayload);
       if (submitBtn) submitBtn.disabled = false;
 
       if (res && res.ok) {
@@ -2115,6 +2276,7 @@
 
       if (res?.code === 'AUTH_METHOD_MISMATCH' && res.expectedMethod) {
         signinExpectedMethod = res.expectedMethod;
+        signinExpectedBioMode = res.biometricMode || signinExpectedBioMode;
         signinExpectedBioId = res.biometricCredentialId || signinExpectedBioId;
         signinManualMethodOverride = false;
         applyAuthMethodUI('signin', res.expectedMethod);
@@ -2514,6 +2676,9 @@
       });
 
       window.ExoticRouter.onNavigate((route) => {
+        if (route !== 'signup' && route !== 'signin') {
+          window.ExoticAuth?.stopCameraScan?.();
+        }
         if (route !== 'play' && canvasFullscreen) {
           setCanvasFullscreen(false);
         }

@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC — Monochrome Troll Platformer</title>
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c8" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c8" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c8" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c11" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c11" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c11" />
 </head>
 <body>
   <div id="app">
@@ -111,7 +111,7 @@
               </div>
             </div>
 
-            <form id="signup-form" class="auth-form">
+            <form id="signup-form" class="auth-form" novalidate>
               <label for="signup-username-input" class="auth-field-label">
                 <span>Username</span>
                 <span class="mono">3–20 · A-Z 0-9 _</span>
@@ -219,13 +219,16 @@
                 <div id="signup-panel-biometric" class="auth-cred-panel">
                   <div class="auth-field-label">
                     <span id="signup-bio-label">Fingerprint Passkey</span>
-                    <span class="mono" id="signup-bio-tag">BIOMETRIC</span>
+                    <span class="mono" id="signup-bio-tag">HARDWARE SENSOR</span>
+                  </div>
+                  <div id="signup-face-viewport" class="auth-face-viewport">
+                    <canvas id="signup-face-canvas" width="220" height="220"></canvas>
                   </div>
                   <div id="signup-bio-card" class="auth-bio-card">
                     <div id="signup-bio-emblem" class="auth-bio-emblem" data-icon="fingerprint"></div>
                     <div class="auth-bio-info">
                       <strong id="signup-bio-title">Enroll Fingerprint</strong>
-                      <span id="signup-bio-desc">Scan your Fingerprint to protect this account, or press Create Account to scan automatically.</span>
+                      <span id="signup-bio-desc">Scan your Fingerprint on your device sensor, or press Create Account to scan automatically.</span>
                     </div>
                     <button type="button" id="signup-bio-scan-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
                       <span id="signup-bio-btn-icon" data-icon="fingerprint"></span>
@@ -300,7 +303,7 @@
               </div>
             </div>
 
-            <form id="signin-form" class="auth-form">
+            <form id="signin-form" class="auth-form" novalidate>
               <label for="signin-username-input" class="auth-field-label">
                 <span>Registered Username</span>
                 <span class="mono">3–20 · A-Z 0-9 _</span>
@@ -408,13 +411,16 @@
                 <div id="signin-panel-biometric" class="auth-cred-panel">
                   <div class="auth-field-label">
                     <span id="signin-bio-label">Fingerprint Passkey</span>
-                    <span class="mono" id="signin-bio-tag">BIOMETRIC</span>
+                    <span class="mono" id="signin-bio-tag">HARDWARE SENSOR</span>
+                  </div>
+                  <div id="signin-face-viewport" class="auth-face-viewport">
+                    <canvas id="signin-face-canvas" width="220" height="220"></canvas>
                   </div>
                   <div id="signin-bio-card" class="auth-bio-card">
                     <div id="signin-bio-emblem" class="auth-bio-emblem" data-icon="fingerprint"></div>
                     <div class="auth-bio-info">
                       <strong id="signin-bio-title">Verify Fingerprint</strong>
-                      <span id="signin-bio-desc">Verify your Fingerprint to unlock sign-in, or press Sign In to scan automatically.</span>
+                      <span id="signin-bio-desc">Verify your Fingerprint on your device sensor, or press Sign In to scan automatically.</span>
                     </div>
                     <button type="button" id="signin-bio-scan-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
                       <span id="signin-bio-btn-icon" data-icon="fingerprint"></span>
@@ -984,27 +990,28 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c8"></script>
-  <script src="src/core/theme.js?v=20261025c8"></script>
-  <script src="src/core/audio.js?v=20261025c8"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c8"></script>
-  <script src="src/core/storage.js?v=20261025c8"></script>
-  <script src="src/core/auth.js?v=20261025c8"></script>
-  <script src="src/data/shopItems.js?v=20261025c8"></script>
-  <script src="src/data/achievements.js?v=20261025c8"></script>
-  <script src="src/data/levels.js?v=20261025c8"></script>
-  <script src="src/core/realtime.js?v=20261025c8"></script>
-  <script src="src/graphics/characters.js?v=20261025c8"></script>
-  <script src="src/graphics/auras.js?v=20261025c8"></script>
-  <script src="src/graphics/trails.js?v=20261025c8"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c8"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c8"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c8"></script>
-  <script src="src/game/traps.js?v=20261025c8"></script>
-  <script src="src/game/physics.js?v=20261025c8"></script>
-  <script src="src/game/engine.js?v=20261025c8"></script>
-  <script src="src/ui/router.js?v=20261025c8"></script>
-  <script src="src/ui/views.js?v=20261025c8"></script>
-  <script src="src/ui/main.js?v=20261025c8"></script>
+  <script src="src/core/icons.js?v=20261025c11"></script>
+  <script src="src/core/theme.js?v=20261025c11"></script>
+  <script src="src/core/audio.js?v=20261025c11"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c11"></script>
+  <script src="src/core/storage.js?v=20261025c11"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c11"></script>
+  <script src="src/core/auth.js?v=20261025c11"></script>
+  <script src="src/data/shopItems.js?v=20261025c11"></script>
+  <script src="src/data/achievements.js?v=20261025c11"></script>
+  <script src="src/data/levels.js?v=20261025c11"></script>
+  <script src="src/core/realtime.js?v=20261025c11"></script>
+  <script src="src/graphics/characters.js?v=20261025c11"></script>
+  <script src="src/graphics/auras.js?v=20261025c11"></script>
+  <script src="src/graphics/trails.js?v=20261025c11"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c11"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c11"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c11"></script>
+  <script src="src/game/traps.js?v=20261025c11"></script>
+  <script src="src/game/physics.js?v=20261025c11"></script>
+  <script src="src/game/engine.js?v=20261025c11"></script>
+  <script src="src/ui/router.js?v=20261025c11"></script>
+  <script src="src/ui/views.js?v=20261025c11"></script>
+  <script src="src/ui/main.js?v=20261025c11"></script>
 </body>
 </html>

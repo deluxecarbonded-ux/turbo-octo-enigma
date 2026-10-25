@@ -1,6 +1,5 @@
 (function () {
   const AUTH_BINDING_KEY = 'exotic_auth_binding_v1';
-  const BIOMETRIC_VAULT_KEY = 'exotic_biometric_vault_v1';
   const USERNAME_REGEX = /^[A-Za-z0-9_]{3,20}$/;
   const PIN_REGEX = /^[0-9]{4,8}$/;
   const AUTH_METHODS = ['password', 'pin', 'fingerprint', 'faceid'];
@@ -13,6 +12,7 @@
     boundUsername: null,
     authMethod: 'password',
     boundAuthMethod: null,
+    biometricMode: null,
     biometricCredentialId: null,
     profileId: null
   };
@@ -39,78 +39,6 @@
     }
   }
 
-  function bytesToHex(bytes) {
-    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  function bytesToBase64Url(bytes) {
-    let bin = '';
-    for (let i = 0; i < bytes.length; i++) {
-      bin += String.fromCharCode(bytes[i]);
-    }
-    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-  }
-
-  function base64UrlToBytes(str) {
-    const base64 = String(str || '').replace(/-/g, '+').replace(/_/g, '/');
-    const pad = base64.length % 4 === 0 ? '' : '='.repeat(4 - (base64.length % 4));
-    const bin = atob(base64 + pad);
-    const out = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) {
-      out[i] = bin.charCodeAt(i);
-    }
-    return out;
-  }
-
-  function randomHex(byteLen = 32) {
-    const arr = new Uint8Array(byteLen);
-    if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
-      window.crypto.getRandomValues(arr);
-    } else {
-      for (let i = 0; i < byteLen; i++) {
-        arr[i] = Math.floor(Math.random() * 256);
-      }
-    }
-    return bytesToHex(arr);
-  }
-
-  function readBiometricVault() {
-    try {
-      const raw = localStorage.getItem(BIOMETRIC_VAULT_KEY);
-      if (!raw) return {};
-      const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === 'object' ? parsed : {};
-    } catch {
-      return {};
-    }
-  }
-
-  function writeBiometricVault(vault) {
-    try {
-      localStorage.setItem(BIOMETRIC_VAULT_KEY, JSON.stringify(vault || {}));
-    } catch {
-      // Ignore storage quota errors
-    }
-  }
-
-  function removeBiometricsForUsername(username) {
-    if (!username) return;
-    const lower = String(username).trim().toLowerCase();
-    const vault = readBiometricVault();
-    let changed = false;
-    for (const key of Object.keys(vault)) {
-      if (key.endsWith(`:${lower}`)) {
-        delete vault[key];
-        changed = true;
-      }
-    }
-    if (changed) writeBiometricVault(vault);
-  }
-
-  function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   function loadCachedBinding() {
     try {
       const raw = localStorage.getItem(AUTH_BINDING_KEY);
@@ -123,6 +51,7 @@
         state.boundUsername = parsed.boundUsername || null;
         state.authMethod = parsed.authMethod || 'password';
         state.boundAuthMethod = parsed.boundAuthMethod || parsed.authMethod || null;
+        state.biometricMode = parsed.biometricMode || null;
         state.biometricCredentialId = parsed.biometricCredentialId || null;
         state.profileId = parsed.profileId || null;
       }
@@ -146,6 +75,7 @@
           boundUsername: state.boundUsername,
           authMethod: state.authMethod,
           boundAuthMethod: state.boundAuthMethod,
+          biometricMode: state.biometricMode,
           biometricCredentialId: state.biometricCredentialId,
           profileId: state.profileId
         })
@@ -212,7 +142,10 @@
     state.username = signedIn ? resolvedUsername : null;
     state.authMethod = resolvedMethod;
     state.boundAuthMethod = hasAcc ? resolvedMethod : null;
-    state.biometricCredentialId = payload.biometricCredentialId || state.biometricCredentialId || null;
+    if (payload.biometricMode) state.biometricMode = payload.biometricMode;
+    if (payload.biometricCredentialId) {
+      state.biometricCredentialId = payload.biometricCredentialId;
+    }
     state.profileId = payload.profileId || null;
 
     persistBinding();
@@ -232,170 +165,129 @@
     return { ...state };
   }
 
-  async function canAttemptNativeWebAuthn() {
-    try {
-      if (
-        !window.isSecureContext ||
-        typeof window.PublicKeyCredential !== 'function' ||
-        !navigator.credentials ||
-        typeof navigator.credentials.create !== 'function'
-      ) {
-        return false;
-      }
-      if (typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function') {
-        return await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
-
-  async function enrollBiometric(method, username) {
-    const cleanMethod = method === 'faceid' ? 'faceid' : 'fingerprint';
-    const label = formatMethodLabel(cleanMethod);
-    const cleanUser = String(username || 'runner').trim() || 'runner';
-    const secret = `${cleanMethod}_${randomHex(32)}`;
-    let credentialId = `bio_${cleanMethod}_${randomHex(16)}`;
-    let mode = 'device';
-
-    const tryNative = await canAttemptNativeWebAuthn();
-    if (tryNative) {
-      const t0 = performance.now();
-      try {
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        const userId = new TextEncoder().encode(`${cleanMethod}:${cleanUser.toLowerCase()}`);
-
-        const cred = await navigator.credentials.create({
-          publicKey: {
-            challenge,
-            rp: { name: 'Exotic' },
-            user: {
-              id: userId,
-              name: `${cleanUser} (${label})`,
-              displayName: cleanUser
-            },
-            pubKeyCredParams: [
-              { type: 'public-key', alg: -7 },
-              { type: 'public-key', alg: -257 }
-            ],
-            authenticatorSelection: {
-              authenticatorAttachment: 'platform',
-              userVerification: 'required',
-              residentKey: 'preferred'
-            },
-            timeout: 25000,
-            attestation: 'none'
-          }
-        });
-
-        if (cred && cred.rawId) {
-          credentialId = bytesToBase64Url(new Uint8Array(cred.rawId));
-          mode = 'webauthn';
-        }
-      } catch (err) {
-        const elapsed = performance.now() - t0;
-        if (err && err.name === 'NotAllowedError' && window.top === window.self && elapsed > 300) {
-          return {
-            ok: false,
-            canceled: true,
-            reason: `${label} scan was canceled`
-          };
-        }
-        await sleep(520);
-      }
-    } else {
-      await sleep(520);
-    }
-
-    const vault = readBiometricVault();
-    const vaultKey = `${cleanMethod}:${cleanUser.toLowerCase()}`;
-    vault[vaultKey] = {
-      method: cleanMethod,
-      username: cleanUser.toLowerCase(),
-      secret,
-      credentialId,
-      mode,
-      createdAt: Date.now()
-    };
-    writeBiometricVault(vault);
-
-    return {
-      ok: true,
-      method: cleanMethod,
-      credential: secret,
-      biometricCredentialId: credentialId,
-      mode
-    };
-  }
-
-  async function verifyBiometric(method, username, expectedCredentialId = null) {
-    const cleanMethod = method === 'faceid' ? 'faceid' : 'fingerprint';
-    const label = formatMethodLabel(cleanMethod);
-    const cleanUser = String(username || '').trim().toLowerCase();
-    const vault = readBiometricVault();
-
-    let entry = cleanUser ? vault[`${cleanMethod}:${cleanUser}`] : null;
-    if (!entry && expectedCredentialId) {
-      entry = Object.values(vault).find(
-        (v) => v && v.method === cleanMethod && v.credentialId === expectedCredentialId
-      );
-    }
-
-    // Legacy account enrolling biometric on first Sign In when no credential existed yet
-    if (!entry && !expectedCredentialId && cleanUser) {
-      return enrollBiometric(cleanMethod, cleanUser);
-    }
-
-    if (!entry) {
-      await sleep(360);
-      return {
+  /**
+   * Synchronously starts real hardware Fingerprint / Face ID scanning inside a user click event
+   * so transient user activation is never lost on Safari / iOS Face ID / macOS Touch ID / Popups.
+   */
+  function startHardwareBiometricScanSync({
+    flow, // 'signup' | 'signin'
+    method, // 'fingerprint' | 'faceid'
+    username,
+    credentialId = null,
+    expectedBiometricMode = null,
+    canvasEl = null,
+    onProgress = null
+  }) {
+    const bio = window.ExoticBiometrics;
+    if (!bio) {
+      return Promise.resolve({
         ok: false,
-        reason: `No ${label} passkey found for @${username || 'runner'} on this device`
-      };
+        unsupported: true,
+        reason: 'Biometric hardware module unavailable'
+      });
     }
 
-    if (entry.mode === 'webauthn' && (await canAttemptNativeWebAuthn())) {
-      const t0 = performance.now();
-      try {
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        const allowId = base64UrlToBytes(expectedCredentialId || entry.credentialId);
+    const cleanMethod = method === 'faceid' ? 'faceid' : 'fingerprint';
+    const support = bio.getMethodSupport(cleanMethod);
+    if (!support.supported) {
+      return Promise.resolve({
+        ok: false,
+        unsupported: true,
+        reason: support.reason || `${formatMethodLabel(cleanMethod)} is not supported on this device`
+      });
+    }
 
-        const assertion = await navigator.credentials.get({
-          publicKey: {
-            challenge,
-            allowCredentials: [{ type: 'public-key', id: allowId }],
-            userVerification: 'required',
-            timeout: 25000
-          }
+    const caps = bio.getCapabilities();
+    const ready = bio.getReadyChallengeSync(username);
+    const activeChallenge = ready ? ready.challenge : null;
+    const resolvedCredId =
+      credentialId || ready?.biometricCredentialId || state.biometricCredentialId || null;
+
+    let targetBioMode = support.mode || 'webauthn';
+    if (cleanMethod === 'fingerprint') {
+      targetBioMode = 'webauthn';
+    } else if (expectedBiometricMode === 'webauthn' || expectedBiometricMode === 'camera_face') {
+      targetBioMode = expectedBiometricMode;
+    }
+
+    // 1. Hardware WebAuthn Path (Touch ID, iOS Face ID, Windows Hello, Android BiometricPrompt)
+    if (targetBioMode === 'webauthn') {
+      // If embedded in a cross-origin iframe that blocks inline WebAuthn, open top-level sensor window synchronously
+      if (caps.isEmbeddedFrame && !caps.inlineWebAuthnAllowed) {
+        return bio.openTopLevelSensorBridgeSync({
+          mode: flow,
+          method: cleanMethod,
+          biometricMode: 'webauthn',
+          username,
+          challenge: activeChallenge || '',
+          credentialId: resolvedCredId || ''
         });
-
-        if (!assertion) {
-          return { ok: false, reason: `${label} verification failed` };
-        }
-      } catch (err) {
-        const elapsed = performance.now() - t0;
-        if (err && err.name === 'NotAllowedError' && window.top === window.self && elapsed > 300) {
-          return {
-            ok: false,
-            canceled: true,
-            reason: `${label} verification was canceled`
-          };
-        }
-        await sleep(460);
       }
-    } else {
-      await sleep(480);
+
+      if (!activeChallenge) {
+        return bio.prefetchChallenge(username).then((fresh) => {
+          if (!fresh || !fresh.challenge) {
+            return { ok: false, reason: 'Could not prepare biometric challenge — tap Scan again' };
+          }
+          return flow === 'signup'
+            ? bio.startInlineWebAuthnEnrollSync({
+                username,
+                method: cleanMethod,
+                challenge: fresh.challenge
+              })
+            : bio.startInlineWebAuthnVerifySync({
+                username,
+                method: cleanMethod,
+                challenge: fresh.challenge,
+                credentialId: resolvedCredId || fresh.biometricCredentialId
+              });
+        });
+      }
+
+      return flow === 'signup'
+        ? bio.startInlineWebAuthnEnrollSync({
+            username,
+            method: cleanMethod,
+            challenge: activeChallenge
+          })
+        : bio.startInlineWebAuthnVerifySync({
+            username,
+            method: cleanMethod,
+            challenge: activeChallenge,
+            credentialId: resolvedCredId
+          });
     }
 
-    return {
-      ok: true,
-      method: cleanMethod,
-      credential: entry.secret,
-      biometricCredentialId: entry.credentialId
-    };
+    // 2. Real Front-Camera Face ID Biometric Scan Path
+    if (caps.isEmbeddedFrame && !caps.inlineCameraAllowed) {
+      return bio.openTopLevelSensorBridgeSync({
+        mode: flow,
+        method: 'faceid',
+        biometricMode: 'camera_face',
+        username,
+        challenge: activeChallenge || '',
+        credentialId: resolvedCredId || ''
+      });
+    }
+
+    return (async () => {
+      let ch = activeChallenge;
+      if (!ch) {
+        const fresh = await bio.prefetchChallenge(username);
+        ch = fresh?.challenge || '';
+      }
+      if (!ch) {
+        return { ok: false, reason: 'Could not initialize Face ID challenge' };
+      }
+      const res = await bio.scanCameraFace({
+        canvas: canvasEl,
+        challenge: ch,
+        onProgress
+      });
+      // Refresh challenge in background after scan
+      bio.prefetchChallenge(username);
+      return res;
+    })();
   }
 
   loadCachedBinding();
@@ -419,6 +311,21 @@
     isValidPin(pin) {
       return PIN_REGEX.test(String(pin || '').trim());
     },
+
+    getMethodSupport(method) {
+      if (!window.ExoticBiometrics) return { supported: true };
+      return window.ExoticBiometrics.getMethodSupport(method);
+    },
+
+    prefetchBiometricChallenge(username) {
+      return window.ExoticBiometrics?.prefetchChallenge?.(username);
+    },
+
+    stopCameraScan() {
+      window.ExoticBiometrics?.stopActiveCamera?.();
+    },
+
+    startHardwareBiometricScanSync,
 
     getState() {
       return { ...state };
@@ -450,6 +357,10 @@
 
     getBoundAuthMethod() {
       return state.boundAuthMethod || state.authMethod || null;
+    },
+
+    getBiometricMode() {
+      return state.biometricMode || null;
     },
 
     getBiometricCredentialId() {
@@ -485,10 +396,12 @@
     },
 
     applySessionPayload,
-    enrollBiometric,
-    verifyBiometric,
 
     async init() {
+      if (window.ExoticBiometrics) {
+        window.ExoticBiometrics.detectCapabilities().then(() => notify());
+        window.ExoticBiometrics.prefetchChallenge(state.boundUsername || '');
+      }
       const clientKey = window.ExoticSupabase ? window.ExoticSupabase.getClientKey() : '';
       const res = await requestAuth(
         `/api/auth/session?clientKey=${encodeURIComponent(clientKey)}`,
@@ -523,38 +436,35 @@
       if (res && typeof res === 'object') {
         res.taken = Boolean(res.valid && res.exists);
       }
+      window.ExoticBiometrics?.prefetchChallenge?.(trimmed);
       return res;
     },
 
     async signUp(username, authOptions = {}) {
       const trimmed = String(username || '').trim();
       const authMethod = normalizeMethod(authOptions.authMethod);
-      const credential = authOptions.credential != null ? String(authOptions.credential) : '';
-      const biometricCredentialId = authOptions.biometricCredentialId || null;
 
       const res = await requestAuth('/api/auth/signup', 'POST', {
         username: trimmed,
         authMethod,
-        credential,
-        biometricCredentialId
+        credential: authOptions.credential != null ? String(authOptions.credential) : '',
+        biometricMode: authOptions.biometricMode || null,
+        biometricCredentialId: authOptions.biometricCredentialId || null,
+        webauthnAttestation: authOptions.webauthnAttestation || null,
+        faceDescriptor: authOptions.faceDescriptor || null,
+        challenge: authOptions.challenge || null
       });
+
       if (res && res.ok) {
-        // Re-key biometric vault entry to canonical username if casing differed
-        if ((authMethod === 'fingerprint' || authMethod === 'faceid') && res.username) {
-          const vault = readBiometricVault();
-          const entry = vault[`${authMethod}:${trimmed.toLowerCase()}`];
-          if (entry) {
-            vault[`${authMethod}:${res.username.toLowerCase()}`] = entry;
-            writeBiometricVault(vault);
-          }
-        }
         applySessionPayload(
           {
             hasAccount: true,
             signedIn: true,
             username: res.username,
             authMethod: res.authMethod || authMethod,
-            biometricCredentialId: res.biometricCredentialId || biometricCredentialId,
+            biometricMode: res.biometricMode || authOptions.biometricMode || null,
+            biometricCredentialId:
+              res.biometricCredentialId || authOptions.biometricCredentialId || null,
             profileId: res.profileId,
             snapshot: res.snapshot
           },
@@ -569,15 +479,19 @@
     async signIn(username, authOptions = {}) {
       const trimmed = String(username || '').trim();
       const authMethod = normalizeMethod(authOptions.authMethod);
-      const credential = authOptions.credential != null ? String(authOptions.credential) : '';
-      const biometricCredentialId = authOptions.biometricCredentialId || null;
 
       const res = await requestAuth('/api/auth/signin', 'POST', {
         username: trimmed,
         authMethod,
-        credential,
-        biometricCredentialId
+        credential: authOptions.credential != null ? String(authOptions.credential) : '',
+        biometricMode: authOptions.biometricMode || null,
+        biometricCredentialId: authOptions.biometricCredentialId || null,
+        webauthnAssertion: authOptions.webauthnAssertion || null,
+        webauthnAttestation: authOptions.webauthnAttestation || null,
+        faceDescriptor: authOptions.faceDescriptor || null,
+        challenge: authOptions.challenge || null
       });
+
       if (res && res.ok) {
         applySessionPayload(
           {
@@ -585,7 +499,9 @@
             signedIn: true,
             username: res.username,
             authMethod: res.authMethod || authMethod,
-            biometricCredentialId: res.biometricCredentialId || biometricCredentialId,
+            biometricMode: res.biometricMode || authOptions.biometricMode || null,
+            biometricCredentialId:
+              res.biometricCredentialId || authOptions.biometricCredentialId || null,
             profileId: res.profileId,
             snapshot: res.snapshot
           },
@@ -598,6 +514,7 @@
     },
 
     async signOut() {
+      window.ExoticBiometrics?.stopActiveCamera?.();
       const res = await requestAuth('/api/auth/signout', 'POST', {});
       const lockedUsername =
         res?.boundUsername || res?.username || state.boundUsername || state.username;
@@ -616,21 +533,22 @@
         state.biometricCredentialId = res.biometricCredentialId;
       }
       persistBinding();
+      window.ExoticBiometrics?.prefetchChallenge?.(lockedUsername || '');
       notify();
       return res;
     },
 
     async deleteAccount() {
-      const prevUsername = state.username || state.boundUsername;
+      window.ExoticBiometrics?.stopActiveCamera?.();
       const res = await requestAuth('/api/auth/delete-account', 'POST', {});
       if (res && res.ok) {
-        removeBiometricsForUsername(res.deletedUsername || prevUsername);
         state.hasAccount = false;
         state.signedIn = false;
         state.username = null;
         state.boundUsername = null;
         state.authMethod = 'password';
         state.boundAuthMethod = null;
+        state.biometricMode = null;
         state.biometricCredentialId = null;
         state.profileId = null;
         persistBinding();
@@ -638,6 +556,7 @@
           window.ExoticStorage.resetLocalOnly();
         }
         window.ExoticRealtime?.bootstrapFromCloud?.();
+        window.ExoticBiometrics?.prefetchChallenge?.('');
         notify();
       }
       return res;

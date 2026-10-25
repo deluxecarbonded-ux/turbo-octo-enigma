@@ -2,6 +2,13 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { PgWireClient, PgConnectionPool, parsePostgresUrl } = require('./src/server/pgClient');
+const {
+  createChallenge,
+  verifyRegistration,
+  verifyAssertion,
+  verifyFaceDescriptorEnrollment,
+  verifyFaceDescriptorMatch
+} = require('./src/server/webauthnVerify');
 
 const ROOT_DIR = __dirname;
 
@@ -443,6 +450,7 @@ const server = http.createServer(async (req, res) => {
 
       let action = 'session';
       if (pathname === '/api/auth/session') action = 'session';
+      else if (pathname === '/api/auth/webauthn-challenge') action = 'challenge';
       else if (pathname === '/api/auth/check-username') action = 'check';
       else if (pathname === '/api/auth/signup') action = 'signup';
       else if (pathname === '/api/auth/signin') action = 'signin';
@@ -459,14 +467,38 @@ const server = http.createServer(async (req, res) => {
       );
       const authMethod =
         body.authMethod != null
-          ? String(body.authMethod)
-          : parsedUrl.searchParams.get('authMethod');
+          ? String(body.authMethod).toLowerCase()
+          : parsedUrl.searchParams.get('authMethod')?.toLowerCase() || null;
       const credential =
         body.credential != null ? String(body.credential) : null;
       const biometricCredentialId =
         body.biometricCredentialId != null
           ? String(body.biometricCredentialId)
           : null;
+      const expectedHost = String(
+        req.headers['x-forwarded-host'] || req.headers.host || ''
+      );
+
+      if (action === 'challenge') {
+        const challenge = createChallenge();
+        let userMeta = null;
+        if (username && /^[A-Za-z0-9_]{3,20}$/.test(username.trim())) {
+          const chkQ = await pgPool.query(
+            'SELECT public.rpc_check_username($1, $2) AS res',
+            [username.trim(), clientKey || null]
+          );
+          userMeta = chkQ.rows[0]?.res || null;
+        }
+        sendJson(res, 200, {
+          ok: true,
+          challenge,
+          exists: Boolean(userMeta?.exists),
+          authMethod: userMeta?.authMethod || null,
+          biometricMode: userMeta?.biometricMode || null,
+          biometricCredentialId: userMeta?.biometricCredentialId || null
+        });
+        return;
+      }
 
       let q;
       if (action === 'check') {
@@ -475,27 +507,219 @@ const server = http.createServer(async (req, res) => {
           [username, clientKey || null]
         );
       } else if (action === 'signup') {
-        q = await pgPool.query(
-          'SELECT public.rpc_auth_signup($1, $2, $3, $4, $5) AS res',
-          [
-            clientKey,
-            username,
-            authMethod || 'password',
-            credential,
-            biometricCredentialId
-          ]
-        );
+        const chosen = authMethod || 'password';
+        if (chosen === 'fingerprint' || chosen === 'faceid') {
+          if (chosen === 'faceid' && body.biometricMode === 'camera_face') {
+            const fv = verifyFaceDescriptorEnrollment({
+              faceDescriptor: body.faceDescriptor,
+              challenge: body.challenge
+            });
+            if (!fv.ok) {
+              sendJson(res, 400, {
+                ok: false,
+                code: 'CREDENTIAL_INVALID',
+                reason: fv.reason
+              });
+              return;
+            }
+            q = await pgPool.query(
+              'SELECT public.rpc_auth_signup($1, $2, $3, NULL, $4, NULL, -7, 0, $5, $6::float8[]) AS res',
+              [
+                clientKey,
+                username,
+                chosen,
+                biometricCredentialId || null,
+                'camera_face',
+                `{${fv.normalizedDescriptor.join(',')}}`
+              ]
+            );
+          } else {
+            const rv = verifyRegistration({
+              attestation: body.webauthnAttestation,
+              expectedHost
+            });
+            if (!rv.ok) {
+              sendJson(res, 400, {
+                ok: false,
+                code: 'CREDENTIAL_INVALID',
+                reason: rv.reason
+              });
+              return;
+            }
+            q = await pgPool.query(
+              'SELECT public.rpc_auth_signup($1, $2, $3, NULL, $4, $5, $6, $7, $8, NULL) AS res',
+              [
+                clientKey,
+                username,
+                chosen,
+                rv.credentialId,
+                rv.publicKeySpki,
+                rv.publicKeyAlg,
+                rv.signCount,
+                'webauthn'
+              ]
+            );
+          }
+        } else {
+          q = await pgPool.query(
+            'SELECT public.rpc_auth_signup($1, $2, $3, $4, NULL, NULL, -7, 0, NULL, NULL) AS res',
+            [clientKey, username, chosen, credential]
+          );
+        }
       } else if (action === 'signin') {
-        q = await pgPool.query(
-          'SELECT public.rpc_auth_signin($1, $2, $3, $4, $5) AS res',
-          [
-            clientKey,
-            username,
-            authMethod || null,
-            credential,
-            biometricCredentialId
-          ]
-        );
+        if (authMethod === 'fingerprint' || authMethod === 'faceid') {
+          const targetQ = await pgPool.query(
+            'SELECT public.rpc_get_webauthn_target($1, $2) AS res',
+            [username, clientKey || null]
+          );
+          const target = targetQ.rows[0]?.res || { ok: false };
+          if (!target.ok) {
+            sendJson(res, 400, target);
+            return;
+          }
+          if (target.hasCredential && target.authMethod !== authMethod) {
+            sendJson(res, 400, {
+              ok: false,
+              code: 'AUTH_METHOD_MISMATCH',
+              expectedMethod: target.authMethod,
+              biometricMode: target.biometricMode,
+              biometricCredentialId: target.biometricCredentialId,
+              reason: `This account uses ${
+                target.authMethod === 'faceid'
+                  ? 'Face ID'
+                  : target.authMethod === 'fingerprint'
+                  ? 'Fingerprint'
+                  : target.authMethod === 'pin'
+                  ? 'PIN'
+                  : 'Password'
+              } authentication`
+            });
+            return;
+          }
+
+          if (target.hasCredential) {
+            if (target.biometricMode === 'camera_face') {
+              const fm = verifyFaceDescriptorMatch({
+                enrolledDescriptor: target.faceDescriptor,
+                candidateDescriptor: body.faceDescriptor,
+                challenge: body.challenge
+              });
+              if (!fm.ok) {
+                sendJson(res, 400, {
+                  ok: false,
+                  code: 'INVALID_CREDENTIAL',
+                  expectedMethod: target.authMethod,
+                  reason: fm.reason
+                });
+                return;
+              }
+              q = await pgPool.query(
+                'SELECT public.rpc_auth_signin_biometric_verified($1, $2, $3, $4, $5, NULL, -7, 0, NULL) AS res',
+                [
+                  clientKey,
+                  username,
+                  authMethod,
+                  'camera_face',
+                  target.biometricCredentialId
+                ]
+              );
+            } else {
+              const av = verifyAssertion({
+                assertion: body.webauthnAssertion,
+                expectedCredentialId: target.biometricCredentialId,
+                publicKeySpki: target.publicKeySpki,
+                publicKeyAlg: target.publicKeyAlg,
+                prevSignCount: target.signCount,
+                expectedHost
+              });
+              if (!av.ok) {
+                sendJson(res, 400, {
+                  ok: false,
+                  code: 'INVALID_CREDENTIAL',
+                  expectedMethod: target.authMethod,
+                  biometricCredentialId: target.biometricCredentialId,
+                  reason: av.reason
+                });
+                return;
+              }
+              q = await pgPool.query(
+                'SELECT public.rpc_auth_signin_biometric_verified($1, $2, $3, $4, $5, NULL, $6, $7, NULL) AS res',
+                [
+                  clientKey,
+                  username,
+                  authMethod,
+                  'webauthn',
+                  target.biometricCredentialId,
+                  target.publicKeyAlg,
+                  av.newSignCount
+                ]
+              );
+            }
+          } else {
+            // Bind hardware biometric onto pre-existing credential-less account
+            if (authMethod === 'faceid' && body.biometricMode === 'camera_face') {
+              const fv = verifyFaceDescriptorEnrollment({
+                faceDescriptor: body.faceDescriptor,
+                challenge: body.challenge
+              });
+              if (!fv.ok) {
+                sendJson(res, 400, {
+                  ok: false,
+                  code: 'CREDENTIAL_INVALID',
+                  reason: fv.reason
+                });
+                return;
+              }
+              q = await pgPool.query(
+                'SELECT public.rpc_auth_signin_biometric_verified($1, $2, $3, $4, NULL, NULL, -7, 0, $5::float8[]) AS res',
+                [
+                  clientKey,
+                  username,
+                  authMethod,
+                  'camera_face',
+                  `{${fv.normalizedDescriptor.join(',')}}`
+                ]
+              );
+            } else {
+              const rv = verifyRegistration({
+                attestation: body.webauthnAttestation,
+                expectedHost
+              });
+              if (!rv.ok) {
+                sendJson(res, 400, {
+                  ok: false,
+                  code: 'CREDENTIAL_INVALID',
+                  reason: rv.reason
+                });
+                return;
+              }
+              q = await pgPool.query(
+                'SELECT public.rpc_auth_signin_biometric_verified($1, $2, $3, $4, $5, $6, $7, $8, NULL) AS res',
+                [
+                  clientKey,
+                  username,
+                  authMethod,
+                  'webauthn',
+                  rv.credentialId,
+                  rv.publicKeySpki,
+                  rv.publicKeyAlg,
+                  rv.signCount
+                ]
+              );
+            }
+          }
+        } else {
+          q = await pgPool.query(
+            'SELECT public.rpc_auth_signin($1, $2, $3, $4, $5) AS res',
+            [
+              clientKey,
+              username,
+              authMethod || null,
+              credential,
+              biometricCredentialId
+            ]
+          );
+        }
       } else if (action === 'signout') {
         q = await pgPool.query(
           'SELECT public.rpc_auth_signout($1) AS res',
@@ -1020,7 +1244,9 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, {
         'Content-Type': contentType,
         'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Access-Control-Allow-Origin': '*'
+        'Access-Control-Allow-Origin': '*',
+        'Permissions-Policy':
+          'publickey-credentials-get=*, publickey-credentials-create=*, camera=*'
       });
       res.end(content);
     });

@@ -11,3 +11,5 @@ supabase/.branches/
 .supabase/
 data/storage/
 
+
+.npm/
