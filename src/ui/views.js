@@ -543,7 +543,7 @@
       actionHtml = `
         <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full" disabled>
           ${window.ExoticIcons.get('lock')}
-          <span>Full Account Only</span>
+          <span>Locked · Not Available for Guest</span>
         </button>
       `;
     } else if (!owned) {
@@ -582,7 +582,7 @@
     }
 
     const statusHtml = guestLocked
-      ? `<span class="ex-chip ex-chip--subtle mono">Guest Locked</span>`
+      ? `<span class="ex-chip ex-chip--subtle mono">Locked</span>`
       : isEquipped
       ? `<span class="ex-chip ex-chip--inverted">${isUpgrade ? 'Active' : 'Equipped'}</span>`
       : owned
@@ -647,6 +647,7 @@
       const isAct = cat.id === activeShopCategory;
       const btn = document.createElement('button');
       btn.type = 'button';
+      btn.setAttribute('data-shop-cat', cat.id);
       btn.className = `ex-pill-btn ${
         isAct ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
       } ex-pill-btn--sm`;

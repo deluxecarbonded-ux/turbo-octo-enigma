@@ -269,6 +269,108 @@
       return;
     }
 
+    if (charId === 'char_tom') {
+      const sc = h / 26;
+      const earFlick = Math.sin(time * 9) * 0.7 * sc;
+      // Wide-set tall pointed tomcat ears (clockwise!)
+      ctx.moveTo(-8.8 * sc, -5.2 * sc);
+      ctx.lineTo(-10.8 * sc, (-16.2 + earFlick) * sc);
+      ctx.lineTo(-2.4 * sc, -9.8 * sc);
+      ctx.closePath();
+
+      ctx.moveTo(2.4 * sc, -9.8 * sc);
+      ctx.lineTo(10.8 * sc, (-16.2 - earFlick * 0.6) * sc);
+      ctx.lineTo(8.8 * sc, -5.2 * sc);
+      ctx.closePath();
+
+      // Fluffy side cheek jowl tufts + tomcat head + protruding muzzle
+      addEllipseSubpath(ctx, -7.4 * sc, -2.2 * sc, 3.9 * sc, 2.7 * sc);
+      addEllipseSubpath(ctx, 7.4 * sc, -2.2 * sc, 3.9 * sc, 2.7 * sc);
+      addCircleSubpath(ctx, 0, -4.6 * sc, 7.8 * sc);
+      addEllipseSubpath(ctx, facing * 4.4 * sc, -2.0 * sc, 4.4 * sc, 2.8 * sc);
+      // Sleek upright cat torso + swinging gloved paws + striding tomcat feet
+      addRoundRectSubpath(ctx, -5.8 * sc, 1.8 * sc, 11.6 * sc, 8.8 * sc, 4.2 * sc);
+      addCapsuleSubpath(ctx, -4.6 * sc, 3.6 * sc, (-8.4 - stride * 0.5) * sc, 7.8 * sc, 1.65 * sc);
+      addCircleSubpath(ctx, (-8.7 - stride * 0.5) * sc, 8.2 * sc, 2.5 * sc);
+      addCapsuleSubpath(ctx, 4.6 * sc, 3.6 * sc, (8.4 + stride * 0.5) * sc, 7.2 * sc, 1.65 * sc);
+      addCircleSubpath(ctx, (8.7 + stride * 0.5) * sc, 7.6 * sc, 2.5 * sc);
+      addCapsuleSubpath(ctx, -2.8 * sc, 9.4 * sc, (-3.2 + stride) * sc, 12.6 * sc, 1.7 * sc);
+      addCapsuleSubpath(ctx, 2.8 * sc, 9.4 * sc, (3.2 - stride) * sc, 12.6 * sc, 1.7 * sc);
+      addRoundRectSubpath(ctx, (-6.8 + stride) * sc, 11.2 * sc, 7.0 * sc, 3.5 * sc, 1.7 * sc);
+      addRoundRectSubpath(ctx, (-0.2 - stride) * sc, 11.2 * sc, 7.0 * sc, 3.5 * sc, 1.7 * sc);
+      return;
+    }
+
+    if (charId === 'char_jerry') {
+      const sc = h / 26;
+      const earBob = Math.sin(time * 10) * 0.8 * sc;
+      // Oversized wide-splayed saucer mouse ears + forehead hair curl
+      addCircleSubpath(ctx, -8.2 * sc, (-9.2 + earBob) * sc, 5.5 * sc);
+      addCircleSubpath(ctx, 8.2 * sc, (-9.2 - earBob * 0.7) * sc, 5.5 * sc);
+      addCapsuleSubpath(ctx, 0, -9.8 * sc, facing * 2.8 * sc, -13.4 * sc, 1.3 * sc);
+      addCapsuleSubpath(ctx, -0.6 * sc, -9.8 * sc, -facing * 1.5 * sc, -12.6 * sc, 1.0 * sc);
+      // Nimble mouse head + cheeky upturned snout + agile compact body + scurrying feet
+      addCircleSubpath(ctx, 0, -3.5 * sc, 6.6 * sc);
+      addEllipseSubpath(ctx, facing * 5.6 * sc, -2.2 * sc, 3.3 * sc, 2.3 * sc);
+      addRoundRectSubpath(ctx, -4.8 * sc, 2.0 * sc, 9.6 * sc, 7.8 * sc, 4.2 * sc);
+      addCapsuleSubpath(ctx, -3.8 * sc, 3.6 * sc, (-7.2 - stride * 0.5) * sc, 7.2 * sc, 1.45 * sc);
+      addCapsuleSubpath(ctx, 3.8 * sc, 3.6 * sc, (7.2 + stride * 0.5) * sc, 6.8 * sc, 1.45 * sc);
+      addRoundRectSubpath(ctx, (-6.0 + stride) * sc, 10.6 * sc, 6.2 * sc, 3.2 * sc, 1.6 * sc);
+      addRoundRectSubpath(ctx, (-0.2 - stride) * sc, 10.6 * sc, 6.2 * sc, 3.2 * sc, 1.6 * sc);
+      return;
+    }
+
+    if (charId === 'char_bugs_bunny') {
+      const sc = h / 26;
+      const earBend = Math.max(-4.5, Math.min(4.5, -vx * 0.016)) * sc;
+      // Sky-high upright hare ears with velocity-reactive bend
+      addCapsuleSubpath(ctx, -2.8 * sc, -8.2 * sc, -3.8 * sc + earBend * 0.45, -15.2 * sc, 2.25 * sc);
+      addCapsuleSubpath(ctx, -3.8 * sc + earBend * 0.45, -15.2 * sc, -5.0 * sc + earBend, -20.8 * sc, 2.05 * sc);
+      addCapsuleSubpath(ctx, 2.4 * sc, -8.2 * sc, 3.4 * sc + earBend * 0.45, -15.2 * sc, 2.25 * sc);
+      addCapsuleSubpath(ctx, 3.4 * sc + earBend * 0.45, -15.2 * sc, 4.6 * sc + earBend, -20.8 * sc, 2.05 * sc);
+      // Wide puffed rabbit cheeks + head + slender torso + gloved hands + cotton tail + long thumper feet
+      addEllipseSubpath(ctx, -6.8 * sc, -1.8 * sc, 4.2 * sc, 2.6 * sc);
+      addEllipseSubpath(ctx, 6.8 * sc, -1.8 * sc, 4.2 * sc, 2.6 * sc);
+      addCircleSubpath(ctx, 0, -4.2 * sc, 6.6 * sc);
+      addRoundRectSubpath(ctx, -5.0 * sc, 1.6 * sc, 10.0 * sc, 9.0 * sc, 4.2 * sc);
+      addCircleSubpath(ctx, -facing * 6.8 * sc, 7.6 * sc, 3.1 * sc);
+      addCapsuleSubpath(ctx, -4.2 * sc, 3.4 * sc, (-8.0 - stride * 0.5) * sc, 7.6 * sc, 1.55 * sc);
+      addCircleSubpath(ctx, (-8.3 - stride * 0.5) * sc, 8.0 * sc, 2.4 * sc);
+      addCapsuleSubpath(ctx, 4.2 * sc, 3.4 * sc, (8.0 + stride * 0.5) * sc, 7.0 * sc, 1.55 * sc);
+      addCircleSubpath(ctx, (8.3 + stride * 0.5) * sc, 7.4 * sc, 2.4 * sc);
+      addRoundRectSubpath(ctx, (-7.4 + stride) * sc, 11.0 * sc, 8.6 * sc, 3.4 * sc, 1.7 * sc);
+      addRoundRectSubpath(ctx, (-0.2 - stride) * sc, 11.0 * sc, 8.6 * sc, 3.4 * sc, 1.7 * sc);
+      return;
+    }
+
+    if (charId === 'char_donald_duck') {
+      const sc = h / 26;
+      const tailWag = Math.sin(time * 11) * 0.9 * sc;
+      // Jaunty tilted Sailor Cap + cap band
+      addEllipseSubpath(ctx, -facing * 1.4 * sc, -11.8 * sc, 6.8 * sc, 2.9 * sc, -facing * 0.2);
+      addRoundRectSubpath(ctx, -5.0 * sc, -10.5 * sc, 9.6 * sc, 2.4 * sc, 1.0 * sc);
+      // Round duck head + prominent forward-extending duck bill
+      addCircleSubpath(ctx, 0, -4.4 * sc, 7.2 * sc);
+      addRoundRectSubpath(
+        ctx,
+        (facing > 0 ? 1.2 : -11.8) * sc,
+        -4.2 * sc,
+        10.6 * sc,
+        3.8 * sc,
+        1.9 * sc
+      );
+      addCircleSubpath(ctx, facing * 10.4 * sc, -3.2 * sc, 2.0 * sc);
+      // Sailor tunic torso + upturned pointed duck tail feathers + wing-arms + wide webbed feet
+      addRoundRectSubpath(ctx, -5.8 * sc, 1.8 * sc, 11.6 * sc, 8.6 * sc, 4.2 * sc);
+      addCapsuleSubpath(ctx, -facing * 4.5 * sc, 6.8 * sc, -facing * 10.4 * sc, (3.4 + tailWag) * sc, 2.1 * sc);
+      addCapsuleSubpath(ctx, -facing * 4.5 * sc, 8.2 * sc, -facing * 9.4 * sc, (6.0 + tailWag) * sc, 1.6 * sc);
+      addCapsuleSubpath(ctx, -4.6 * sc, 3.6 * sc, (-8.4 - stride * 0.5) * sc, 7.6 * sc, 1.75 * sc);
+      addCapsuleSubpath(ctx, 4.6 * sc, 3.6 * sc, (8.4 + stride * 0.5) * sc, 7.0 * sc, 1.75 * sc);
+      addRoundRectSubpath(ctx, (-7.2 + stride) * sc, 11.2 * sc, 7.8 * sc, 3.2 * sc, 1.5 * sc);
+      addRoundRectSubpath(ctx, (-0.4 - stride) * sc, 11.2 * sc, 7.8 * sc, 3.2 * sc, 1.5 * sc);
+      return;
+    }
+
     if (charId === 'char_cat') {
       const sc = h / 26;
       // Pointed triangular cat ears (clockwise!)
@@ -572,6 +674,141 @@
         ctx.fillStyle = secondary;
         ctx.fillRect(-w * 0.4, 5, w * 0.65, 3);
       }
+    } else if (skinId === 'skin_sailor') {
+      // Nautical deck tunic: crisp collar stripes + V-neck kerchief + front bow knot
+      ctx.fillStyle = primary;
+      ctx.fillRect(bx, by, bw, bh);
+      ctx.fillStyle = mid;
+      ctx.fillRect(bx, 6.2, bw, bh);
+      // Double nautical collar stripes
+      ctx.fillStyle = secondary;
+      ctx.fillRect(bx, 1.2, bw, 1.2);
+      ctx.fillRect(bx, 3.1, bw, 1.0);
+      // V-kerchief & bow tie
+      ctx.beginPath();
+      ctx.moveTo(-5.2, 1.2);
+      ctx.lineTo(5.2, 1.2);
+      ctx.lineTo(0, 7.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = mid;
+      ctx.beginPath();
+      ctx.moveTo(0, 4.6);
+      ctx.lineTo(-4.4, 2.8);
+      ctx.lineTo(-4.4, 6.4);
+      ctx.moveTo(0, 4.6);
+      ctx.lineTo(4.4, 2.8);
+      ctx.lineTo(4.4, 6.4);
+      ctx.closePath();
+      ctx.fill();
+    } else if (skinId === 'skin_polka') {
+      // Staggered vintage cartoon polka-dot weave
+      ctx.fillStyle = primary;
+      ctx.fillRect(bx, by, bw, bh);
+      const pulse = 1 + Math.sin(time * 4.5) * 0.14;
+      let rowIdx = 0;
+      for (let gy = -28; gy <= 28; gy += 6.2) {
+        const xShift = rowIdx % 2 === 0 ? 0 : 3.4;
+        for (let gx = -28; gx <= 28; gx += 6.8) {
+          ctx.fillStyle = (rowIdx + Math.round(gx)) % 3 === 0 ? mid : secondary;
+          ctx.beginPath();
+          ctx.arc(gx + xShift, gy, 1.85 * pulse, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        rowIdx += 1;
+      }
+    } else if (skinId === 'skin_chevron') {
+      // Animated upward velocity chevrons
+      ctx.fillStyle = primary;
+      ctx.fillRect(bx, by, bw, bh);
+      const shift = ((time * 18) % 9);
+      for (let gy = -30 - shift; gy <= 34; gy += 9) {
+        ctx.fillStyle = secondary;
+        ctx.beginPath();
+        ctx.moveTo(-30, gy + 7);
+        ctx.lineTo(0, gy);
+        ctx.lineTo(30, gy + 7);
+        ctx.lineTo(30, gy + 9.8);
+        ctx.lineTo(0, gy + 2.8);
+        ctx.lineTo(-30, gy + 9.8);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (skinId === 'skin_harlequin') {
+      // Theatrical interlocking diamond argyle lattice
+      ctx.fillStyle = primary;
+      ctx.fillRect(bx, by, bw, bh);
+      const stepX = 8.4;
+      const stepY = 10.4;
+      for (let gy = -32; gy <= 32; gy += stepY) {
+        for (let gx = -32; gx <= 32; gx += stepX) {
+          ctx.fillStyle = secondary;
+          fillDiamond(ctx, gx, gy, stepX * 0.46, stepY * 0.46);
+          ctx.fillStyle = mid;
+          fillDiamond(ctx, gx + stepX * 0.5, gy + stepY * 0.5, 1.7, 2.2);
+        }
+      }
+    } else if (skinId === 'skin_filmstrip') {
+      // Scrolling 35mm cinema reel perforations & frame dividers
+      ctx.fillStyle = primary;
+      ctx.fillRect(bx, by, bw, bh);
+      const scroll = (time * 20) % 10;
+      ctx.fillStyle = mid;
+      for (let fy = -30 + scroll; fy <= 30; fy += 10) {
+        ctx.fillRect(bx, fy, bw, 1.6);
+      }
+      ctx.fillStyle = secondary;
+      const perfScroll = (time * 20) % 5;
+      for (let py = -30 + perfScroll; py <= 30; py += 5) {
+        fillRoundRect(ctx, -8.8, py, 2.2, 2.8, 0.5);
+        fillRoundRect(ctx, 6.6, py, 2.2, 2.8, 0.5);
+      }
+    } else if (skinId === 'skin_mosaic') {
+      // Faceted geometric shard plates
+      ctx.fillStyle = primary;
+      ctx.fillRect(bx, by, bw, bh);
+      for (let i = 0; i < 14; i++) {
+        const mx = ((i * 11) % 28) - 14;
+        const my = Math.floor(i / 2.2) * 7 - 17;
+        ctx.fillStyle = i % 2 === 0 ? secondary : mid;
+        ctx.beginPath();
+        ctx.moveTo(mx, my - 3.6);
+        ctx.lineTo(mx + 4.4, my - 0.8);
+        ctx.lineTo(mx + 2.2, my + 3.8);
+        ctx.lineTo(mx - 3.2, my + 2.1);
+        ctx.closePath();
+        ctx.fill();
+      }
+    } else if (skinId === 'skin_eclipse') {
+      // Concentric lunar corona rings & eclipsed crescent core
+      ctx.fillStyle = primary;
+      ctx.fillRect(bx, by, bw, bh);
+      const wave = (time * 6) % 8;
+      ctx.fillStyle = mid;
+      fillRing(ctx, 0, -1, 7 + wave, 5.2 + wave);
+      fillRing(ctx, 0, -1, 14 + wave * 0.7, 12.4 + wave * 0.7);
+      ctx.fillStyle = secondary;
+      ctx.beginPath();
+      ctx.arc(0, -1, 5.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = primary;
+      ctx.beginPath();
+      ctx.arc(2.1, -2.0, 4.7, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (skinId === 'skin_cipher') {
+      // Cascading vertical binary micro-glyph columns
+      ctx.fillStyle = primary;
+      ctx.fillRect(bx, by, bw, bh);
+      for (let col = -3; col <= 3; col++) {
+        const cx = col * 3.8;
+        const speed = 15 + (Math.abs(col) % 3) * 6;
+        const headY = (((time * speed + col * 9.5) % 38) + 38) % 38 - 19;
+        ctx.fillStyle = secondary;
+        ctx.fillRect(cx - 1.1, headY, 2.2, 3.0);
+        ctx.fillStyle = mid;
+        ctx.fillRect(cx - 1.0, headY - 4.4, 2.0, 2.4);
+        ctx.fillRect(cx - 0.9, headY - 8.2, 1.8, 1.8);
+      }
     } else {
       ctx.fillStyle = primary;
       ctx.fillRect(bx, by, bw, bh);
@@ -664,6 +901,228 @@
         ctx.beginPath();
         addEllipseSubpath(ctx, (-1.8 + facing * 0.8) * sc, 6.2 * sc, 1.15 * sc, 1.9 * sc);
         addEllipseSubpath(ctx, (2.2 + facing * 0.8) * sc, 6.2 * sc, 1.15 * sc, 1.9 * sc);
+        ctx.fill();
+      }
+      return;
+    }
+
+    if (charId === 'char_tom') {
+      // Whippy tomcat tail behind body with contrasting white tail tip
+      const wag = Math.sin(time * 10) * 3.4 * sc;
+      const tipX = -facing * 15.2 * sc;
+      const tipY = (1.6 - wag) * sc;
+      ctx.fillStyle = crestFill;
+      fillCapsule(ctx, -facing * 5.2 * sc, 8.2 * sc, -facing * 10.6 * sc, (6.2 + wag * 0.5) * sc, 1.85 * sc);
+      fillCapsule(ctx, -facing * 10.6 * sc, (6.2 + wag * 0.5) * sc, tipX, tipY, 1.75 * sc);
+      ctx.fillStyle = pal.playerSecondary;
+      ctx.beginPath();
+      ctx.arc(tipX, tipY, 2.35 * sc, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Inner ear triangles
+      ctx.fillStyle = pal.playerSecondary;
+      ctx.beginPath();
+      ctx.moveTo(-7.6 * sc, -6.6 * sc);
+      ctx.lineTo(-9.2 * sc, -13.4 * sc);
+      ctx.lineTo(-3.8 * sc, -9.4 * sc);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(3.8 * sc, -9.4 * sc);
+      ctx.lineTo(9.2 * sc, -13.4 * sc);
+      ctx.lineTo(7.6 * sc, -6.6 * sc);
+      ctx.closePath();
+      ctx.fill();
+
+      // Lighter cartoon muzzle puff + chest bib
+      ctx.fillStyle = pal.playerSecondary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, facing * 2.6 * sc, -1.8 * sc, 5.4 * sc, 2.8 * sc);
+      if (skinId !== 'skin_tuxedo' && skinId !== 'skin_sailor') {
+        addEllipseSubpath(ctx, facing * 0.8 * sc, 5.8 * sc, 3.2 * sc, 3.4 * sc);
+      }
+      ctx.fill();
+
+      // Tall oval cartoon cat eyes + scheming arched brows + slit pupils
+      ctx.fillStyle = pal.playerSecondary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, (facing * 0.4 - 1.8) * sc, -5.8 * sc, 1.9 * sc, 3.0 * sc);
+      addEllipseSubpath(ctx, (facing * 0.4 + 2.6) * sc, -5.8 * sc, 1.9 * sc, 3.0 * sc);
+      ctx.fill();
+
+      ctx.fillStyle = pal.playerPrimary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, (facing * 1.1 - 1.8) * sc, -5.6 * sc, 0.85 * sc, 1.9 * sc);
+      addEllipseSubpath(ctx, (facing * 1.1 + 2.6) * sc, -5.6 * sc, 0.85 * sc, 1.9 * sc);
+      ctx.fill();
+
+      // Arched tomcat eyebrows
+      fillCapsule(ctx, (-3.8 + facing * 0.3) * sc, -8.8 * sc, (-0.4 + facing * 0.3) * sc, -7.8 * sc, 0.75 * sc);
+      fillCapsule(ctx, (1.2 + facing * 0.3) * sc, -7.8 * sc, (4.6 + facing * 0.3) * sc, -8.8 * sc, 0.75 * sc);
+
+      // Triangular cat nose + sly smirk + 3 cheek whiskers per side
+      fillDiamond(ctx, facing * 5.8 * sc, -2.5 * sc, 1.6 * sc, 1.15 * sc);
+      fillCapsule(ctx, facing * 1.2 * sc, -0.8 * sc, facing * 4.8 * sc, -0.5 * sc, 0.55 * sc);
+
+      ctx.fillRect(-12.2 * sc, -3.2 * sc, 4.2 * sc, 0.75 * sc);
+      ctx.fillRect(-12.0 * sc, -1.6 * sc, 4.0 * sc, 0.75 * sc);
+      ctx.fillRect(8.0 * sc, -3.2 * sc, 4.2 * sc, 0.75 * sc);
+      ctx.fillRect(8.0 * sc, -1.6 * sc, 4.0 * sc, 0.75 * sc);
+      return;
+    }
+
+    if (charId === 'char_jerry') {
+      const earBob = Math.sin(time * 10) * 0.8 * sc;
+      const wag = Math.sin(time * 13) * 3.0 * sc;
+      // Thin playful curved mouse tail
+      ctx.fillStyle = crestFill;
+      fillCapsule(ctx, -facing * 4.4 * sc, 7.6 * sc, -facing * 10.2 * sc, (5.8 + wag * 0.6) * sc, 1.05 * sc);
+      fillCapsule(ctx, -facing * 10.2 * sc, (5.8 + wag * 0.6) * sc, -facing * 13.8 * sc, (2.2 - wag) * sc, 0.85 * sc);
+
+      // Huge contrasting inner ear saucers (signature Jerry silhouette!)
+      ctx.fillStyle = pal.playerSecondary;
+      ctx.beginPath();
+      addCircleSubpath(ctx, -8.0 * sc, (-9.0 + earBob) * sc, 3.4 * sc);
+      addCircleSubpath(ctx, 8.0 * sc, (-9.0 - earBob * 0.7) * sc, 3.4 * sc);
+      // Warm lighter belly & cheeky muzzle patch
+      if (skinId !== 'skin_tuxedo' && skinId !== 'skin_sailor') {
+        addEllipseSubpath(ctx, facing * 0.6 * sc, 5.8 * sc, 2.9 * sc, 3.2 * sc);
+      }
+      addEllipseSubpath(ctx, facing * 3.0 * sc, -1.8 * sc, 4.4 * sc, 2.5 * sc);
+      ctx.fill();
+
+      // Big bright mouse eyes with lively catchlights
+      ctx.fillStyle = pal.playerSecondary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, (facing * 0.6 - 1.5) * sc, -4.6 * sc, 1.7 * sc, 2.6 * sc);
+      addEllipseSubpath(ctx, (facing * 0.6 + 2.1) * sc, -4.6 * sc, 1.7 * sc, 2.6 * sc);
+      ctx.fill();
+
+      ctx.fillStyle = pal.playerPrimary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, (facing * 1.1 - 1.4) * sc, -4.5 * sc, 0.9 * sc, 1.6 * sc);
+      addEllipseSubpath(ctx, (facing * 1.1 + 2.2) * sc, -4.5 * sc, 0.9 * sc, 1.6 * sc);
+      // Upturned button nose
+      addEllipseSubpath(ctx, facing * 8.2 * sc, -2.6 * sc, 1.65 * sc, 1.25 * sc);
+      ctx.fill();
+
+      // Cheerful smile & delicate mouse whiskers
+      fillCapsule(ctx, facing * 1.6 * sc, -0.8 * sc, facing * 5.0 * sc, -0.6 * sc, 0.55 * sc);
+      ctx.fillRect(-9.6 * sc, -2.2 * sc, 3.2 * sc, 0.7 * sc);
+      ctx.fillRect(6.8 * sc, -2.2 * sc, 3.2 * sc, 0.7 * sc);
+      return;
+    }
+
+    if (charId === 'char_bugs_bunny') {
+      const earBend = Math.max(-4.5, Math.min(4.5, -vx * 0.016)) * sc;
+      // Tall narrow inner ear slots
+      ctx.fillStyle = pal.playerSecondary;
+      fillCapsule(ctx, -2.8 * sc, -9.6 * sc, -4.5 * sc + earBend * 0.85, -18.8 * sc, 1.0 * sc);
+      fillCapsule(ctx, 2.4 * sc, -9.6 * sc, 4.1 * sc + earBend * 0.85, -18.8 * sc, 1.0 * sc);
+
+      // Puffed white cheek mask + chest bib + fluffy cotton tail puff
+      ctx.beginPath();
+      addEllipseSubpath(ctx, -4.6 * sc, -1.6 * sc, 3.8 * sc, 2.3 * sc);
+      addEllipseSubpath(ctx, 4.6 * sc, -1.6 * sc, 3.8 * sc, 2.3 * sc);
+      addEllipseSubpath(ctx, facing * 1.6 * sc, -1.6 * sc, 4.8 * sc, 2.5 * sc);
+      addCircleSubpath(ctx, -facing * 7.2 * sc, 7.6 * sc, 2.2 * sc);
+      if (skinId !== 'skin_tuxedo' && skinId !== 'skin_sailor') {
+        addEllipseSubpath(ctx, facing * 0.6 * sc, 5.8 * sc, 3.0 * sc, 3.5 * sc);
+      }
+      ctx.fill();
+
+      // Tall cartoon eyes + suave half-lidded upper lids
+      ctx.fillStyle = pal.playerSecondary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, (facing * 0.5 - 1.7) * sc, -5.4 * sc, 1.7 * sc, 2.9 * sc);
+      addEllipseSubpath(ctx, (facing * 0.5 + 2.1) * sc, -5.4 * sc, 1.7 * sc, 2.9 * sc);
+      ctx.fill();
+
+      ctx.fillStyle = pal.playerMid;
+      fillRoundRect(ctx, (facing * 0.5 - 3.4) * sc, -8.3 * sc, 3.4 * sc, 1.8 * sc, 0.8 * sc);
+      fillRoundRect(ctx, (facing * 0.5 + 0.4) * sc, -8.3 * sc, 3.4 * sc, 1.8 * sc, 0.8 * sc);
+
+      ctx.fillStyle = pal.playerPrimary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, (facing * 1.0 - 1.6) * sc, -4.9 * sc, 0.85 * sc, 1.55 * sc);
+      addEllipseSubpath(ctx, (facing * 1.0 + 2.2) * sc, -4.9 * sc, 0.85 * sc, 1.55 * sc);
+      ctx.fill();
+
+      // Triangular rabbit nose + signature twin rectangular buck teeth!
+      fillDiamond(ctx, facing * 3.4 * sc, -2.4 * sc, 1.5 * sc, 1.05 * sc);
+      ctx.fillStyle = pal.playerSecondary;
+      fillRoundRect(ctx, (facing * 2.8 - 1.8) * sc, -0.7 * sc, 3.6 * sc, 2.5 * sc, 0.5 * sc);
+      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillRect((facing * 2.8 - 0.35) * sc, -0.7 * sc, 0.7 * sc, 2.5 * sc);
+
+      // Crisp splayed rabbit whiskers
+      ctx.fillRect(-11.4 * sc, -2.5 * sc, 3.8 * sc, 0.75 * sc);
+      ctx.fillRect(-11.2 * sc, -1.0 * sc, 3.6 * sc, 0.75 * sc);
+      ctx.fillRect(7.6 * sc, -2.5 * sc, 3.8 * sc, 0.75 * sc);
+      ctx.fillRect(7.6 * sc, -1.0 * sc, 3.6 * sc, 0.75 * sc);
+      return;
+    }
+
+    if (charId === 'char_donald_duck') {
+      const ribbonFlutter = Math.sin(time * 13) * 1.8 * sc;
+      // Fluttering sailor cap ribbons behind head + cap tally band
+      ctx.fillStyle = pal.playerPrimary;
+      fillCapsule(ctx, -facing * 4.8 * sc, -9.6 * sc, -facing * 10.6 * sc, (-7.8 + ribbonFlutter) * sc, 0.95 * sc);
+      fillCapsule(ctx, -facing * 4.8 * sc, -8.8 * sc, -facing * 9.8 * sc, (-5.8 - ribbonFlutter * 0.7) * sc, 0.85 * sc);
+      ctx.fillStyle = pal.playerSecondary;
+      fillRoundRect(ctx, -4.6 * sc, -10.1 * sc, 8.6 * sc, 1.4 * sc, 0.6 * sc);
+
+      // Expressive tall duck eyes + feisty slanted Donald brow ridge
+      ctx.fillStyle = pal.playerSecondary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, (facing * 0.6 - 1.5) * sc, -5.8 * sc, 1.8 * sc, 2.9 * sc);
+      addEllipseSubpath(ctx, (facing * 0.6 + 2.2) * sc, -5.8 * sc, 1.8 * sc, 2.9 * sc);
+      ctx.fill();
+
+      ctx.fillStyle = pal.playerPrimary;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, (facing * 1.2 - 1.4) * sc, -5.5 * sc, 0.9 * sc, 1.7 * sc);
+      addEllipseSubpath(ctx, (facing * 1.2 + 2.3) * sc, -5.5 * sc, 0.9 * sc, 1.7 * sc);
+      ctx.fill();
+      // Determined slanted duck brow
+      fillCapsule(ctx, -3.2 * sc, -8.4 * sc, 4.2 * sc, (-7.6 + facing * 0.4) * sc, 0.85 * sc);
+
+      // Wide contrasting Duck Bill + expressive bill smile crease
+      ctx.fillStyle = pal.playerMid;
+      fillRoundRect(
+        ctx,
+        (facing > 0 ? 1.0 : -11.4) * sc,
+        -3.9 * sc,
+        10.4 * sc,
+        3.4 * sc,
+        1.7 * sc
+      );
+      ctx.beginPath();
+      ctx.arc(facing * 10.2 * sc, -3.0 * sc, 1.7 * sc, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = pal.playerPrimary;
+      fillCapsule(ctx, facing * 2.0 * sc, -2.1 * sc, facing * 9.6 * sc, -2.3 * sc, 0.55 * sc);
+
+      // Classic Sailor Tunic V-collar stripe + prominent front Bow Tie
+      if (skinId !== 'skin_tuxedo') {
+        ctx.fillStyle = pal.playerSecondary;
+        ctx.beginPath();
+        ctx.moveTo(-4.2 * sc, 2.2 * sc);
+        ctx.lineTo(4.2 * sc, 2.2 * sc);
+        ctx.lineTo(0, 6.8 * sc);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = pal.playerMid;
+        ctx.beginPath();
+        ctx.moveTo(facing * 0.8 * sc, 4.4 * sc);
+        ctx.lineTo((facing * 0.8 - 3.8) * sc, 2.6 * sc);
+        ctx.lineTo((facing * 0.8 - 3.8) * sc, 6.2 * sc);
+        ctx.moveTo(facing * 0.8 * sc, 4.4 * sc);
+        ctx.lineTo((facing * 0.8 + 3.8) * sc, 2.6 * sc);
+        ctx.lineTo((facing * 0.8 + 3.8) * sc, 6.2 * sc);
+        ctx.closePath();
         ctx.fill();
       }
       return;

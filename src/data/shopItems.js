@@ -9,7 +9,7 @@
   ];
 
   const ITEMS = [
-    // CHARACTERS (Coins — 16 Playable Characters)
+    // CHARACTERS (Coins — 20 Playable Characters)
     {
       id: 'char_classic',
       category: 'characters',
@@ -36,6 +36,42 @@
       cost: 0,
       currency: 'coins',
       desc: 'Classic stick figure runner with full procedural multi-jointed running and aerial limbs.'
+    },
+    {
+      id: 'char_tom',
+      category: 'characters',
+      name: 'Tom',
+      tier: 'Rare',
+      cost: 65,
+      currency: 'coins',
+      desc: 'Scheming housecat rival with wide-set ears, cheek tufts, arched brows, and a white-tipped tail. Full account required.'
+    },
+    {
+      id: 'char_jerry',
+      category: 'characters',
+      name: 'Jerry',
+      tier: 'Rare',
+      cost: 60,
+      currency: 'coins',
+      desc: 'Quick-witted little mouse sporting oversized saucer ears, forehead curl, bright eyes, and nimble stride. Full account required.'
+    },
+    {
+      id: 'char_bugs_bunny',
+      category: 'characters',
+      name: 'Bugs Bunny',
+      tier: 'Epic',
+      cost: 85,
+      currency: 'coins',
+      desc: 'Suave wise-cracking hare with sky-high ears, puffed cheeks, half-lidded gaze, and buck teeth. Full account required.'
+    },
+    {
+      id: 'char_donald_duck',
+      category: 'characters',
+      name: 'Donald Duck',
+      tier: 'Epic',
+      cost: 90,
+      currency: 'coins',
+      desc: 'Feisty sailor-capped duck featuring a wide expressive bill, bow-tied tunic, tail feathers, and webbed stride. Full account required.'
     },
     {
       id: 'char_cat',
@@ -155,7 +191,7 @@
       desc: 'Sentient floating relic housing a single tracking geometric pupil.'
     },
 
-    // SKINS (Coins — Base default + 15 Coin-unlockable Skins compatible with Mickey, Stickman & every Character)
+    // SKINS (Coins — Base default + 23 Coin-unlockable Skins compatible with every Character)
     {
       id: 'skin_solid',
       category: 'skins',
@@ -182,6 +218,78 @@
       cost: 35,
       currency: 'coins',
       desc: 'Classic vintage cartoon two-tone outfit with contrasting buttoned shorts.'
+    },
+    {
+      id: 'skin_sailor',
+      category: 'skins',
+      name: 'Sailor Regalia',
+      tier: 'Uncommon',
+      cost: 40,
+      currency: 'coins',
+      desc: 'Nautical deck tunic sporting crisp collar stripes, V-neck kerchief, and front bow knot. Full account required.'
+    },
+    {
+      id: 'skin_polka',
+      category: 'skins',
+      name: 'Vintage Polka',
+      tier: 'Uncommon',
+      cost: 55,
+      currency: 'coins',
+      desc: 'Staggered cartoon polka-dot weave locked cleanly across ears, limbs, and torso. Full account required.'
+    },
+    {
+      id: 'skin_chevron',
+      category: 'skins',
+      name: 'Velocity Chevron',
+      tier: 'Rare',
+      cost: 75,
+      currency: 'coins',
+      desc: 'Kinetic directional chevron bands surging upward through your runner silhouette. Full account required.'
+    },
+    {
+      id: 'skin_harlequin',
+      category: 'skins',
+      name: 'Harlequin Argyle',
+      tier: 'Rare',
+      cost: 95,
+      currency: 'coins',
+      desc: 'Classic theatrical diamond lattice inspired by slapstick stage performers. Full account required.'
+    },
+    {
+      id: 'skin_filmstrip',
+      category: 'skins',
+      name: 'Celluloid Reel',
+      tier: 'Epic',
+      cost: 120,
+      currency: 'coins',
+      desc: 'Scrolling cinema reel perforations and frame bars straight from a projector booth. Full account required.'
+    },
+    {
+      id: 'skin_mosaic',
+      category: 'skins',
+      name: 'Shattered Mosaic',
+      tier: 'Epic',
+      cost: 145,
+      currency: 'coins',
+      desc: 'Interlocking faceted geometric shards with alternating contrast plates. Full account required.'
+    },
+    {
+      id: 'skin_eclipse',
+      category: 'skins',
+      name: 'Lunar Corona',
+      tier: 'Mythic',
+      cost: 170,
+      currency: 'coins',
+      desc: 'Concentric eclipse rings expanding gently from a shadowed inner crescent. Full account required.'
+    },
+    {
+      id: 'skin_cipher',
+      category: 'skins',
+      name: 'Binary Cipher',
+      tier: 'Exotic',
+      cost: 205,
+      currency: 'coins',
+      desc: 'Cascading vertical glyph columns streaming smoothly across your form. Full account required.'
     },
     {
       id: 'skin_sketch',
