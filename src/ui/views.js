@@ -898,7 +898,7 @@
 
     c.fillStyle = pal.playerPrimary;
     c.font = '900 13px -apple-system, BlinkMacSystemFont, sans-serif';
-    c.fillText('EXOTIC · MONOCHROME LOADOUT', 292, 64);
+    c.fillText('EXOTIC · RUNNER LOADOUT', 292, 64);
 
     c.font = '900 32px -apple-system, BlinkMacSystemFont, sans-serif';
     c.fillText(callsign.slice(0, 16), 292, 108);

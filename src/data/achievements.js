@@ -13,7 +13,7 @@
     {
       id: 'ach_trap_magnet',
       title: 'Instinctive Bait',
-      desc: 'Trigger 10 hidden troll mechanisms across runs.',
+      desc: 'Trigger 10 hidden trap mechanisms across runs.',
       rewardCoins: 60,
       rewardSP: 1,
       progress(state) {

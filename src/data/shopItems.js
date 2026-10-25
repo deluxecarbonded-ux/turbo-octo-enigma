@@ -9,7 +9,7 @@
   ];
 
   const ITEMS = [
-    // CHARACTERS (Coins — 16 Playable Characters including Mickey Mouse, Stickman, Troll Cat, etc.)
+    // CHARACTERS (Coins — 16 Playable Characters)
     {
       id: 'char_classic',
       category: 'characters',
@@ -26,7 +26,7 @@
       tier: 'Starter',
       cost: 0,
       currency: 'coins',
-      desc: '1928 vintage monochrome toon mouse with iconic twin round ears, pie-cut eyes, snout, and wagging tail.'
+      desc: '1928 vintage toon mouse with iconic twin round ears, pie-cut eyes, snout, and wagging tail.'
     },
     {
       id: 'char_stickman',
@@ -35,16 +35,16 @@
       tier: 'Starter',
       cost: 0,
       currency: 'coins',
-      desc: 'Classic rage-platformer stick figure with full procedural multi-jointed running and aerial limbs.'
+      desc: 'Classic stick figure runner with full procedural multi-jointed running and aerial limbs.'
     },
     {
       id: 'char_cat',
       category: 'characters',
-      name: 'Syobon Troll Cat',
+      name: 'Syobon Mischief Cat',
       tier: 'Uncommon',
       cost: 35,
       currency: 'coins',
-      desc: 'Mischievous pointed-ear feline tribute to classic rage-bait trap platformers.'
+      desc: 'Mischievous pointed-ear feline tribute to classic rage-bait trap gauntlets.'
     },
     {
       id: 'char_bunny',
@@ -53,7 +53,7 @@
       tier: 'Uncommon',
       cost: 50,
       currency: 'coins',
-      desc: '1930s monochrome cartoon rabbit with velocity-reactive floppy ears and cotton tail.'
+      desc: '1930s cartoon rabbit with velocity-reactive floppy ears and cotton tail.'
     },
     {
       id: 'char_shinobi',
@@ -71,7 +71,7 @@
       tier: 'Rare',
       cost: 75,
       currency: 'coins',
-      desc: 'Gelatinous monochrome blob with harmonic wobble physics and suspended core bubbles.'
+      desc: 'Gelatinous blob with harmonic wobble physics and suspended core bubbles.'
     },
     {
       id: 'char_knight',
@@ -89,7 +89,7 @@
       tier: 'Rare',
       cost: 100,
       currency: 'coins',
-      desc: 'Monochrome skull-and-ribcage runner risen from a hundred previous trap deaths.'
+      desc: 'Skull-and-ribcage runner risen from a hundred previous trap deaths.'
     },
     {
       id: 'char_imp',
@@ -163,7 +163,7 @@
       tier: 'Default',
       cost: 0,
       currency: 'coins',
-      desc: 'High-contrast monochrome fill tuned for maximum silhouette clarity.'
+      desc: 'High-contrast solid fill tuned for maximum silhouette clarity.'
     },
     {
       id: 'skin_inverted',
@@ -208,7 +208,7 @@
       tier: 'Rare',
       cost: 60,
       currency: 'coins',
-      desc: 'Formal monochrome suit with crisp shirt V-lapel, bow tie, and dress buttons.'
+      desc: 'Formal evening suit with crisp shirt V-lapel, bow tie, and dress buttons.'
     },
     {
       id: 'skin_toon_ink',
@@ -226,7 +226,7 @@
       tier: 'Rare',
       cost: 80,
       currency: 'coins',
-      desc: 'Crisp monochrome chessboard weave locked across ears, limbs, and torso.'
+      desc: 'Crisp chessboard weave locked across ears, limbs, and torso.'
     },
     {
       id: 'skin_tiger',
@@ -235,7 +235,7 @@
       tier: 'Rare',
       cost: 90,
       currency: 'coins',
-      desc: 'Bold angled monochrome stripes cutting across your character geometry.'
+      desc: 'Bold angled stripes cutting across your character geometry.'
     },
     {
       id: 'skin_halftone',
@@ -253,7 +253,7 @@
       tier: 'Epic',
       cost: 115,
       currency: 'coins',
-      desc: 'Layered criss-cross monochrome cloth bandages earned the hard way.'
+      desc: 'Layered criss-cross cloth bandages earned the hard way.'
     },
     {
       id: 'skin_scanline',
@@ -271,7 +271,7 @@
       tier: 'Epic',
       cost: 135,
       currency: 'coins',
-      desc: 'Darkened chamber pulsing with visible internal monochrome bone segments.'
+      desc: 'Darkened chamber pulsing with visible internal bone segments.'
     },
     {
       id: 'skin_hollow',
@@ -289,7 +289,7 @@
       tier: 'Mythic',
       cost: 175,
       currency: 'coins',
-      desc: 'Living night-sky silhouette filled with drifting twinkling monochrome stars.'
+      desc: 'Living night-sky silhouette filled with drifting twinkling stars.'
     },
     {
       id: 'skin_glitch',
@@ -318,7 +318,7 @@
       tier: 'Uncommon',
       cost: 35,
       currency: 'coins',
-      desc: 'Four-point monochrome stars twinkling, rotating, and ascending around your body.'
+      desc: 'Four-point stars twinkling, rotating, and ascending around your body.'
     },
     {
       id: 'aura_bat',
@@ -327,7 +327,7 @@
       tier: 'Rare',
       cost: 70,
       currency: 'coins',
-      desc: 'Articulated monochrome bats with flapping wings orbiting in figure-eight rings.'
+      desc: 'Articulated bats with flapping wings orbiting in figure-eight rings.'
     },
     {
       id: 'aura_butterfly',
@@ -336,7 +336,7 @@
       tier: 'Rare',
       cost: 90,
       currency: 'coins',
-      desc: 'Fluttering monochrome butterflies spiraling upward on gentle air currents.'
+      desc: 'Fluttering butterflies spiraling upward on gentle air currents.'
     },
     {
       id: 'aura_feather',
@@ -345,7 +345,7 @@
       tier: 'Epic',
       cost: 125,
       currency: 'coins',
-      desc: 'Sweeping monochrome feathers drifting in vortex updrafts with ground pulse rings.'
+      desc: 'Sweeping feathers drifting in vortex updrafts with ground pulse rings.'
     },
     {
       id: 'aura_vortex',
@@ -392,7 +392,7 @@
       tier: 'Uncommon',
       cost: 30,
       currency: 'coins',
-      desc: 'Crisp tumbling monochrome micro-cubes kicked up along footsteps and jumps.'
+      desc: 'Crisp tumbling micro-cubes kicked up along footsteps and jumps.'
     },
     {
       id: 'trail_ghost',
@@ -446,7 +446,7 @@
       tier: 'Exotic',
       cost: 200,
       currency: 'coins',
-      desc: 'Crisp monochrome 0 and 1 blocks streaming behind high-speed movement.'
+      desc: 'Crisp 0 and 1 blocks streaming behind high-speed movement.'
     },
 
     // EMOTES / TAUNTS (Coins)
@@ -520,7 +520,7 @@
       tier: 'Exotic',
       cost: 195,
       currency: 'coins',
-      desc: 'Plants a monochrome RIP monument to honor your previous attempts.'
+      desc: 'Plants a stone RIP monument to honor your previous attempts.'
     },
 
     // UPGRADES (Skill Points - SP)

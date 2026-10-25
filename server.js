@@ -1278,7 +1278,7 @@ async function handleRequest(req, res) {
             [
               prof.id,
               cName,
-              `${cName} minted a Monochrome Loadout Card`,
+              `${cName} minted a Runner Loadout Card`,
               `Bucket: ${bucket}`,
               JSON.stringify({ bucket, publicUrl })
             ]
@@ -1329,7 +1329,12 @@ async function handleRequest(req, res) {
   // --------------------------------------------------------------------------
   // 10. STATIC ASSET SERVING (HTML, CSS, Vanilla JS)
   // --------------------------------------------------------------------------
-  let relativePath = pathname === '/' ? '/index.html' : pathname;
+  let relativePath =
+    pathname === '/'
+      ? '/index.html'
+      : pathname === '/favicon.ico'
+      ? '/favicon.svg'
+      : pathname;
   const resolvedPath = path.normalize(path.join(ROOT_DIR, relativePath));
 
   if (

@@ -3,14 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>EXOTIC — Monochrome Troll Platformer</title>
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c15" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c15" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c15" />
+  <title>EXOTIC</title>
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c16" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c16" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c16" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c16" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c16" />
 </head>
 <body>
   <div id="app">
-    <!-- Live Interactive Monochrome Parallax Backdrop -->
+    <!-- Interactive Parallax Backdrop -->
     <canvas id="backdrop-canvas"></canvas>
 
     <!-- Global Top Bar -->
@@ -62,17 +64,12 @@
           </button>
         </div>
         <div class="splash-box">
-          <canvas id="splash-logo-canvas"></canvas>
-          <div>
-            <h1 class="splash-title">EXOTIC</h1>
-            <p class="splash-sub" style="margin-top:6px;">Monochrome Troll Platformer</p>
-          </div>
+          <h1 class="splash-title">EXOTIC</h1>
           <div class="splash-progress-wrap">
             <div class="splash-track">
               <div id="splash-progress-fill" class="splash-fill"></div>
             </div>
             <div class="splash-status">
-              <span id="splash-step-label">Initializing engine...</span>
               <span id="splash-pct-label" class="mono">0%</span>
             </div>
           </div>
@@ -466,14 +463,14 @@
           <div class="menu-hero">
             <div class="menu-eyebrow">
               <span data-icon="bolt"></span>
-              <span>Precision Rage-Bait Platformer</span>
+              <span>Precision Rage-Bait Gauntlet</span>
             </div>
             <div class="menu-title-row">
               <div class="menu-logo-mark" data-icon="logo"></div>
               <h1 class="menu-title">EXOTIC</h1>
             </div>
             <p class="menu-tagline">
-              Trust no floor, question every coin, and outmaneuver dishonest geometry across eight handcrafted monochrome stages.
+              Trust no floor, question every coin, and outmaneuver dishonest geometry across eight handcrafted stages.
             </p>
 
             <nav class="menu-nav-grid" aria-label="Primary Navigation">
@@ -692,7 +689,7 @@
           <div class="page-header">
             <div class="page-header-text">
               <h2 class="page-title">Settings &amp; Controls</h2>
-              <p class="page-subtitle">Configure Monochrome Light and Dark mode, sound effects, controls, and your registered account.</p>
+              <p class="page-subtitle">Configure Light and Dark mode, sound effects, controls, and your registered account.</p>
             </div>
           </div>
 
@@ -702,7 +699,7 @@
 
               <div class="settings-row">
                 <div class="settings-row-info">
-                  <span class="settings-row-title">Monochrome Theme</span>
+                  <span class="settings-row-title">Appearance Theme</span>
                   <span class="settings-row-desc">Switch between pure neutral Dark Mode and Light Mode.</span>
                 </div>
                 <div style="display:flex; gap:6px; flex-shrink:0;">
@@ -1013,7 +1010,7 @@
               <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:10px;">
                 <div class="settings-row-info">
                   <span class="settings-row-title">Runner Loadout Card</span>
-                  <span class="settings-row-desc">Render a monochrome portrait of your equipped runner and save it to your profile.</span>
+                  <span class="settings-row-desc">Render a portrait of your equipped runner and save it to your profile.</span>
                 </div>
                 <div id="set-card-preview-wrap" class="runner-card-preview is-empty"></div>
                 <button type="button" id="set-upload-card-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full">
@@ -1043,7 +1040,7 @@
           <div class="page-header">
             <div class="page-header-text">
               <h2 class="page-title">Credits &amp; Studio Craft</h2>
-              <p class="page-subtitle">EXOTIC — Handcrafted monochrome rage-bait platformer engineered from the ground up.</p>
+              <p class="page-subtitle">EXOTIC — Handcrafted rage-bait gauntlet engineered from the ground up.</p>
             </div>
             <span class="ex-chip">Exotic Development Team</span>
           </div>
@@ -1061,13 +1058,13 @@
               <span class="credit-role">Core Physics &amp; Collision Engine</span>
               <h3 class="credit-heading">Precision Sub-Stepped Kinematics</h3>
               <p class="credit-text">
-                Responsive platformer physics featuring coyote grace frames, jump buffering, variable jump apex cuts, and moving platform momentum carry.
+                Responsive movement physics featuring coyote grace frames, jump buffering, variable jump apex cuts, and moving platform momentum carry.
               </p>
             </article>
 
             <article class="credit-card">
               <span class="credit-role">Visual Architecture</span>
-              <h3 class="credit-heading">Pure Monochrome Solid Geometry</h3>
+              <h3 class="credit-heading">Pure Contrast Solid Geometry</h3>
               <p class="credit-text">
                 Calibrated Light Mode and Dark Mode neutral luminance hierarchy with crisp solid silhouettes, orbital Auras, and animated stage and armory previews.
               </p>
@@ -1177,28 +1174,28 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c15"></script>
-  <script src="src/core/theme.js?v=20261025c15"></script>
-  <script src="src/core/audio.js?v=20261025c15"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c15"></script>
-  <script src="src/core/storage.js?v=20261025c15"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c15"></script>
-  <script src="src/core/auth.js?v=20261025c15"></script>
-  <script src="src/data/shopItems.js?v=20261025c15"></script>
-  <script src="src/data/achievements.js?v=20261025c15"></script>
-  <script src="src/data/levels.js?v=20261025c15"></script>
-  <script src="src/core/realtime.js?v=20261025c15"></script>
-  <script src="src/graphics/characters.js?v=20261025c15"></script>
-  <script src="src/graphics/auras.js?v=20261025c15"></script>
-  <script src="src/graphics/trails.js?v=20261025c15"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c15"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c15"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c15"></script>
-  <script src="src/game/traps.js?v=20261025c15"></script>
-  <script src="src/game/physics.js?v=20261025c15"></script>
-  <script src="src/game/engine.js?v=20261025c15"></script>
-  <script src="src/ui/router.js?v=20261025c15"></script>
-  <script src="src/ui/views.js?v=20261025c15"></script>
-  <script src="src/ui/main.js?v=20261025c15"></script>
+  <script src="src/core/icons.js?v=20261025c16"></script>
+  <script src="src/core/theme.js?v=20261025c16"></script>
+  <script src="src/core/audio.js?v=20261025c16"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c16"></script>
+  <script src="src/core/storage.js?v=20261025c16"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c16"></script>
+  <script src="src/core/auth.js?v=20261025c16"></script>
+  <script src="src/data/shopItems.js?v=20261025c16"></script>
+  <script src="src/data/achievements.js?v=20261025c16"></script>
+  <script src="src/data/levels.js?v=20261025c16"></script>
+  <script src="src/core/realtime.js?v=20261025c16"></script>
+  <script src="src/graphics/characters.js?v=20261025c16"></script>
+  <script src="src/graphics/auras.js?v=20261025c16"></script>
+  <script src="src/graphics/trails.js?v=20261025c16"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c16"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c16"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c16"></script>
+  <script src="src/game/traps.js?v=20261025c16"></script>
+  <script src="src/game/physics.js?v=20261025c16"></script>
+  <script src="src/game/engine.js?v=20261025c16"></script>
+  <script src="src/ui/router.js?v=20261025c16"></script>
+  <script src="src/ui/views.js?v=20261025c16"></script>
+  <script src="src/ui/main.js?v=20261025c16"></script>
 </body>
 </html>

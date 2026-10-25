@@ -71,9 +71,28 @@
   let currentMode = 'dark';
   const listeners = new Set();
 
+  function syncTabFavicon(mode) {
+    if (typeof document === 'undefined') return;
+    const isLight = mode === 'light';
+    const bg = isLight ? '#0a0a0a' : '#fafafa';
+    const fg = isLight ? '#fafafa' : '#0a0a0a';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="0" y="0" width="64" height="64" rx="20" ry="20" fill="${bg}"/><g transform="translate(13.2 13.2) scale(1.5667)"><path fill="${fg}" fill-rule="evenodd" clip-rule="evenodd" d="M4 3h16l-3 5H9v2.5h7l-2.2 3.5H9v2.5h8l3 4.5H4V3zm13.5 7.5L21 12l-3.5 1.5L16 17l-1.5-3.5L11 12l3.5-1.5L16 7l1.5 3.5z"/></g></svg>`;
+    const dataUri = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+    let link = document.getElementById('app-favicon') || document.querySelector('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement('link');
+      link.id = 'app-favicon';
+      link.rel = 'icon';
+      link.type = 'image/svg+xml';
+      document.head.appendChild(link);
+    }
+    link.href = dataUri;
+  }
+
   function applyTheme(mode, notify = true) {
     currentMode = mode === 'light' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', currentMode);
+    syncTabFavicon(currentMode);
     if (notify) {
       listeners.forEach((fn) => fn(currentMode, PALETTES[currentMode]));
     }

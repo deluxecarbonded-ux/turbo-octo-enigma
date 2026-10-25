@@ -3,8 +3,6 @@
   let backdropCtx = null;
   let menuCharCanvas = null;
   let menuCharCtx = null;
-  let splashCanvas = null;
-  let splashCtx = null;
 
   const menuTrail = new window.ExoticTrailSystem();
   let motes = [];
@@ -48,55 +46,6 @@
       canvas.height = targetH;
     }
     return { w: rect.width, h: rect.height, dpr };
-  }
-
-  function renderSplashLogo(time) {
-    if (!splashCanvas || !splashCtx) return;
-    const dim = resizeCanvas(splashCanvas);
-    if (!dim) return;
-    const pal = window.ExoticTheme.getPalette();
-    const { fillRing, fillDiamond } = window.ExoticCharacterRenderer;
-
-    splashCtx.save();
-    splashCtx.scale(dim.dpr, dim.dpr);
-    splashCtx.fillStyle = pal.stageBg;
-    splashCtx.fillRect(0, 0, dim.w, dim.h);
-
-    const cx = dim.w * 0.5;
-    const cy = dim.h * 0.5;
-
-    // Rotating monochrome orbital rings
-    splashCtx.fillStyle = pal.auraDim;
-    splashCtx.globalAlpha = 0.35;
-    fillRing(splashCtx, cx, cy, 52 + Math.sin(time * 3) * 2, 49);
-
-    splashCtx.globalAlpha = 0.85;
-    splashCtx.fillStyle = pal.playerPrimary;
-    for (let i = 0; i < 4; i++) {
-      const a = time * 2.2 + (i * Math.PI) / 2;
-      fillDiamond(splashCtx, cx + Math.cos(a) * 50, cy + Math.sin(a) * 50, 4, 4);
-    }
-
-    // Hero runner hopping in center
-    const hop = Math.abs(Math.sin(time * 4.2)) * 14;
-    window.ExoticCharacterRenderer.draw(splashCtx, {
-      x: cx - 15,
-      y: cy - 12 - hop,
-      w: 30,
-      h: 32,
-      facing: 1,
-      squashX: hop > 8 ? 0.92 : 1.06,
-      squashY: hop > 8 ? 1.08 : 0.94,
-      characterId: 'char_classic',
-      skinId: 'skin_solid',
-      palette: pal,
-      time
-    });
-
-    // Solid ground plinth
-    splashCtx.fillStyle = pal.platform;
-    splashCtx.fillRect(cx - 34, cy + 22, 68, 8);
-    splashCtx.restore();
   }
 
   function renderBackdrop(time, dt) {
@@ -223,10 +172,6 @@
 
     if (active) {
       renderBackdrop(time, dt);
-      const splashEl = document.getElementById('view-splash');
-      if (splashEl && splashEl.classList.contains('is-active')) {
-        renderSplashLogo(time);
-      }
       const menuEl = document.getElementById('view-menu');
       if (menuEl && menuEl.classList.contains('is-active')) {
         renderMenuShowcase(time, dt);
@@ -242,8 +187,6 @@
       backdropCtx = backdropCanvas ? backdropCanvas.getContext('2d') : null;
       menuCharCanvas = document.getElementById('menu-character-canvas');
       menuCharCtx = menuCharCanvas ? menuCharCanvas.getContext('2d') : null;
-      splashCanvas = document.getElementById('splash-logo-canvas');
-      splashCtx = splashCanvas ? splashCanvas.getContext('2d') : null;
 
       seedBackdrop();
 

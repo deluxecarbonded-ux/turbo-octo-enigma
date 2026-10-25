@@ -8,17 +8,10 @@
 
   function runSplashBoot(authReadyPromise) {
     const fillEl = document.getElementById('splash-progress-fill');
-    const stepEl = document.getElementById('splash-step-label');
     const pctEl = document.getElementById('splash-pct-label');
     const enterBtn = document.getElementById('splash-enter-btn');
 
-    const steps = [
-      { pct: 20, label: 'Loading monochrome palette & runner profile...' },
-      { pct: 45, label: 'Verifying account session...' },
-      { pct: 70, label: 'Preparing character, aura & trail systems...' },
-      { pct: 90, label: 'Tuning sound effects & trap triggers...' },
-      { pct: 100, label: 'Ready.' }
-    ];
+    const steps = [20, 45, 70, 90, 100];
 
     let idx = 0;
     let entered = false;
@@ -50,10 +43,9 @@
         setTimeout(enterAppAfterAuth, 280);
         return;
       }
-      const s = steps[idx];
-      if (fillEl) fillEl.style.width = `${s.pct}%`;
-      if (stepEl) stepEl.textContent = s.label;
-      if (pctEl) pctEl.textContent = `${s.pct}%`;
+      const pct = steps[idx];
+      if (fillEl) fillEl.style.width = `${pct}%`;
+      if (pctEl) pctEl.textContent = `${pct}%`;
       idx += 1;
       setTimeout(advance, 160);
     }

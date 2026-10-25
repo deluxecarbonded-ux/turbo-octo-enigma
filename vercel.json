@@ -13,6 +13,10 @@
   ],
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/favicon.svg"
+    },
+    {
       "source": "/api/((?!gateway$).*)",
       "destination": "/api/gateway?__pathname=/api/$1"
     },
