@@ -157,7 +157,7 @@
   };
 
   let currentMode = 'dark';
-  let currentColorMode = 'colored';
+  let currentColorMode = 'monochrome';
   const listeners = new Set();
 
   function normalizeMode(mode) {
@@ -165,7 +165,7 @@
   }
 
   function normalizeColorMode(colorMode) {
-    return colorMode === 'monochrome' ? 'monochrome' : 'colored';
+    return colorMode === 'colored' ? 'colored' : 'monochrome';
   }
 
   function syncTabFavicon(mode, colorMode) {
@@ -193,7 +193,7 @@
   function resolvePalette(mode, colorMode) {
     const m = normalizeMode(mode || currentMode);
     const c = normalizeColorMode(colorMode || currentColorMode);
-    return PALETTES[`${m}_${c}`] || PALETTES.dark_colored;
+    return PALETTES[`${m}_${c}`] || PALETTES.dark_monochrome;
   }
 
   function applyAttributesAndNotify(notify = true) {
@@ -219,7 +219,7 @@
   }
 
   window.ExoticTheme = {
-    init(initialMode = 'dark', initialColorMode = 'colored') {
+    init(initialMode = 'dark', initialColorMode = 'monochrome') {
       currentMode = normalizeMode(initialMode);
       currentColorMode = normalizeColorMode(initialColorMode);
       applyAttributesAndNotify(false);

@@ -8,6 +8,7 @@
       coins: 0,
       skillPoints: 0,
       skinPricingMigrated: true,
+      defaultMonochromeMigrated: true,
       runnerCardUrl: '',
       avatarUrl: '',
       ownedItems: [
@@ -45,7 +46,7 @@
       },
       settings: {
         theme: 'dark',
-        colorMode: 'colored',
+        colorMode: 'monochrome',
         muted: false,
         volume: 0.7,
         screenShake: true,
@@ -87,6 +88,11 @@
             state.equipped.skin = 'skin_solid';
           }
           state.skinPricingMigrated = true;
+          persistLocalOnly();
+        }
+        if (!parsed.defaultMonochromeMigrated) {
+          state.settings.colorMode = 'monochrome';
+          state.defaultMonochromeMigrated = true;
           persistLocalOnly();
         }
       }
@@ -342,15 +348,20 @@
         state.activeUpgrades = load.active_upgrades;
       }
 
-      if (sets.theme) state.settings.theme = sets.theme;
-      if (sets.color_mode === 'colored' || sets.color_mode === 'monochrome') {
-        state.settings.colorMode = sets.color_mode;
+      const recentLocalMutation = !replace && Date.now() - lastLocalSettingsMutationAt < 2500;
+      if (!recentLocalMutation) {
+        if (sets.theme) state.settings.theme = sets.theme;
+        if (sets.color_mode === 'colored' || sets.color_mode === 'monochrome') {
+          state.settings.colorMode = sets.color_mode;
+        }
+        if (typeof sets.muted === 'boolean') state.settings.muted = sets.muted;
+        if (sets.volume != null) state.settings.volume = Number(sets.volume);
+        if (typeof sets.screen_shake === 'boolean') state.settings.screenShake = sets.screen_shake;
+        if (typeof sets.touch_controls === 'boolean') {
+          state.settings.touchControls = sets.touch_controls;
+        }
+        if (typeof sets.live_ghosts === 'boolean') state.settings.liveGhosts = sets.live_ghosts;
       }
-      if (typeof sets.muted === 'boolean') state.settings.muted = sets.muted;
-      if (sets.volume != null) state.settings.volume = Number(sets.volume);
-      if (typeof sets.screen_shake === 'boolean') state.settings.screenShake = sets.screen_shake;
-      if (typeof sets.touch_controls === 'boolean') state.settings.touchControls = sets.touch_controls;
-      if (typeof sets.live_ghosts === 'boolean') state.settings.liveGhosts = sets.live_ghosts;
 
       const isGuestProf =
         Boolean(prof.is_guest) || Boolean(window.ExoticAuth && window.ExoticAuth.isGuest());
@@ -942,7 +953,7 @@
     },
     resetLocalOnly() {
       const currentTheme = state.settings.theme;
-      const currentColorMode = state.settings.colorMode || 'colored';
+      const currentColorMode = state.settings.colorMode || 'monochrome';
       state = createDefaultState();
       state.settings.theme = currentTheme;
       state.settings.colorMode = currentColorMode;
@@ -951,7 +962,7 @@
     },
     async resetAllData() {
       const currentTheme = state.settings.theme;
-      const currentColorMode = state.settings.colorMode || 'colored';
+      const currentColorMode = state.settings.colorMode || 'monochrome';
       const keepNoticeSeen = Boolean(state.settings.leaderboardNoticeSeen);
       const keepUsername =
         (window.ExoticAuth && window.ExoticAuth.getUsername()) || state.callsign || '';

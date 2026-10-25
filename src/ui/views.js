@@ -223,8 +223,8 @@
     }
 
     const isColored = window.ExoticTheme.getColorMode
-      ? window.ExoticTheme.getColorMode() !== 'monochrome'
-      : true;
+      ? window.ExoticTheme.getColorMode() === 'colored'
+      : false;
     const colorColoredBtn = document.getElementById('set-color-colored');
     const colorMonoBtn = document.getElementById('set-color-monochrome');
     if (colorColoredBtn && colorMonoBtn) {

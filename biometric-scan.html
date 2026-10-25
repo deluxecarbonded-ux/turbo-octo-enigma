@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-color-mode="colored">
+<html lang="en" data-theme="dark" data-color-mode="monochrome">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC — Biometric Sensor</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c21" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c21" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c21" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c21" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c22" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c22" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c22" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c22" />
   <style>
     body {
       min-height: 100vh;
@@ -142,9 +142,9 @@
     </div>
   </main>
 
-  <script src="src/core/icons.js?v=20261025c21"></script>
-  <script src="src/core/theme.js?v=20261025c21"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c21"></script>
+  <script src="src/core/icons.js?v=20261025c22"></script>
+  <script src="src/core/theme.js?v=20261025c22"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c22"></script>
   <script>
     (function () {
       const qs = new URLSearchParams(window.location.search);
@@ -156,14 +156,14 @@
       let activeChallenge = qs.get('challenge') || '';
       const credentialId = qs.get('credId') || '';
       let currentTheme = qs.get('theme') === 'light' ? 'light' : 'dark';
-      let currentColorMode = qs.get('colorMode') === 'monochrome' ? 'monochrome' : 'colored';
+      let currentColorMode = qs.get('colorMode') === 'colored' ? 'colored' : 'monochrome';
       try {
         const saved = JSON.parse(localStorage.getItem('exotic_save_state_v1') || '{}');
         if (!qs.has('theme') && saved?.settings?.theme === 'light') {
           currentTheme = 'light';
         }
-        if (!qs.has('colorMode') && saved?.settings?.colorMode === 'monochrome') {
-          currentColorMode = 'monochrome';
+        if (!qs.has('colorMode') && saved?.settings?.colorMode === 'colored') {
+          currentColorMode = 'colored';
         }
       } catch {
         // Ignore storage read error

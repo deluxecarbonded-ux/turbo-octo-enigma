@@ -927,7 +927,7 @@
   }) {
     const requestId = `bio_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const colorMode = document.documentElement.getAttribute('data-color-mode') || 'colored';
+    const colorMode = document.documentElement.getAttribute('data-color-mode') || 'monochrome';
     const qs = new URLSearchParams({
       reqId: requestId,
       mode: mode || 'signup',

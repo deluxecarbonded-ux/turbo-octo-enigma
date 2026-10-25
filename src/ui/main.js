@@ -59,7 +59,7 @@
     const saved = window.ExoticStorage.init();
     window.ExoticTheme.init(
       saved.settings.theme || 'dark',
-      saved.settings.colorMode || 'colored'
+      saved.settings.colorMode || 'monochrome'
     );
     window.ExoticAudio.setMuted(Boolean(saved.settings.muted));
     window.ExoticAudio.setVolume(saved.settings.volume ?? 0.7);
