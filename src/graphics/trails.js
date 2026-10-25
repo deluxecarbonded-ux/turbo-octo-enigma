@@ -1,0 +1,159 @@
+(function () {
+  class TrailSystem {
+    constructor() {
+      this.nodes = [];
+      this.emitAcc = 0;
+    }
+
+    reset() {
+      this.nodes.length = 0;
+      this.emitAcc = 0;
+    }
+
+    update(dt, trailId, playerState) {
+      if (!trailId || trailId === 'trail_none') {
+        this.nodes.length = 0;
+        return;
+      }
+
+      const speed = Math.hypot(playerState.vx || 0, playerState.vy || 0);
+      const interval = trailId === 'trail_ribbon' || trailId === 'trail_bolt' ? 0.018 : 0.036;
+      this.emitAcc += dt;
+
+      if (speed > 24 && this.emitAcc >= interval) {
+        this.emitAcc = 0;
+        this.nodes.push({
+          x: playerState.x + playerState.w * 0.5,
+          y: playerState.y + playerState.h * 0.5,
+          px: playerState.x,
+          py: playerState.y,
+          w: playerState.w,
+          h: playerState.h,
+          facing: playerState.facing || 1,
+          gravitySign: playerState.gravitySign || 1,
+          age: 0,
+          life: trailId === 'trail_ghost' ? 0.28 : 0.38,
+          jitterX: (Math.random() - 0.5) * 8,
+          jitterY: (Math.random() - 0.5) * 8,
+          glyph: Math.random() > 0.5 ? '1' : '0',
+          rot: Math.random() * Math.PI
+        });
+      }
+
+      for (let i = this.nodes.length - 1; i >= 0; i--) {
+        const n = this.nodes[i];
+        n.age += dt;
+        if (n.age >= n.life) {
+          this.nodes.splice(i, 1);
+        }
+      }
+    }
+
+    draw(ctx, trailId, pal, charId, skinId, time) {
+      if (!trailId || trailId === 'trail_none' || this.nodes.length === 0) return;
+      const { fillRing, fillDiamond } = window.ExoticCharacterRenderer;
+
+      ctx.save();
+
+      if (trailId === 'trail_ribbon' && this.nodes.length >= 2) {
+        // Tapered solid polygon ribbon (zero strokes!)
+        ctx.fillStyle = pal.auraSoft;
+        ctx.globalAlpha = 0.55;
+        ctx.beginPath();
+        for (let i = 0; i < this.nodes.length; i++) {
+          const n = this.nodes[i];
+          const t = i / (this.nodes.length - 1);
+          const halfThick = t * 7.5;
+          if (i === 0) ctx.moveTo(n.x, n.y - halfThick);
+          else ctx.lineTo(n.x, n.y - halfThick);
+        }
+        for (let i = this.nodes.length - 1; i >= 0; i--) {
+          const n = this.nodes[i];
+          const t = i / (this.nodes.length - 1);
+          const halfThick = t * 7.5;
+          ctx.lineTo(n.x, n.y + halfThick);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        return;
+      }
+
+      if (trailId === 'trail_bolt' && this.nodes.length >= 2) {
+        // Solid angular lightning quads (zero strokes!)
+        ctx.fillStyle = pal.auraBright;
+        for (let i = 1; i < this.nodes.length; i++) {
+          const a = this.nodes[i - 1];
+          const b = this.nodes[i];
+          const t = 1 - b.age / b.life;
+          const offA = ((i % 2) * 2 - 1) * 4.5;
+          const offB = (((i + 1) % 2) * 2 - 1) * 4.5;
+          const thick = Math.max(1.2, t * 3.4);
+          ctx.globalAlpha = t * 0.85;
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y + offA - thick);
+          ctx.lineTo(b.x, b.y + offB - thick);
+          ctx.lineTo(b.x, b.y + offB + thick);
+          ctx.lineTo(a.x, a.y + offA + thick);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+        return;
+      }
+
+      for (let i = 0; i < this.nodes.length; i++) {
+        const n = this.nodes[i];
+        const lifeLeft = Math.max(0, 1 - n.age / n.life);
+
+        if (trailId === 'trail_dust') {
+          ctx.globalAlpha = lifeLeft * 0.72;
+          ctx.fillStyle = pal.auraSoft;
+          const sz = Math.max(2, lifeLeft * 6);
+          ctx.save();
+          ctx.translate(n.x + n.jitterX * 0.6, n.y + 8 + n.jitterY * 0.4 - n.age * 16);
+          ctx.rotate(n.rot + n.age * 5);
+          ctx.fillRect(-sz * 0.5, -sz * 0.5, sz, sz);
+          ctx.restore();
+        } else if (trailId === 'trail_ghost') {
+          window.ExoticCharacterRenderer.draw(ctx, {
+            x: n.px,
+            y: n.py,
+            w: n.w,
+            h: n.h,
+            facing: n.facing,
+            gravitySign: n.gravitySign,
+            characterId: charId,
+            skinId: 'skin_solid',
+            palette: pal,
+            time,
+            alpha: lifeLeft * 0.28
+          });
+        } else if (trailId === 'trail_rings') {
+          ctx.globalAlpha = lifeLeft * 0.62;
+          ctx.fillStyle = pal.auraBright;
+          const r = 4 + (1 - lifeLeft) * 14;
+          fillRing(ctx, n.x, n.y, r, Math.max(0.5, r - 2.2));
+        } else if (trailId === 'trail_shards') {
+          ctx.globalAlpha = lifeLeft * 0.82;
+          ctx.fillStyle = i % 2 === 0 ? pal.auraBright : pal.auraSoft;
+          ctx.save();
+          ctx.translate(n.x + n.jitterX * 0.5, n.y + n.jitterY * 0.5);
+          ctx.rotate(n.rot + n.age * 7);
+          fillDiamond(ctx, 0, 0, 2.6 * lifeLeft + 1, 6.2 * lifeLeft + 1.5);
+          ctx.restore();
+        } else if (trailId === 'trail_binary') {
+          ctx.globalAlpha = lifeLeft * 0.8;
+          ctx.fillStyle = pal.auraBright;
+          ctx.font = '700 10px ui-monospace, monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(n.glyph, n.x + n.jitterX * 0.4, n.y + n.jitterY * 0.5 - n.age * 14);
+        }
+      }
+
+      ctx.restore();
+    }
+  }
+
+  window.ExoticTrailSystem = TrailSystem;
+})();

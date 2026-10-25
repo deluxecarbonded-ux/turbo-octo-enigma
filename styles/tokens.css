@@ -1,0 +1,147 @@
+:root,
+[data-theme="dark"] {
+  --bg-app: #0a0a0a;
+  --bg-backdrop-overlay: rgba(10, 10, 10, 0.72);
+  --bg-surface-1: #131313;
+  --bg-surface-2: #1c1c1c;
+  --bg-surface-3: #262626;
+  --bg-surface-4: #333333;
+  --bg-preview: #0e0e0e;
+  --bg-modal-scrim: rgba(0, 0, 0, 0.80);
+
+  --fg-primary: #fafafa;
+  --fg-secondary: #a6a6a6;
+  --fg-muted: #707070;
+  --fg-inverse: #0a0a0a;
+
+  --pill-primary-bg: #fafafa;
+  --pill-primary-fg: #0a0a0a;
+  --pill-primary-hover: #e0e0e0;
+  --pill-primary-active: #cccccc;
+
+  --pill-secondary-bg: #242424;
+  --pill-secondary-fg: #fafafa;
+  --pill-secondary-hover: #333333;
+  --pill-secondary-active: #404040;
+
+  --pill-ghost-fg: #b3b3b3;
+  --pill-ghost-hover-bg: #212121;
+  --pill-ghost-hover-fg: #fafafa;
+
+  --pill-muted-bg: #171717;
+  --pill-muted-fg: #666666;
+
+  --scrollbar-track: #121212;
+  --scrollbar-thumb: #2e2e2e;
+}
+
+[data-theme="light"] {
+  --bg-app: #f5f5f5;
+  --bg-backdrop-overlay: rgba(245, 245, 245, 0.76);
+  --bg-surface-1: #ffffff;
+  --bg-surface-2: #ffffff;
+  --bg-surface-3: #eaeaea;
+  --bg-surface-4: #dcdcdc;
+  --bg-preview: #ededed;
+  --bg-modal-scrim: rgba(245, 245, 245, 0.84);
+
+  --fg-primary: #0a0a0a;
+  --fg-secondary: #525252;
+  --fg-muted: #858585;
+  --fg-inverse: #fafafa;
+
+  --pill-primary-bg: #0a0a0a;
+  --pill-primary-fg: #fafafa;
+  --pill-primary-hover: #262626;
+  --pill-primary-active: #3b3b3b;
+
+  --pill-secondary-bg: #e6e6e6;
+  --pill-secondary-fg: #0a0a0a;
+  --pill-secondary-hover: #d6d6d6;
+  --pill-secondary-active: #c7c7c7;
+
+  --pill-ghost-fg: #525252;
+  --pill-ghost-hover-bg: #e8e8e8;
+  --pill-ghost-hover-fg: #0a0a0a;
+
+  --pill-muted-bg: #ebebeb;
+  --pill-muted-fg: #999999;
+
+  --scrollbar-track: #ededed;
+  --scrollbar-thumb: #c4c4c4;
+}
+
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  --radius-pill: 9999px;
+  --radius-card: 20px;
+  --radius-stage: 14px;
+  --radius-panel: 24px;
+
+  --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-app);
+  color: var(--fg-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  transition: background-color 220ms var(--ease-snappy), color 220ms var(--ease-snappy);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+button:focus,
+button:focus-visible,
+input:focus,
+input:focus-visible {
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+}

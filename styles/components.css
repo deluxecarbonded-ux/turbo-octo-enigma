@@ -1,0 +1,426 @@
+/* Custom ShadcnUI Pill-Style Button System (Used For Every Button Throughout) */
+.ex-pill-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  border: none;
+  outline: none;
+  box-shadow: none;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background-color 150ms var(--ease-snappy),
+    color 150ms var(--ease-snappy),
+    transform 130ms var(--ease-spring),
+    opacity 150ms ease;
+}
+
+.ex-pill-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.ex-pill-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.ex-pill-btn:disabled,
+.ex-pill-btn[aria-disabled="true"] {
+  background-color: var(--pill-muted-bg);
+  color: var(--pill-muted-fg);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Variants */
+.ex-pill-btn--primary {
+  background-color: var(--pill-primary-bg);
+  color: var(--pill-primary-fg);
+}
+
+.ex-pill-btn--primary:hover:not(:disabled) {
+  background-color: var(--pill-primary-hover);
+}
+
+.ex-pill-btn--primary:active:not(:disabled) {
+  background-color: var(--pill-primary-active);
+}
+
+.ex-pill-btn--secondary {
+  background-color: var(--pill-secondary-bg);
+  color: var(--pill-secondary-fg);
+}
+
+.ex-pill-btn--secondary:hover:not(:disabled) {
+  background-color: var(--pill-secondary-hover);
+}
+
+.ex-pill-btn--secondary:active:not(:disabled) {
+  background-color: var(--pill-secondary-active);
+}
+
+.ex-pill-btn--ghost {
+  background-color: transparent;
+  color: var(--pill-ghost-fg);
+}
+
+.ex-pill-btn--ghost:hover:not(:disabled) {
+  background-color: var(--pill-ghost-hover-bg);
+  color: var(--pill-ghost-hover-fg);
+}
+
+/* Sizes */
+.ex-pill-btn--xs {
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.ex-pill-btn--xs svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ex-pill-btn--sm {
+  height: 34px;
+  padding: 0 16px;
+  font-size: 13px;
+  gap: 7px;
+}
+
+.ex-pill-btn--sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ex-pill-btn--md {
+  height: 40px;
+  padding: 0 20px;
+  font-size: 14px;
+  gap: 8px;
+}
+
+.ex-pill-btn--lg {
+  height: 48px;
+  padding: 0 26px;
+  font-size: 15px;
+  gap: 10px;
+}
+
+.ex-pill-btn--lg svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ex-pill-btn--xl {
+  height: 54px;
+  padding: 0 34px;
+  font-size: 16px;
+  gap: 11px;
+}
+
+.ex-pill-btn--xl svg {
+  width: 19px;
+  height: 19px;
+}
+
+.ex-pill-btn--icon {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+}
+
+.ex-pill-btn--icon-sm {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.ex-pill-btn--full {
+  width: 100%;
+}
+
+/* Non-interactive Pill Chips & Currency Counters */
+.ex-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface-2);
+  color: var(--fg-primary);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ex-chip svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.ex-chip--subtle {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background-color: var(--bg-surface-3);
+  color: var(--fg-secondary);
+}
+
+.ex-chip--inverted {
+  height: 24px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background-color: var(--pill-primary-bg);
+  color: var(--pill-primary-fg);
+}
+
+/* Pill Input (Borderless, Outline-free, Gradient-free) */
+.ex-pill-input {
+  height: 42px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface-3);
+  color: var(--fg-primary);
+  font-size: 14px;
+  font-weight: 500;
+  width: 100%;
+  transition: background-color 150ms var(--ease-snappy);
+}
+
+.ex-pill-input::placeholder {
+  color: var(--fg-muted);
+}
+
+.ex-pill-input:focus {
+  background-color: var(--bg-surface-4);
+}
+
+/* Video Card Preview Component (Shop Items & Levels) */
+.ex-video-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface-2);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  gap: 12px;
+  transition: transform 180ms var(--ease-snappy), background-color 180ms var(--ease-snappy);
+}
+
+.ex-video-card:hover {
+  transform: translateY(-2px);
+}
+
+.ex-video-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-stage);
+  background-color: var(--bg-preview);
+  overflow: hidden;
+}
+
+.ex-video-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ex-video-overlay-top {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.ex-video-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-backdrop-overlay);
+  color: var(--fg-primary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ex-video-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background-color: var(--fg-primary);
+  animation: exPulseDot 1.6s ease-in-out infinite;
+}
+
+@keyframes exPulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+.ex-video-scrubber {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface-3);
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.ex-video-scrubber-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-pill);
+  background-color: var(--fg-primary);
+}
+
+.ex-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 4px;
+  flex: 1;
+}
+
+.ex-card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ex-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--fg-primary);
+}
+
+.ex-card-desc {
+  font-size: 12.5px;
+  color: var(--fg-secondary);
+  line-height: 1.4;
+}
+
+.ex-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+/* Modal System */
+.ex-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--bg-modal-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms var(--ease-snappy);
+}
+
+.ex-modal-scrim.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ex-modal-card {
+  width: 100%;
+  max-width: 460px;
+  background-color: var(--bg-surface-1);
+  border-radius: var(--radius-panel);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  transform: translateY(10px) scale(0.98);
+  transition: transform 200ms var(--ease-snappy);
+}
+
+.ex-modal-scrim.is-open .ex-modal-card {
+  transform: translateY(0) scale(1);
+}
+
+/* Toast Stack */
+.ex-toast-stack {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.ex-toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background-color: var(--pill-primary-bg);
+  color: var(--pill-primary-fg);
+  font-size: 13px;
+  font-weight: 600;
+  animation: exToastIn 260ms var(--ease-spring) forwards;
+}
+
+.ex-toast svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+@keyframes exToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

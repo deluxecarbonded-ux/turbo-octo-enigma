@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>EXOTIC — Monochrome 2D Troll Platformer</title>
+  <link rel="stylesheet" href="styles/tokens.css" />
+  <link rel="stylesheet" href="styles/components.css" />
+  <link rel="stylesheet" href="styles/views.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Live Interactive Monochrome Parallax Backdrop -->
+    <canvas id="backdrop-canvas"></canvas>
+
+    <!-- Global Top Bar -->
+    <header id="global-topbar" class="ex-topbar is-hidden">
+      <div class="ex-topbar-left">
+        <button type="button" id="topbar-back-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+          <span data-icon="back"></span>
+          <span>Main Menu</span>
+        </button>
+        <div class="ex-brand-pill">
+          <span data-icon="logo"></span>
+          <span>EXOTIC</span>
+        </div>
+      </div>
+
+      <div class="ex-topbar-right">
+        <div class="ex-chip" title="Coins — Spend on Auras, Characters, Skins, Trails & Emotes">
+          <span data-icon="coin"></span>
+          <span id="header-coins" class="mono">0</span>
+          <span style="color:var(--fg-secondary); font-weight:500;">Coins</span>
+        </div>
+        <div class="ex-chip" title="Skill Points — Spend on Gameplay Upgrades">
+          <span data-icon="skill"></span>
+          <span id="header-sp" class="mono">0</span>
+          <span style="color:var(--fg-secondary); font-weight:500;">SP</span>
+        </div>
+        <button type="button" id="header-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+          <span data-icon="sun"></span>
+          <span>Light Mode</span>
+        </button>
+        <button type="button" id="header-mute-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--icon" aria-label="Toggle Audio">
+          <span data-icon="soundOn"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Route Views Container -->
+    <main class="ex-views">
+      <!-- 1. SPLASH LOADING SCREEN -->
+      <section id="view-splash" class="ex-view is-active" aria-label="Splash Loading Screen">
+        <div class="splash-box">
+          <canvas id="splash-logo-canvas"></canvas>
+          <div>
+            <h1 class="splash-title">EXOTIC</h1>
+            <p class="splash-sub" style="margin-top:6px;">Monochrome 2D Troll Platformer</p>
+          </div>
+          <div class="splash-progress-wrap">
+            <div class="splash-track">
+              <div id="splash-progress-fill" class="splash-fill"></div>
+            </div>
+            <div class="splash-status">
+              <span id="splash-step-label">Initializing engine...</span>
+              <span id="splash-pct-label" class="mono">0%</span>
+            </div>
+          </div>
+          <button type="button" id="splash-enter-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--md" style="opacity:0.75;">
+            <span data-icon="play"></span>
+            <span>Skip &amp; Enter</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. MAIN MENU ROUTE -->
+      <section id="view-menu" class="ex-view" aria-label="Main Menu">
+        <div class="menu-layout">
+          <div class="menu-hero">
+            <div class="menu-eyebrow">
+              <span data-icon="bolt"></span>
+              <span>Precision Rage-Bait Platformer</span>
+            </div>
+            <div class="menu-title-row">
+              <div class="menu-logo-mark" data-icon="logo"></div>
+              <h1 class="menu-title">EXOTIC</h1>
+            </div>
+            <p class="menu-tagline">
+              Trust no floor, question every coin, and outmaneuver dishonest geometry across eight handcrafted monochrome stages.
+            </p>
+
+            <nav class="menu-nav-grid" aria-label="Primary Navigation">
+              <button type="button" id="menu-btn-play" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--xl menu-play-cta">
+                <span data-icon="play"></span>
+                <span id="menu-play-label">Play — Level 01: Trust Nothing</span>
+              </button>
+
+              <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="levels">
+                <span data-icon="levels"></span>
+                <span>Levels</span>
+              </button>
+
+              <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="shop">
+                <span data-icon="shop"></span>
+                <span>Shop</span>
+              </button>
+
+              <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="achievements">
+                <span data-icon="achievements"></span>
+                <span>Achievements</span>
+              </button>
+
+              <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="leaderboards">
+                <span data-icon="leaderboards"></span>
+                <span>Leaderboards</span>
+              </button>
+
+              <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="settings">
+                <span data-icon="settings"></span>
+                <span>Settings</span>
+              </button>
+
+              <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="credits">
+                <span data-icon="credits"></span>
+                <span>Credits</span>
+              </button>
+            </nav>
+          </div>
+
+          <aside class="menu-showcase-card" aria-label="Equipped Runner Live Preview">
+            <div class="ex-card-title-row">
+              <span class="ex-chip ex-chip--subtle">Active Loadout Showcase</span>
+              <span id="menu-loadout-chip" class="ex-chip ex-chip--subtle">Exotic Cube · No Aura</span>
+            </div>
+            <div class="menu-showcase-stage">
+              <canvas id="menu-character-canvas"></canvas>
+            </div>
+            <div class="menu-stats-row">
+              <div class="menu-stat-pill">
+                <span class="menu-stat-label">Cleared</span>
+                <span id="menu-stat-cleared" class="menu-stat-value">0 / 8</span>
+              </div>
+              <div class="menu-stat-pill">
+                <span class="menu-stat-label">Total Deaths</span>
+                <span id="menu-stat-deaths" class="menu-stat-value">0</span>
+              </div>
+              <div class="menu-stat-pill">
+                <span class="menu-stat-label">Achievements</span>
+                <span id="menu-stat-ach" class="menu-stat-value">0 / 10</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 3. PLAY ROUTE (2D CANVAS PLATFORMER) -->
+      <section id="view-play" class="ex-view" aria-label="Gameplay Stage">
+        <div class="play-hud-top">
+          <div class="play-hud-group">
+            <div class="ex-chip">
+              <span data-icon="levels"></span>
+              <span id="hud-stage-label">01 · Trust Nothing</span>
+            </div>
+            <div class="ex-chip" title="Run Deaths">
+              <span data-icon="skull"></span>
+              <span id="hud-deaths-val" class="mono">0</span>
+            </div>
+            <div class="ex-chip" title="Stage Timer">
+              <span data-icon="clock"></span>
+              <span id="hud-time-val" class="mono">00:00.00</span>
+            </div>
+          </div>
+
+          <div class="play-hud-group">
+            <div class="ex-chip">
+              <span data-icon="coin"></span>
+              <span id="hud-coins-val" class="mono">0</span>
+            </div>
+            <div class="ex-chip">
+              <span data-icon="skill"></span>
+              <span id="hud-sp-val" class="mono">0</span>
+            </div>
+            <button type="button" id="play-emote-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" title="Perform Equipped Emote (E)">
+              <span data-icon="emote"></span>
+              <span>Taunt (E)</span>
+            </button>
+            <button type="button" id="play-retry-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" title="Quick Retry (R)">
+              <span data-icon="retry"></span>
+              <span>Retry (R)</span>
+            </button>
+            <button type="button" id="play-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--icon" aria-label="Switch Theme">
+              <span data-icon="sun"></span>
+            </button>
+            <button type="button" id="play-pause-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" title="Pause (Esc)">
+              <span data-icon="pause"></span>
+              <span>Pause</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="game-stage-wrapper">
+          <canvas id="game-canvas" width="960" height="540"></canvas>
+        </div>
+
+        <div id="rage-banner" class="rage-banner"></div>
+
+        <!-- Optional Touch / On-Screen Pill Controls -->
+        <div id="touch-controls" class="touch-controls">
+          <div class="touch-cluster">
+            <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-touch-key="left">
+              <span data-icon="left"></span>
+            </button>
+            <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-touch-key="right">
+              <span data-icon="right"></span>
+            </button>
+          </div>
+          <div class="touch-cluster">
+            <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-touch-key="dash">
+              <span data-icon="bolt"></span>
+              <span>Dash</span>
+            </button>
+            <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg" data-touch-key="jump">
+              <span data-icon="up"></span>
+              <span>Jump</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. LEVELS ROUTE (LIVE VIDEO CARD PREVIEWS) -->
+      <section id="view-levels" class="ex-view" aria-label="Select Stage">
+        <div class="ex-container">
+          <div class="page-header">
+            <div class="page-header-text">
+              <h2 class="page-title">Handcrafted Stages</h2>
+              <p class="page-subtitle">Live real-time stage video previews showing actual traps, geometry, and runner paths.</p>
+            </div>
+            <span class="ex-chip">8 Stages · Hidden Skill Orbs · Par Targets</span>
+          </div>
+
+          <div id="levels-grid" class="levels-grid"></div>
+        </div>
+      </section>
+
+      <!-- 5. SHOP ROUTE (LIVE VIDEO CARD PREVIEWS FOR ACTUAL ITEMS) -->
+      <section id="view-shop" class="ex-view" aria-label="Exotic Shop">
+        <div class="ex-container">
+          <div class="page-header">
+            <div class="page-header-text">
+              <h2 class="page-title">Exotic Armory &amp; Shop</h2>
+              <p class="page-subtitle">Every card renders the actual live Aura, Character, Skin, Trail, Emote, or Upgrade in real time.</p>
+            </div>
+            <div id="shop-category-tabs" class="pill-tabs"></div>
+          </div>
+
+          <div class="shop-loadout-bar">
+            <span style="font-size:13px; font-weight:700;">Equipped Loadout</span>
+            <div id="shop-loadout-chips" class="shop-loadout-chips"></div>
+          </div>
+
+          <div id="shop-items-grid" class="cards-grid"></div>
+        </div>
+      </section>
+
+      <!-- 6. ACHIEVEMENTS ROUTE -->
+      <section id="view-achievements" class="ex-view" aria-label="Achievements">
+        <div class="ex-container">
+          <div class="page-header">
+            <div class="page-header-text">
+              <h2 class="page-title">Achievements</h2>
+              <p class="page-subtitle">Earned strictly through real gameplay milestones. Unlocks automatically grant Coins and Skill Points.</p>
+            </div>
+            <span id="achievements-summary-chip" class="ex-chip">0 / 10 Unlocked</span>
+          </div>
+
+          <div id="achievements-grid" class="achievements-grid"></div>
+        </div>
+      </section>
+
+      <!-- 7. LEADERBOARDS ROUTE (ZERO MOCK DATA / ZERO DEMO USERS) -->
+      <section id="view-leaderboards" class="ex-view" aria-label="Leaderboards">
+        <div class="ex-container">
+          <div class="page-header">
+            <div class="page-header-text">
+              <h2 class="page-title">Verified Leaderboards</h2>
+              <p class="page-subtitle">100% real player runs recorded from completed stages — zero mock users or fabricated entries.</p>
+            </div>
+            <div id="lb-sort-tabs" class="pill-tabs"></div>
+          </div>
+
+          <div id="lb-level-tabs" class="pill-tabs"></div>
+
+          <div id="lb-content" class="lb-panel"></div>
+        </div>
+      </section>
+
+      <!-- 8. SETTINGS ROUTE -->
+      <section id="view-settings" class="ex-view" aria-label="Settings">
+        <div class="ex-container">
+          <div class="page-header">
+            <div class="page-header-text">
+              <h2 class="page-title">Settings &amp; Controls</h2>
+              <p class="page-subtitle">Configure Monochrome Light/Dark theme, synthesized audio, input preferences, and Callsign.</p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <div class="settings-card">
+              <h3 class="ex-card-title" style="font-size:17px;">Visuals &amp; Audio</h3>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Monochrome Theme</span>
+                  <span class="settings-row-desc">Switch between pure neutral Dark Mode and Light Mode.</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button type="button" id="set-theme-dark" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">Dark</button>
+                  <button type="button" id="set-theme-light" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">Light</button>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">WebAudio Synthesizer</span>
+                  <span class="settings-row-desc">Toggle real-time procedural sound effects.</span>
+                </div>
+                <button type="button" id="set-audio-toggle" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">Audio Enabled</button>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Master Volume</span>
+                  <span class="settings-row-desc">Select output level preset.</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                  <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs" data-vol-preset="0.35">35%</button>
+                  <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--xs" data-vol-preset="0.7">70%</button>
+                  <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs" data-vol-preset="1">100%</button>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Impact Camera Shake</span>
+                  <span class="settings-row-desc">Subtle screen recoil when crushers slam or traps fire.</span>
+                </div>
+                <button type="button" id="set-shake-toggle" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">Enabled</button>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">On-Screen Touch Pills</span>
+                  <span class="settings-row-desc">Display pill buttons for mobile or pointer play.</span>
+                </div>
+                <button type="button" id="set-touch-toggle" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">Hidden</button>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3 class="ex-card-title" style="font-size:17px;">Player Identity &amp; Controls</h3>
+
+              <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Player Callsign</span>
+                  <span class="settings-row-desc">Used only when you choose to publish a verified stage clear to the Leaderboard.</span>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" id="set-callsign-input" class="ex-pill-input" maxlength="20" placeholder="Enter your Callsign..." />
+                  <button type="button" id="set-save-callsign-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--md">Save</button>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Move &amp; Jump</span>
+                  <span class="settings-row-desc">A / D or Arrow Keys · Space / W / Up Arrow to Jump</span>
+                </div>
+                <span class="ex-chip ex-chip--subtle mono">WASD / ARROWS</span>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Phase Dash · Emote · Quick Retry</span>
+                  <span class="settings-row-desc">Shift / K to Dash · E to Taunt · R for Instant Retry</span>
+                </div>
+                <span class="ex-chip ex-chip--subtle mono">SHIFT · E · R</span>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Reset All Save Data</span>
+                  <span class="settings-row-desc">Clears unlocked items, stage stats, and local run records.</span>
+                </div>
+                <button type="button" id="set-reset-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                  <span data-icon="trash"></span>
+                  <span>Reset</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. CREDITS ROUTE -->
+      <section id="view-credits" class="ex-view" aria-label="Credits">
+        <div class="ex-container">
+          <div class="page-header">
+            <div class="page-header-text">
+              <h2 class="page-title">Credits &amp; Studio Craft</h2>
+              <p class="page-subtitle">EXOTIC — Custom-engineered 2D monochrome platformer built from scratch in HTML, CSS, JavaScript &amp; Canvas 2D API.</p>
+            </div>
+            <span class="ex-chip">Exotic Development Team</span>
+          </div>
+
+          <div class="credits-grid">
+            <article class="credit-card">
+              <span class="credit-role">Game Direction &amp; Level Choreography</span>
+              <h3 class="credit-heading">Human-Crafted Betrayal Design</h3>
+              <p class="credit-text">
+                Eight bespoke rage-bait stages engineered around player instinct, reaction windows, comedic timing, parting floors, shy exit doors, and polarity inversions.
+              </p>
+            </article>
+
+            <article class="credit-card">
+              <span class="credit-role">Core Physics &amp; Collision Engine</span>
+              <h3 class="credit-heading">Sub-Stepped 2D AABB Kinematics</h3>
+              <p class="credit-text">
+                Custom vanilla JavaScript physics featuring coyote grace frames, jump buffering, variable jump apex cuts, moving platform momentum carry, and zero external dependencies.
+              </p>
+            </article>
+
+            <article class="credit-card">
+              <span class="credit-role">Visual Architecture &amp; Canvas Renderer</span>
+              <h3 class="credit-heading">Pure Monochrome Solid Geometry</h3>
+              <p class="credit-text">
+                Calibrated Light Mode and Dark Mode neutral luminance hierarchy with zero gradients, zero borders, zero outlines, 3D-projected orbital Auras, and real-time video card previews.
+              </p>
+            </article>
+
+            <article class="credit-card">
+              <span class="credit-role">Sound Engineering</span>
+              <h3 class="credit-heading">Procedural WebAudio Synthesis</h3>
+              <p class="credit-text">
+                Low-latency oscillator and filtered-noise sound synthesis crafted directly on the Web Audio API for tactile jumps, mechanical trap clacks, and victory chords.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Pause Modal -->
+    <div id="pause-modal" class="ex-modal-scrim" role="dialog" aria-modal="true" aria-label="Game Paused">
+      <div class="ex-modal-card">
+        <div>
+          <span class="ex-chip ex-chip--subtle">Paused</span>
+          <h3 class="page-title" style="margin-top:8px;">Stage Paused</h3>
+          <p class="ex-card-desc" style="margin-top:4px;">Take a breath. The traps will wait right where you left them.</p>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button type="button" id="pause-resume-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+            <span data-icon="play"></span>
+            <span>Resume Stage</span>
+          </button>
+          <button type="button" id="pause-restart-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
+            <span data-icon="retry"></span>
+            <span>Restart Stage From Zero</span>
+          </button>
+          <button type="button" id="pause-levels-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
+            <span data-icon="levels"></span>
+            <span>Stage Select</span>
+          </button>
+          <button type="button" id="pause-menu-btn" class="ex-pill-btn ex-pill-btn--ghost ex-pill-btn--md ex-pill-btn--full">
+            <span>Return to Main Menu</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="ex-modal-scrim" role="dialog" aria-modal="true" aria-label="Stage Cleared">
+      <div class="ex-modal-card">
+        <div>
+          <span class="ex-chip ex-chip--inverted">Victory</span>
+          <h3 id="vic-stage-title" class="page-title" style="margin-top:10px;">Stage Cleared</h3>
+        </div>
+
+        <div class="menu-stats-row">
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">Time</span>
+            <span id="vic-time" class="menu-stat-value">00:00.00</span>
+          </div>
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">Deaths</span>
+            <span id="vic-deaths" class="menu-stat-value">0</span>
+          </div>
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">Rewards</span>
+            <span id="vic-rewards" class="menu-stat-value" style="font-size:13px;">+45 Coins</span>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; background:var(--bg-surface-2); padding:14px; border-radius:16px;">
+          <span style="font-size:12px; font-weight:600; color:var(--fg-secondary);">Publish Verified Run to Leaderboard</span>
+          <input type="text" id="vic-callsign-input" class="ex-pill-input" maxlength="20" placeholder="Enter your Callsign..." />
+          <button type="button" id="vic-publish-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full">
+            <span data-icon="leaderboards"></span>
+            <span>Publish Verified Run</span>
+          </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button type="button" id="vic-next-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+            <span data-icon="play"></span>
+            <span>Next Stage</span>
+          </button>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <button type="button" id="vic-replay-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md">
+              <span data-icon="retry"></span>
+              <span>Replay</span>
+            </button>
+            <button type="button" id="vic-levels-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md">
+              <span data-icon="levels"></span>
+              <span>All Stages</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Notifications -->
+    <div id="toast-stack" class="ex-toast-stack" aria-live="polite"></div>
+  </div>
+
+  <!-- Ordered Modular Vanilla JS Scripts (Zero Frameworks) -->
+  <script src="src/core/icons.js"></script>
+  <script src="src/core/theme.js"></script>
+  <script src="src/core/audio.js"></script>
+  <script src="src/core/storage.js"></script>
+  <script src="src/data/shopItems.js"></script>
+  <script src="src/data/achievements.js"></script>
+  <script src="src/data/levels.js"></script>
+  <script src="src/graphics/characters.js"></script>
+  <script src="src/graphics/auras.js"></script>
+  <script src="src/graphics/trails.js"></script>
+  <script src="src/graphics/worldDraw.js"></script>
+  <script src="src/graphics/backdrop.js"></script>
+  <script src="src/graphics/previewDirector.js"></script>
+  <script src="src/game/traps.js"></script>
+  <script src="src/game/physics.js"></script>
+  <script src="src/game/engine.js"></script>
+  <script src="src/ui/router.js"></script>
+  <script src="src/ui/views.js"></script>
+  <script src="src/ui/main.js"></script>
+</body>
+</html>
