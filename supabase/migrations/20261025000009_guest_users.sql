@@ -140,7 +140,7 @@ begin
     );
   end if;
 
-  v_summary := public.get_profile_auth_methods_summary(v_profile.id);
+  v_summary := public.get_profile_auth_summary(v_profile.id);
 
   return jsonb_build_object(
     'ok', true,
@@ -213,7 +213,7 @@ begin
   v_has_target := found;
 
   if v_has_target and not v_target.is_guest then
-    v_summary := public.get_profile_auth_methods_summary(v_target.id);
+    v_summary := public.get_profile_auth_summary(v_target.id);
   else
     v_summary := null;
   end if;
@@ -506,7 +506,7 @@ begin
   insert into public.profile_credentials (
     profile_id,
     auth_method,
-    secret_hash,
+    credential_hash,
     biometric_credential_id,
     public_key_spki,
     public_key_alg,
@@ -525,7 +525,7 @@ begin
     case when v_bio_mode = 'camera_face' then p_face_descriptor else null end
   );
 
-  v_summary := public.get_profile_auth_methods_summary(v_profile.id);
+  v_summary := public.get_profile_auth_summary(v_profile.id);
 
   return jsonb_build_object(
     'ok', true,
@@ -651,7 +651,7 @@ begin
     );
   end if;
 
-  v_summary := public.get_profile_auth_methods_summary(v_target.id);
+  v_summary := public.get_profile_auth_summary(v_target.id);
 
   if v_method = '' then
     v_method := coalesce(v_summary->>'primaryMethod', v_target.auth_method, 'password');
@@ -667,11 +667,11 @@ begin
     if jsonb_array_length(coalesce(v_summary->'authMethods', '[]'::jsonb)) = 0
        and v_method in ('password', 'pin', 'fingerprint', 'faceid') then
       if v_method = 'password' and char_length(v_secret) between 4 and 64 then
-        insert into public.profile_credentials (profile_id, auth_method, secret_hash)
+        insert into public.profile_credentials (profile_id, auth_method, credential_hash)
         values (v_target.id, 'password', extensions.crypt(v_secret, extensions.gen_salt('bf', 10)))
         returning * into v_cred;
       elsif v_method = 'pin' and v_secret ~ '^[0-9]{4,8}$' then
-        insert into public.profile_credentials (profile_id, auth_method, secret_hash)
+        insert into public.profile_credentials (profile_id, auth_method, credential_hash)
         values (v_target.id, 'pin', extensions.crypt(v_secret, extensions.gen_salt('bf', 10)))
         returning * into v_cred;
       elsif v_method in ('fingerprint', 'faceid') and p_biometric_verified then
@@ -697,7 +697,7 @@ begin
     end if;
   else
     if v_method in ('password', 'pin') then
-      if v_secret = '' or v_cred.secret_hash is null or v_cred.secret_hash <> extensions.crypt(v_secret, v_cred.secret_hash) then
+      if v_secret = '' or v_cred.credential_hash is null or v_cred.credential_hash <> extensions.crypt(v_secret, v_cred.credential_hash) then
         return jsonb_build_object(
           'ok', false,
           'code', 'INVALID_CREDENTIAL',
@@ -757,7 +757,7 @@ begin
   where id = v_target.id
   returning * into v_target;
 
-  v_summary := public.get_profile_auth_methods_summary(v_target.id);
+  v_summary := public.get_profile_auth_summary(v_target.id);
 
   return jsonb_build_object(
     'ok', true,
@@ -862,7 +862,7 @@ begin
   insert into public.profile_credentials (
     profile_id,
     auth_method,
-    secret_hash,
+    credential_hash,
     biometric_credential_id,
     public_key_spki,
     public_key_alg,
@@ -883,7 +883,7 @@ begin
     now()
   )
   on conflict (profile_id, auth_method) do update set
-    secret_hash = excluded.secret_hash,
+    credential_hash = excluded.credential_hash,
     biometric_credential_id = excluded.biometric_credential_id,
     public_key_spki = excluded.public_key_spki,
     public_key_alg = excluded.public_key_alg,
@@ -898,7 +898,7 @@ begin
     where id = v_profile.id;
   end if;
 
-  v_summary := public.get_profile_auth_methods_summary(v_profile.id);
+  v_summary := public.get_profile_auth_summary(v_profile.id);
 
   return jsonb_build_object(
     'ok', true,
@@ -964,7 +964,7 @@ begin
     );
   end if;
 
-  v_summary := public.get_profile_auth_methods_summary(v_profile.id);
+  v_summary := public.get_profile_auth_summary(v_profile.id);
 
   return jsonb_build_object(
     'ok', true,

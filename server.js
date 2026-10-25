@@ -973,34 +973,24 @@ async function handleRequest(req, res) {
       const timeMs = Math.round(Number(body.timeMs));
       const deaths = Math.max(0, Math.round(Number(body.deaths || 0)));
 
+      if (body.publicShareConfirmed !== true) {
+        sendJson(res, 403, {
+          ok: false,
+          code: 'SHARE_CONSENT_REQUIRED',
+          reason: 'Public leaderboard sharing requires your confirmation.'
+        });
+        return;
+      }
+
       if (!callsign || !Number.isFinite(levelId) || levelId < 1 || levelId > 8 || !Number.isFinite(timeMs) || timeMs < 500) {
         sendJson(res, 400, { ok: false, reason: 'Invalid run payload.' });
         return;
       }
 
-      // Save replay JSON into run-replays bucket path if frames provided
-      let replayStoragePath = null;
-      if (Array.isArray(body.frames) && body.frames.length > 0) {
-        const safeName = callsign.replace(/[^a-zA-Z0-9_-]/g, '_') || 'runner';
-        const relFile = `stage-0${levelId}-${Date.now()}-${safeName}.json`;
-        const absFile = path.join(STORAGE_ROOT, 'run-replays', relFile);
-        fs.writeFileSync(
-          absFile,
-          JSON.stringify({
-            levelId,
-            callsign,
-            timeMs,
-            deaths,
-            characterId: body.characterId || 'char_classic',
-            skinId: body.skinId || 'skin_solid',
-            auraId: body.auraId || 'aura_none',
-            sampleIntervalMs: body.sampleIntervalMs || 80,
-            frames: body.frames
-          }),
-          'utf8'
-        );
-        replayStoragePath = `/storage/v1/object/public/run-replays/${relFile}`;
-      }
+      const hasFrames = Array.isArray(body.frames) && body.frames.length > 0;
+      const safeName = callsign.replace(/[^a-zA-Z0-9_-]/g, '_') || 'runner';
+      const relFile = hasFrames ? `stage-0${levelId}-${Date.now()}-${safeName}.json` : null;
+      const replayStoragePath = relFile ? `/storage/v1/object/public/run-replays/${relFile}` : null;
 
       if (pgPool) {
         const stageQ = await pgPool.query(
@@ -1029,12 +1019,37 @@ async function handleRequest(req, res) {
               levelId,
               timeMs,
               deaths,
+              publicShareConfirmed: true,
               replayStoragePath
             })
           ]
         );
         const rpcOut = q.rows[0]?.res || { ok: false };
         if (rpcOut.ok && rpcOut.record) {
+          // Only write replay file after DB verifies auth + leaderboard_share_enabled + consent
+          if (hasFrames && relFile) {
+            try {
+              const absFile = path.join(STORAGE_ROOT, 'run-replays', relFile);
+              fs.writeFileSync(
+                absFile,
+                JSON.stringify({
+                  levelId,
+                  callsign,
+                  timeMs,
+                  deaths,
+                  characterId: body.characterId || 'char_classic',
+                  skinId: body.skinId || 'skin_solid',
+                  auraId: body.auraId || 'aura_none',
+                  sampleIntervalMs: body.sampleIntervalMs || 80,
+                  frames: body.frames
+                }),
+                'utf8'
+              );
+            } catch {
+              // Read-only serverless fs may skip local copy while DB row holds frames
+            }
+          }
+
           const runsRes = await pgPool.query(
             'SELECT * FROM public.leaderboard_runs ORDER BY time_ms ASC, deaths ASC LIMIT 120'
           );
@@ -1045,11 +1060,11 @@ async function handleRequest(req, res) {
           });
           return;
         }
-        sendJson(res, 400, rpcOut);
+        sendJson(res, 403, rpcOut);
         return;
       }
 
-      // Local fallback if DB unreachable
+      // Local fallback if DB unreachable (still gated by publicShareConfirmed === true above)
       const fallback = readFallbackRuns();
       const rec = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -1099,22 +1114,39 @@ async function handleRequest(req, res) {
         const timeMs = Math.round(Number(body.timeMs));
         const deaths = Math.max(0, Math.round(Number(body.deaths || 0)));
 
+        if (body.publicShareConfirmed !== true) {
+          sendJson(res, 403, {
+            ok: false,
+            code: 'SHARE_CONSENT_REQUIRED',
+            reason: 'Public leaderboard sharing requires your confirmation.'
+          });
+          return;
+        }
+
         if (!callsign || !Number.isFinite(levelId) || levelId < 1 || levelId > 8 || !Number.isFinite(timeMs) || timeMs < 500) {
-          sendJson(res, 400, { error: 'Invalid run payload.' });
+          sendJson(res, 400, { ok: false, error: 'Invalid run payload.' });
           return;
         }
 
         if (pgPool) {
           const q = await pgPool.query(
             'SELECT public.rpc_publish_verified_run($1, $2::jsonb) AS res',
-            [clientKey || null, JSON.stringify({ ...body, callsign, levelId, timeMs, deaths })]
+            [
+              clientKey || null,
+              JSON.stringify({ ...body, callsign, levelId, timeMs, deaths, publicShareConfirmed: true })
+            ]
           );
-          const out = q.rows[0]?.res;
+          const out = q.rows[0]?.res || { ok: false };
+          if (!out.ok || !out.record) {
+            sendJson(res, 403, out);
+            return;
+          }
           const runsQ = await pgPool.query(
             'SELECT * FROM public.leaderboard_runs ORDER BY time_ms ASC, deaths ASC LIMIT 120'
           );
           sendJson(res, 201, {
-            record: out?.record ? mapRunRow(out.record) : null,
+            ok: true,
+            record: mapRunRow(out.record),
             runs: runsQ.rows.map(mapRunRow)
           });
           return;
@@ -1134,9 +1166,9 @@ async function handleRequest(req, res) {
         };
         runs.push(record);
         writeFallbackRuns(runs);
-        sendJson(res, 201, { record, runs });
+        sendJson(res, 201, { ok: true, record, runs });
       } catch {
-        sendJson(res, 400, { error: 'Malformed JSON.' });
+        sendJson(res, 400, { ok: false, error: 'Malformed JSON.' });
       }
       return;
     }

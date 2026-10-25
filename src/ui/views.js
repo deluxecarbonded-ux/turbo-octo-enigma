@@ -3,6 +3,8 @@
   let activeLbLevel = 'all';
   let activeLbSort = 'time';
   let lastWinPayload = null;
+  let lastWinShareDecision = 'pending';
+  const LB_NOTICE_LOCAL_PREFIX = 'exotic_lb_notice_seen_';
   let rageBannerTimer = null;
   let canvasFullscreen = false;
   let nativeFsActive = false;
@@ -1093,6 +1095,31 @@
     }
 
     const isGuest = Boolean(window.ExoticAuth?.isGuest());
+    const lbControlsWrap = document.getElementById('set-lb-controls-wrap');
+    const lbShareBtn = document.getElementById('set-lb-share-toggle');
+    const lbPromptBtn = document.getElementById('set-lb-prompt-toggle');
+    if (lbControlsWrap) {
+      lbControlsWrap.classList.toggle('is-hidden', isGuest);
+    }
+    if (lbShareBtn) {
+      const shareOn = !isGuest && Boolean(s.leaderboardShareEnabled);
+      lbShareBtn.className = `ex-pill-btn ${
+        shareOn ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      lbShareBtn.textContent = shareOn ? 'Enabled' : 'Disabled';
+      lbShareBtn.setAttribute('aria-pressed', String(shareOn));
+      lbShareBtn.disabled = isGuest;
+    }
+    if (lbPromptBtn) {
+      const promptOn = !isGuest && Boolean(s.leaderboardPromptEnabled);
+      lbPromptBtn.className = `ex-pill-btn ${
+        promptOn ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      lbPromptBtn.textContent = promptOn ? 'Enabled' : 'Disabled';
+      lbPromptBtn.setAttribute('aria-pressed', String(promptOn));
+      lbPromptBtn.disabled = isGuest;
+    }
+
     const roleTitle = document.getElementById('set-account-role-title');
     const roleDesc = document.getElementById('set-account-role-desc');
     const delBtnLabel = document.getElementById('set-delete-account-label');
@@ -1194,22 +1221,245 @@
     modal.classList.toggle('is-open', Boolean(isPaused));
   }
 
+  function getLocalLbNoticeKey(username) {
+    return `${LB_NOTICE_LOCAL_PREFIX}${String(username || '').trim().toLowerCase()}`;
+  }
+
+  function hasSeenLbFirstSigninNotice(username) {
+    const clean = String(username || '').trim().toLowerCase();
+    if (!clean) return false;
+    if (window.ExoticStorage?.getState()?.settings?.leaderboardNoticeSeen === true) {
+      return true;
+    }
+    try {
+      return localStorage.getItem(getLocalLbNoticeKey(clean)) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function markLbFirstSigninNoticeSeen(username) {
+    const clean = String(username || '').trim().toLowerCase();
+    if (clean) {
+      try {
+        localStorage.setItem(getLocalLbNoticeKey(clean), '1');
+      } catch {
+        // Ignore storage quota error
+      }
+    }
+    return window.ExoticStorage?.updateSettings({ leaderboardNoticeSeen: true });
+  }
+
+  function clearLbFirstSigninNoticeLocal(username) {
+    const clean = String(username || '').trim().toLowerCase();
+    if (!clean) return;
+    try {
+      localStorage.removeItem(getLocalLbNoticeKey(clean));
+    } catch {
+      // Ignore storage error
+    }
+  }
+
+  function maybeShowFirstSignInLeaderboardDialog() {
+    const modal = document.getElementById('lb-first-signin-modal');
+    if (!modal || !window.ExoticAuth) return;
+    if (!window.ExoticAuth.isSignedIn() || window.ExoticAuth.isGuest()) {
+      modal.classList.remove('is-open');
+      return;
+    }
+    const route = window.ExoticRouter?.getCurrent?.() || '';
+    if (!route || route === 'splash' || route === 'signup' || route === 'signin') {
+      return;
+    }
+    if (modal.classList.contains('is-open')) {
+      return;
+    }
+    const uname = window.ExoticAuth.getUsername();
+    if (!uname || hasSeenLbFirstSigninNotice(uname)) {
+      return;
+    }
+    markLbFirstSigninNoticeSeen(uname);
+    modal.classList.add('is-open');
+  }
+
+  function syncVictoryLeaderboardUI() {
+    const state = window.ExoticStorage.getState();
+    const s = state.settings || {};
+    const isGuest = Boolean(window.ExoticAuth?.isGuest());
+    const shareEnabled = !isGuest && Boolean(s.leaderboardShareEnabled);
+
+    const lbDisabledWrap = document.getElementById('vic-lb-disabled-wrap');
+    const publishWrap = document.getElementById('vic-publish-wrap');
+    const guestLbNote = document.getElementById('vic-guest-lb-disabled');
+    const statusText = document.getElementById('vic-lb-status-text');
+    const callsignInput = document.getElementById('vic-callsign-input');
+    const publishBtn = document.getElementById('vic-publish-btn');
+    const dontStoreBtn = document.getElementById('vic-dont-store-btn');
+
+    if (guestLbNote) guestLbNote.classList.toggle('is-hidden', !isGuest);
+    if (lbDisabledWrap) lbDisabledWrap.classList.toggle('is-hidden', isGuest || shareEnabled);
+    if (publishWrap) publishWrap.classList.toggle('is-hidden', isGuest || !shareEnabled);
+
+    if (callsignInput) {
+      callsignInput.value =
+        (window.ExoticAuth && window.ExoticAuth.getUsername()) || state.callsign || '';
+    }
+
+    if (!isGuest && shareEnabled) {
+      if (lastWinShareDecision === 'shared') {
+        if (statusText) {
+          statusText.textContent = 'Shared publicly on Leaderboards (visible to everyone).';
+        }
+        if (publishBtn) {
+          publishBtn.disabled = true;
+          publishBtn.className = 'ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm';
+          publishBtn.innerHTML = `${window.ExoticIcons.get('check')}<span>Shared Publicly</span>`;
+        }
+        if (dontStoreBtn) dontStoreBtn.classList.add('is-hidden');
+      } else if (lastWinShareDecision === 'declined') {
+        if (statusText) {
+          statusText.textContent = 'Run was not stored at all.';
+        }
+        if (publishBtn) {
+          publishBtn.disabled = true;
+          publishBtn.className = 'ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm';
+          publishBtn.innerHTML = `<span>Run Not Stored</span>`;
+        }
+        if (dontStoreBtn) dontStoreBtn.classList.add('is-hidden');
+      } else {
+        if (statusText) {
+          statusText.textContent =
+            'Runs are never stored automatically. Choose whether to share publicly (visible to everyone) or not store it at all.';
+        }
+        if (publishBtn) {
+          publishBtn.disabled = false;
+          publishBtn.className = 'ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm';
+          publishBtn.innerHTML = `${window.ExoticIcons.get('leaderboards')}<span>Share Run Publicly</span>`;
+        }
+        if (dontStoreBtn) {
+          dontStoreBtn.disabled = false;
+          dontStoreBtn.classList.remove('is-hidden');
+        }
+      }
+    }
+  }
+
+  function openLbSharePromptModal() {
+    if (!lastWinPayload) return;
+    if (window.ExoticAuth?.isGuest()) return;
+    const state = window.ExoticStorage.getState();
+    if (!state.settings?.leaderboardShareEnabled) return;
+    if (lastWinShareDecision !== 'pending') return;
+
+    const promptModal = document.getElementById('lb-share-prompt-modal');
+    if (!promptModal) return;
+
+    const uname =
+      (window.ExoticAuth && window.ExoticAuth.getUsername()) || state.callsign || 'runner';
+    const titleEl = document.getElementById('lb-share-prompt-title');
+    const runnerEl = document.getElementById('lb-prompt-runner');
+    const timeEl = document.getElementById('lb-prompt-time');
+    const deathsEl = document.getElementById('lb-prompt-deaths');
+    const confirmBtn = document.getElementById('lb-prompt-confirm-share-btn');
+    const declineBtn = document.getElementById('lb-prompt-decline-btn');
+
+    if (titleEl) {
+      titleEl.textContent = `Share Stage ${lastWinPayload.level.code} Run Publicly?`;
+    }
+    if (runnerEl) runnerEl.textContent = `@${uname}`;
+    if (timeEl) timeEl.textContent = formatTime(lastWinPayload.timeMs);
+    if (deathsEl) deathsEl.textContent = String(lastWinPayload.deaths);
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = `${window.ExoticIcons.get('leaderboards')}<span>Share Publicly (Visible to Everyone)</span>`;
+    }
+    if (declineBtn) {
+      declineBtn.disabled = false;
+    }
+
+    promptModal.classList.add('is-open');
+  }
+
+  function closeLbSharePromptModal() {
+    document.getElementById('lb-share-prompt-modal')?.classList.remove('is-open');
+  }
+
+  async function confirmPublicRunShare() {
+    if (!lastWinPayload) return;
+    if (window.ExoticAuth?.isGuest()) return;
+    const state = window.ExoticStorage.getState();
+    if (!state.settings?.leaderboardShareEnabled) {
+      showToast('Leaderboards Share is disabled in Settings.');
+      closeLbSharePromptModal();
+      syncVictoryLeaderboardUI();
+      return;
+    }
+
+    const inputEl = document.getElementById('vic-callsign-input');
+    const callsign =
+      (inputEl && inputEl.value.trim()) ||
+      (window.ExoticAuth && window.ExoticAuth.getUsername()) ||
+      state.callsign ||
+      '';
+    if (!callsign) {
+      showToast('Sign in with a full account to share runs publicly.');
+      return;
+    }
+
+    const confirmBtn = document.getElementById('lb-prompt-confirm-share-btn');
+    const declineBtn = document.getElementById('lb-prompt-decline-btn');
+    const vicBtn = document.getElementById('vic-publish-btn');
+    if (confirmBtn) confirmBtn.disabled = true;
+    if (declineBtn) declineBtn.disabled = true;
+    if (vicBtn) vicBtn.disabled = true;
+
+    const res = await window.ExoticStorage.submitRun({
+      callsign,
+      levelId: lastWinPayload.level.id,
+      levelTitle: lastWinPayload.level.title,
+      timeMs: lastWinPayload.timeMs,
+      deaths: lastWinPayload.deaths,
+      coins: lastWinPayload.coinsCollected,
+      sampleIntervalMs: lastWinPayload.sampleIntervalMs || 80,
+      frames: lastWinPayload.frames || [],
+      publicShareConfirmed: true
+    });
+
+    if (res.ok) {
+      lastWinShareDecision = 'shared';
+      closeLbSharePromptModal();
+      syncVictoryLeaderboardUI();
+      window.ExoticAudio.buy();
+      showToast(`Run shared publicly on Leaderboards under @${callsign}.`);
+    } else {
+      if (confirmBtn) confirmBtn.disabled = false;
+      if (declineBtn) declineBtn.disabled = false;
+      syncVictoryLeaderboardUI();
+      showToast(res.reason || 'Run was not stored.');
+    }
+  }
+
+  function declinePublicRunShare() {
+    lastWinShareDecision = 'declined';
+    closeLbSharePromptModal();
+    syncVictoryLeaderboardUI();
+    showToast('Run was not stored.');
+  }
+
   function openVictoryModal(payload) {
     lastWinPayload = payload;
+    lastWinShareDecision = 'pending';
     const modal = document.getElementById('victory-modal');
     if (!modal) return;
 
     const state = window.ExoticStorage.getState();
+    const s = state.settings || {};
     const isGuest = Boolean(window.ExoticAuth?.isGuest());
     const maxStage = isGuest ? window.ExoticAuth.GUEST_MAX_LEVEL : 8;
     const titleEl = document.getElementById('vic-stage-title');
     const timeEl = document.getElementById('vic-time');
     const deathsEl = document.getElementById('vic-deaths');
     const rewardsEl = document.getElementById('vic-rewards');
-    const publishWrap = document.getElementById('vic-publish-wrap');
-    const guestLbNote = document.getElementById('vic-guest-lb-disabled');
-    const callsignInput = document.getElementById('vic-callsign-input');
-    const publishBtn = document.getElementById('vic-publish-btn');
     const nextBtn = document.getElementById('vic-next-btn');
 
     if (titleEl) titleEl.textContent = `Stage ${payload.level.code}: ${payload.level.title} Cleared`;
@@ -1220,26 +1470,24 @@
         ? `+${payload.rewardSummary.earnedCoins} Coins · +${payload.rewardSummary.earnedSP} SP`
         : 'Already Completed';
     }
-    if (publishWrap) publishWrap.classList.toggle('is-hidden', isGuest);
-    if (guestLbNote) guestLbNote.classList.toggle('is-hidden', !isGuest);
-    if (callsignInput) {
-      callsignInput.value =
-        (window.ExoticAuth && window.ExoticAuth.getUsername()) || state.callsign || '';
-    }
-    if (publishBtn) {
-      publishBtn.disabled = isGuest;
-      publishBtn.innerHTML = `${window.ExoticIcons.get('leaderboards')}<span>Publish Verified Run</span>`;
-    }
     if (nextBtn) {
       const hasNext = payload.level.id < maxStage;
       nextBtn.style.display = hasNext ? 'inline-flex' : 'none';
     }
 
+    closeLbSharePromptModal();
+    syncVictoryLeaderboardUI();
     modal.classList.add('is-open');
+
+    if (!isGuest && s.leaderboardShareEnabled === true && s.leaderboardPromptEnabled === true) {
+      openLbSharePromptModal();
+    }
   }
 
   function closeModals() {
-    document.querySelectorAll('.ex-modal-scrim').forEach((el) => el.classList.remove('is-open'));
+    ['pause-modal', 'victory-modal', 'lb-share-prompt-modal'].forEach((id) => {
+      document.getElementById(id)?.classList.remove('is-open');
+    });
   }
 
   function getMethodIconName(method) {
@@ -3142,39 +3390,37 @@
       window.ExoticRouter.navigate('menu');
     });
 
-    document.getElementById('vic-publish-btn')?.addEventListener('click', async () => {
-      if (!lastWinPayload) return;
-      const inputEl = document.getElementById('vic-callsign-input');
-      const callsign = inputEl ? inputEl.value.trim() : '';
-      if (!callsign) {
-        showToast('Enter your Callsign first to publish your run.');
-        inputEl?.focus();
-        return;
-      }
-      const btn = document.getElementById('vic-publish-btn');
-      if (btn) btn.disabled = true;
+    document.getElementById('vic-publish-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      openLbSharePromptModal();
+    });
 
-      const res = await window.ExoticStorage.submitRun({
-        callsign,
-        levelId: lastWinPayload.level.id,
-        levelTitle: lastWinPayload.level.title,
-        timeMs: lastWinPayload.timeMs,
-        deaths: lastWinPayload.deaths,
-        coins: lastWinPayload.coinsCollected,
-        sampleIntervalMs: lastWinPayload.sampleIntervalMs || 80,
-        frames: lastWinPayload.frames || []
-      });
+    document.getElementById('vic-dont-store-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      declinePublicRunShare();
+    });
 
-      if (res.ok) {
-        window.ExoticAudio.buy();
-        showToast(`Verified run published to Leaderboard under @${callsign}!`);
-        if (btn) {
-          btn.innerHTML = `${window.ExoticIcons.get('check')}<span>Published to Leaderboard</span>`;
-        }
-      } else {
-        if (btn) btn.disabled = false;
-        showToast(res.reason || 'Could not publish run.');
-      }
+    document.getElementById('vic-open-settings-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      closeModals();
+      window.ExoticRouter.navigate('settings');
+    });
+
+    document.getElementById('lb-prompt-confirm-share-btn')?.addEventListener('click', async () => {
+      window.ExoticAudio.click();
+      await confirmPublicRunShare();
+    });
+
+    document.getElementById('lb-prompt-decline-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      declinePublicRunShare();
+    });
+
+    document.getElementById('lb-first-notice-dismiss-btn')?.addEventListener('click', async () => {
+      window.ExoticAudio.click();
+      const uname = window.ExoticAuth?.getUsername() || '';
+      document.getElementById('lb-first-signin-modal')?.classList.remove('is-open');
+      await markLbFirstSigninNoticeSeen(uname);
     });
 
     document.getElementById('vic-next-btn')?.addEventListener('click', () => {
@@ -3258,11 +3504,40 @@
       renderSettingsView();
     });
 
+    document.getElementById('set-lb-share-toggle')?.addEventListener('click', async () => {
+      if (window.ExoticAuth?.isGuest()) return;
+      window.ExoticAudio.click();
+      const cur = Boolean(window.ExoticStorage.getState().settings.leaderboardShareEnabled);
+      const next = !cur;
+      await window.ExoticStorage.updateSettings({ leaderboardShareEnabled: next });
+      renderSettingsView();
+      showToast(
+        next
+          ? 'Leaderboards Share enabled.'
+          : 'Leaderboards Share disabled. Runs will not be stored.'
+      );
+    });
+
+    document.getElementById('set-lb-prompt-toggle')?.addEventListener('click', async () => {
+      if (window.ExoticAuth?.isGuest()) return;
+      window.ExoticAudio.click();
+      const cur = Boolean(window.ExoticStorage.getState().settings.leaderboardPromptEnabled);
+      const next = !cur;
+      await window.ExoticStorage.updateSettings({ leaderboardPromptEnabled: next });
+      renderSettingsView();
+      showToast(
+        next
+          ? 'Leaderboards Sharing Prompt enabled.'
+          : 'Leaderboards Sharing Prompt disabled.'
+      );
+    });
+
     document.getElementById('set-signout-btn')?.addEventListener('click', async () => {
       window.ExoticAudio.click();
       const btn = document.getElementById('set-signout-btn');
       if (btn) btn.disabled = true;
       const prevUser = window.ExoticAuth?.getUsername() || 'runner';
+      document.getElementById('lb-first-signin-modal')?.classList.remove('is-open');
       await window.ExoticAuth?.signOut();
       if (btn) btn.disabled = false;
       showToast(`Signed out of @${prevUser}. Sign back in anytime.`);
@@ -3293,6 +3568,8 @@
       if (btn) btn.disabled = false;
       document.getElementById('set-delete-confirm-box')?.classList.remove('is-open');
       if (res && res.ok) {
+        clearLbFirstSigninNoticeLocal(res.deletedUsername);
+        document.getElementById('lb-first-signin-modal')?.classList.remove('is-open');
         const signupInput = document.getElementById('signup-username-input');
         const guestInput = document.getElementById('guest-signup-username-input');
         const signinInput = document.getElementById('signin-username-input');
@@ -3823,6 +4100,8 @@
         else if (route === 'achievements') renderAchievementsView();
         else if (route === 'leaderboards') renderLeaderboardsView();
         else if (route === 'settings') renderSettingsView();
+
+        maybeShowFirstSignInLeaderboardDialog();
       });
 
       updateFullscreenButtons();

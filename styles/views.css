@@ -1276,6 +1276,77 @@
   display: flex;
 }
 
+/* Leaderboard Privacy & Sharing Controls (Authenticated Users Only — Borderless, Outline-Free, Gradient-Free) */
+.ex-modal-scrim--top {
+  z-index: 105;
+}
+
+.settings-lb-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-lb-wrap.is-hidden {
+  display: none !important;
+}
+
+.lb-modal-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: 16px;
+  background-color: var(--bg-surface-2);
+}
+
+.lb-modal-note-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background-color: var(--bg-surface-3);
+  color: var(--fg-primary);
+}
+
+.lb-modal-note-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.lb-modal-note-text {
+  font-size: 12.5px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--fg-primary);
+}
+
+.vic-lb-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background-color: var(--bg-surface-2);
+}
+
+.vic-lb-card.is-hidden {
+  display: none !important;
+}
+
+.vic-lb-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vic-lb-actions .ex-pill-btn {
+  flex: 1 1 160px;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 900px) {
   .menu-layout {

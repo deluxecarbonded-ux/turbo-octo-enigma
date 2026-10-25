@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c17" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c17" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c17" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c17" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c17" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c18" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c18" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c18" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c18" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c18" />
 </head>
 <body>
   <div id="app">
@@ -812,6 +812,25 @@
                 </div>
                 <button type="button" id="set-ghosts-toggle" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">Enabled</button>
               </div>
+
+              <!-- Leaderboard Sharing Controls (Authenticated Users ONLY — Hidden for Guests; Both Disabled by Default) -->
+              <div id="set-lb-controls-wrap" class="settings-lb-wrap">
+                <div class="settings-row">
+                  <div class="settings-row-info">
+                    <span class="settings-row-title">Leaderboards Share</span>
+                    <span class="settings-row-desc">Allow sharing your stage runs publicly (visible to everyone). Disabled by default.</span>
+                  </div>
+                  <button type="button" id="set-lb-share-toggle" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false">Disabled</button>
+                </div>
+
+                <div class="settings-row">
+                  <div class="settings-row-info">
+                    <span class="settings-row-title">Leaderboards Sharing Prompt</span>
+                    <span class="settings-row-desc">Ask after clearing a stage whether to share publicly or not store it at all, instead of popping up on every level when disabled. Disabled by default.</span>
+                  </div>
+                  <button type="button" id="set-lb-prompt-toggle" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false">Disabled</button>
+                </div>
+              </div>
             </div>
 
             <div class="settings-card">
@@ -1254,16 +1273,35 @@
           </div>
         </div>
 
-        <div id="vic-publish-wrap" style="display:flex; flex-direction:column; gap:8px; background:var(--bg-surface-2); padding:14px; border-radius:16px;">
-          <span style="font-size:12px; font-weight:600; color:var(--fg-secondary);">Publish Verified Run to Leaderboard</span>
-          <input type="text" id="vic-callsign-input" class="ex-pill-input mono" maxlength="20" readonly placeholder="Registered Username" />
-          <button type="button" id="vic-publish-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full">
-            <span data-icon="leaderboards"></span>
-            <span>Publish Verified Run</span>
-          </button>
+        <div id="vic-lb-disabled-wrap" class="vic-lb-card is-hidden">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:12px; font-weight:600; color:var(--fg-secondary);">
+              Leaderboards Share is disabled by default. Your run was not stored.
+            </span>
+            <button type="button" id="vic-open-settings-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs">
+              <span data-icon="settings"></span>
+              <span>Settings</span>
+            </button>
+          </div>
         </div>
 
-        <div id="vic-guest-lb-disabled" class="is-hidden" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--bg-surface-2); padding:12px 16px; border-radius:16px;">
+        <div id="vic-publish-wrap" class="vic-lb-card is-hidden">
+          <span id="vic-lb-status-text" style="font-size:12px; font-weight:600; color:var(--fg-secondary);">
+            Runs are never stored automatically. Choose whether to share publicly (visible to everyone) or not store it at all.
+          </span>
+          <input type="text" id="vic-callsign-input" class="ex-pill-input mono" maxlength="20" readonly placeholder="Registered Username" />
+          <div id="vic-lb-actions-row" class="vic-lb-actions">
+            <button type="button" id="vic-publish-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+              <span data-icon="leaderboards"></span>
+              <span>Share Run Publicly</span>
+            </button>
+            <button type="button" id="vic-dont-store-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+              <span>Do Not Store</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="vic-guest-lb-disabled" class="vic-lb-card is-hidden" style="flex-direction:row; align-items:center; justify-content:space-between;">
           <span style="font-size:12px; font-weight:600; color:var(--fg-secondary);">Leaderboards are disabled for Guest accounts.</span>
           <span class="ex-chip ex-chip--subtle mono">LOCKED</span>
         </div>
@@ -1287,33 +1325,103 @@
       </div>
     </div>
 
+    <!-- First-Time Sign-In Leaderboard Controls Notice (Authenticated Users ONLY — Shown Once) -->
+    <div id="lb-first-signin-modal" class="ex-modal-scrim ex-modal-scrim--top" role="dialog" aria-modal="true" aria-labelledby="lb-first-signin-title">
+      <div class="ex-modal-card">
+        <div>
+          <span class="ex-chip ex-chip--inverted">Leaderboards Controls</span>
+          <h3 id="lb-first-signin-title" class="page-title" style="margin-top:10px;">Leaderboards Share &amp; Prompt</h3>
+          <p class="ex-card-desc" style="margin-top:6px;">
+            You can Enable or Disable <strong>Leaderboards Share</strong> and <strong>Leaderboards Sharing Prompt</strong> anytime in the <strong>Settings</strong> route. Runs are never stored automatically — when enabled, you will be asked whether to share a run publicly (visible to everyone) or not store it at all.
+          </p>
+        </div>
+
+        <div id="lb-first-signin-note" class="lb-modal-note">
+          <span class="lb-modal-note-icon" data-icon="settings"></span>
+          <span class="lb-modal-note-text">
+            Note: Both Leaderboards Share and Leaderboards Sharing Prompt are disabled by default.
+          </span>
+        </div>
+
+        <button type="button" id="lb-first-notice-dismiss-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+          <span data-icon="check"></span>
+          <span>I Understand</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Public Leaderboard Share Consent Dialog (Authenticated Users ONLY) -->
+    <div id="lb-share-prompt-modal" class="ex-modal-scrim ex-modal-scrim--top" role="dialog" aria-modal="true" aria-labelledby="lb-share-prompt-title">
+      <div class="ex-modal-card">
+        <div>
+          <span class="ex-chip ex-chip--inverted">Public Leaderboard</span>
+          <h3 id="lb-share-prompt-title" class="page-title" style="margin-top:10px;">Share Run Publicly?</h3>
+          <p id="lb-share-prompt-desc" class="ex-card-desc" style="margin-top:6px;">
+            Runs are never stored automatically. Choose whether to share this stage run publicly (visible to everyone) or not store it at all.
+          </p>
+        </div>
+
+        <div class="menu-stats-row">
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">Runner</span>
+            <span id="lb-prompt-runner" class="menu-stat-value mono">@runner</span>
+          </div>
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">Time</span>
+            <span id="lb-prompt-time" class="menu-stat-value mono">00:00.00</span>
+          </div>
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">Deaths</span>
+            <span id="lb-prompt-deaths" class="menu-stat-value mono">0</span>
+          </div>
+        </div>
+
+        <div class="lb-modal-note">
+          <span class="lb-modal-note-icon" data-icon="leaderboards"></span>
+          <span class="lb-modal-note-text">
+            Sharing makes your username, stage time, death count, and replay visible to everyone on Leaderboards. Choosing Do Not Store saves nothing at all.
+          </span>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button type="button" id="lb-prompt-confirm-share-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+            <span data-icon="leaderboards"></span>
+            <span>Share Publicly (Visible to Everyone)</span>
+          </button>
+          <button type="button" id="lb-prompt-decline-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
+            <span>Do Not Store</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Notifications -->
     <div id="toast-stack" class="ex-toast-stack" aria-live="polite"></div>
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c17"></script>
-  <script src="src/core/theme.js?v=20261025c17"></script>
-  <script src="src/core/audio.js?v=20261025c17"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c17"></script>
-  <script src="src/core/storage.js?v=20261025c17"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c17"></script>
-  <script src="src/core/auth.js?v=20261025c17"></script>
-  <script src="src/data/shopItems.js?v=20261025c17"></script>
-  <script src="src/data/achievements.js?v=20261025c17"></script>
-  <script src="src/data/levels.js?v=20261025c17"></script>
-  <script src="src/core/realtime.js?v=20261025c17"></script>
-  <script src="src/graphics/characters.js?v=20261025c17"></script>
-  <script src="src/graphics/auras.js?v=20261025c17"></script>
-  <script src="src/graphics/trails.js?v=20261025c17"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c17"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c17"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c17"></script>
-  <script src="src/game/traps.js?v=20261025c17"></script>
-  <script src="src/game/physics.js?v=20261025c17"></script>
-  <script src="src/game/engine.js?v=20261025c17"></script>
-  <script src="src/ui/router.js?v=20261025c17"></script>
-  <script src="src/ui/views.js?v=20261025c17"></script>
-  <script src="src/ui/main.js?v=20261025c17"></script>
+  <script src="src/core/icons.js?v=20261025c18"></script>
+  <script src="src/core/theme.js?v=20261025c18"></script>
+  <script src="src/core/audio.js?v=20261025c18"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c18"></script>
+  <script src="src/core/storage.js?v=20261025c18"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c18"></script>
+  <script src="src/core/auth.js?v=20261025c18"></script>
+  <script src="src/data/shopItems.js?v=20261025c18"></script>
+  <script src="src/data/achievements.js?v=20261025c18"></script>
+  <script src="src/data/levels.js?v=20261025c18"></script>
+  <script src="src/core/realtime.js?v=20261025c18"></script>
+  <script src="src/graphics/characters.js?v=20261025c18"></script>
+  <script src="src/graphics/auras.js?v=20261025c18"></script>
+  <script src="src/graphics/trails.js?v=20261025c18"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c18"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c18"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c18"></script>
+  <script src="src/game/traps.js?v=20261025c18"></script>
+  <script src="src/game/physics.js?v=20261025c18"></script>
+  <script src="src/game/engine.js?v=20261025c18"></script>
+  <script src="src/ui/router.js?v=20261025c18"></script>
+  <script src="src/ui/views.js?v=20261025c18"></script>
+  <script src="src/ui/main.js?v=20261025c18"></script>
 </body>
 </html>

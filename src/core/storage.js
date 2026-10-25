@@ -50,7 +50,10 @@
         screenShake: true,
         touchControls: false,
         liveGhosts: true,
-        liveToasts: true
+        liveToasts: true,
+        leaderboardShareEnabled: false,
+        leaderboardPromptEnabled: false,
+        leaderboardNoticeSeen: false
       }
     };
   }
@@ -109,6 +112,26 @@
     });
   }
 
+  function flushCloudStateSync(authoritative = false) {
+    if (!window.ExoticSupabase) return Promise.resolve(null);
+    if (window.ExoticAuth && !window.ExoticAuth.isSignedIn()) return Promise.resolve(null);
+    if (syncDebounceTimer) {
+      clearTimeout(syncDebounceTimer);
+      syncDebounceTimer = null;
+    }
+    window.ExoticSupabase.notifyLocalTabs(state);
+    return window.ExoticSupabase.functions
+      .invoke('sync-profile', {
+        body: {
+          state: {
+            ...state,
+            authoritative
+          }
+        }
+      })
+      .catch(() => null);
+  }
+
   function scheduleCloudStateSync(authoritative = false) {
     if (!window.ExoticSupabase) return;
     if (window.ExoticAuth && !window.ExoticAuth.isSignedIn()) return;
@@ -116,6 +139,7 @@
 
     if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
     syncDebounceTimer = setTimeout(() => {
+      syncDebounceTimer = null;
       if (window.ExoticAuth && !window.ExoticAuth.isSignedIn()) return;
       window.ExoticSupabase.functions
         .invoke('sync-profile', {
@@ -314,6 +338,30 @@
       if (typeof sets.touch_controls === 'boolean') state.settings.touchControls = sets.touch_controls;
       if (typeof sets.live_ghosts === 'boolean') state.settings.liveGhosts = sets.live_ghosts;
 
+      const isGuestProf =
+        Boolean(prof.is_guest) || Boolean(window.ExoticAuth && window.ExoticAuth.isGuest());
+      if (isGuestProf) {
+        state.settings.leaderboardShareEnabled = false;
+        state.settings.leaderboardPromptEnabled = false;
+        state.settings.leaderboardNoticeSeen = false;
+      } else {
+        if (typeof sets.leaderboard_share_enabled === 'boolean') {
+          state.settings.leaderboardShareEnabled = sets.leaderboard_share_enabled;
+        } else if (replace) {
+          state.settings.leaderboardShareEnabled = false;
+        }
+        if (typeof sets.leaderboard_prompt_enabled === 'boolean') {
+          state.settings.leaderboardPromptEnabled = sets.leaderboard_prompt_enabled;
+        } else if (replace) {
+          state.settings.leaderboardPromptEnabled = false;
+        }
+        if (typeof sets.leaderboard_notice_seen === 'boolean') {
+          state.settings.leaderboardNoticeSeen = sets.leaderboard_notice_seen;
+        } else if (replace) {
+          state.settings.leaderboardNoticeSeen = false;
+        }
+      }
+
       if (Array.isArray(snap.levelProgress)) {
         if (replace) {
           state.levelStats = {};
@@ -378,6 +426,7 @@
           rec.deathless_clears ?? state.telemetry.deathlessClears
         );
       } else if (table === 'player_settings' && rec) {
+        const isGuestNow = Boolean(window.ExoticAuth && window.ExoticAuth.isGuest());
         state.settings = {
           ...state.settings,
           theme: rec.theme || state.settings.theme,
@@ -390,7 +439,22 @@
               ? rec.touch_controls
               : state.settings.touchControls,
           liveGhosts:
-            typeof rec.live_ghosts === 'boolean' ? rec.live_ghosts : state.settings.liveGhosts
+            typeof rec.live_ghosts === 'boolean' ? rec.live_ghosts : state.settings.liveGhosts,
+          leaderboardShareEnabled: isGuestNow
+            ? false
+            : typeof rec.leaderboard_share_enabled === 'boolean'
+              ? rec.leaderboard_share_enabled
+              : state.settings.leaderboardShareEnabled,
+          leaderboardPromptEnabled: isGuestNow
+            ? false
+            : typeof rec.leaderboard_prompt_enabled === 'boolean'
+              ? rec.leaderboard_prompt_enabled
+              : state.settings.leaderboardPromptEnabled,
+          leaderboardNoticeSeen: isGuestNow
+            ? false
+            : typeof rec.leaderboard_notice_seen === 'boolean'
+              ? rec.leaderboard_notice_seen
+              : state.settings.leaderboardNoticeSeen
         };
         applySideEffectSettings(state.settings);
       } else if (table === 'player_loadouts' && rec) {
@@ -466,8 +530,24 @@
     },
 
     updateSettings(patch) {
-      state.settings = { ...state.settings, ...patch };
+      const safePatch = { ...(patch || {}) };
+      if (window.ExoticAuth && window.ExoticAuth.isGuest()) {
+        safePatch.leaderboardShareEnabled = false;
+        safePatch.leaderboardPromptEnabled = false;
+        safePatch.leaderboardNoticeSeen = false;
+      }
+      state.settings = { ...state.settings, ...safePatch };
+      const touchesLeaderboardPrivacy =
+        'leaderboardShareEnabled' in safePatch ||
+        'leaderboardPromptEnabled' in safePatch ||
+        'leaderboardNoticeSeen' in safePatch;
+      if (touchesLeaderboardPrivacy) {
+        persistLocalOnly();
+        notifySubscribers();
+        return flushCloudStateSync(false);
+      }
       save(true, false);
+      return Promise.resolve(null);
     },
     setCallsign(name) {
       state.callsign = String(name || '').trim().slice(0, 20);
@@ -748,8 +828,34 @@
     },
     async submitRun(payload) {
       if (window.ExoticAuth && window.ExoticAuth.isGuest()) {
-        return { ok: false, reason: 'Leaderboards are disabled for Guest accounts.' };
+        return {
+          ok: false,
+          code: 'GUEST_LEADERBOARD_DISABLED',
+          reason: 'Leaderboards are disabled for Guest accounts.'
+        };
       }
+      if (window.ExoticAuth && !window.ExoticAuth.isSignedIn()) {
+        return {
+          ok: false,
+          code: 'AUTH_REQUIRED',
+          reason: 'Sign in with a full account to share runs publicly.'
+        };
+      }
+      if (state.settings.leaderboardShareEnabled !== true) {
+        return {
+          ok: false,
+          code: 'LEADERBOARD_SHARE_DISABLED',
+          reason: 'Leaderboards Share is disabled in Settings.'
+        };
+      }
+      if (!payload || payload.publicShareConfirmed !== true) {
+        return {
+          ok: false,
+          code: 'SHARE_CONSENT_REQUIRED',
+          reason: 'Public leaderboard sharing requires your confirmation.'
+        };
+      }
+
       const cleanCallsign = String(payload.callsign || state.callsign || '').trim().slice(0, 20);
       if (!cleanCallsign) {
         return { ok: false, reason: 'Enter your Callsign to publish this run.' };
@@ -769,10 +875,13 @@
         auraId: state.equipped.aura,
         trailId: state.equipped.trail,
         sampleIntervalMs: payload.sampleIntervalMs || 80,
-        frames: Array.isArray(payload.frames) ? payload.frames : []
+        frames: Array.isArray(payload.frames) ? payload.frames : [],
+        publicShareConfirmed: true
       };
 
       if (window.ExoticSupabase) {
+        // Ensure latest Settings (e.g. leaderboardShareEnabled) are persisted before server check
+        await flushCloudStateSync(false);
         const { data, error } = await window.ExoticSupabase.functions.invoke(
           'verify-and-submit-run',
           { body: reqBody }
@@ -785,20 +894,14 @@
           }
           return { ok: true, record: data.record };
         }
-        if (error) {
-          return { ok: false, reason: error.message || 'Verification failed.' };
-        }
+        return {
+          ok: false,
+          code: data?.code || 'VERIFY_FAILED',
+          reason: data?.reason || error?.message || 'Run was not stored.'
+        };
       }
 
-      const fallbackEntry = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        ...reqBody,
-        recordedAt: new Date().toISOString()
-      };
-      const local = getLocalRuns();
-      local.push(fallbackEntry);
-      setLocalRuns(local);
-      return { ok: true, record: fallbackEntry };
+      return { ok: false, reason: 'Leaderboard service unavailable. Run was not stored.' };
     },
     async uploadRunnerCard(pngDataUrl) {
       if (!window.ExoticSupabase) return { ok: false, error: 'Cloud client not loaded.' };
@@ -822,10 +925,12 @@
     },
     async resetAllData() {
       const currentTheme = state.settings.theme;
+      const keepNoticeSeen = Boolean(state.settings.leaderboardNoticeSeen);
       const keepUsername =
         (window.ExoticAuth && window.ExoticAuth.getUsername()) || state.callsign || '';
       state = createDefaultState();
       state.settings.theme = currentTheme;
+      state.settings.leaderboardNoticeSeen = keepNoticeSeen;
       state.callsign = keepUsername;
       persistLocalOnly();
       setLocalRuns([]);

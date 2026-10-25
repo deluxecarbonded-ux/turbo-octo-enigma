@@ -13,6 +13,17 @@ Deno.serve(async (req: Request) => {
     const deaths = Math.max(0, Math.round(Number(body.deaths ?? 0)));
     const callsign = String(body.callsign ?? '').trim().slice(0, 20);
 
+    if (body.publicShareConfirmed !== true) {
+      return jsonResponse(
+        {
+          ok: false,
+          code: 'SHARE_CONSENT_REQUIRED',
+          reason: 'Public leaderboard sharing requires your confirmation.'
+        },
+        403
+      );
+    }
+
     if (!callsign || !Number.isFinite(levelId) || levelId < 1 || levelId > 8 || !Number.isFinite(timeMs)) {
       return jsonResponse({ ok: false, reason: 'Invalid run submission payload.' }, 400);
     }
@@ -39,9 +50,33 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    let replayStoragePath: string | null = null;
-    if (Array.isArray(body.frames) && body.frames.length > 0) {
-      const storageKey = `stage-${String(levelId).padStart(2, '0')}/${Date.now()}-${callsign.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`;
+    const hasFrames = Array.isArray(body.frames) && body.frames.length > 0;
+    const storageKey = hasFrames
+      ? `stage-${String(levelId).padStart(2, '0')}/${Date.now()}-${callsign.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`
+      : null;
+
+    const { data, error } = await supabase.rpc('rpc_publish_verified_run', {
+      p_client_key: clientKey,
+      p_payload: {
+        ...body,
+        callsign,
+        levelId,
+        timeMs,
+        deaths,
+        publicShareConfirmed: true,
+        replayStoragePath: storageKey
+      }
+    });
+
+    if (error) {
+      return jsonResponse({ ok: false, reason: error.message }, 400);
+    }
+
+    if (!data?.ok) {
+      return jsonResponse(data ?? { ok: false, reason: 'Leaderboard sharing is disabled.' }, 403);
+    }
+
+    if (hasFrames && storageKey) {
       const replayBlob = new TextEncoder().encode(
         JSON.stringify({
           levelId,
@@ -55,31 +90,12 @@ Deno.serve(async (req: Request) => {
           frames: body.frames
         })
       );
-      const { error: uploadErr } = await supabase.storage
+      await supabase.storage
         .from('run-replays')
         .upload(storageKey, replayBlob, {
           contentType: 'application/json',
           upsert: true
         });
-      if (!uploadErr) {
-        replayStoragePath = storageKey;
-      }
-    }
-
-    const { data, error } = await supabase.rpc('rpc_publish_verified_run', {
-      p_client_key: clientKey,
-      p_payload: {
-        ...body,
-        callsign,
-        levelId,
-        timeMs,
-        deaths,
-        replayStoragePath
-      }
-    });
-
-    if (error) {
-      return jsonResponse({ ok: false, reason: error.message }, 400);
     }
 
     return jsonResponse(data, 201);
