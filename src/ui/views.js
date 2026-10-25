@@ -1031,7 +1031,9 @@
     c.font = '900 13px -apple-system, BlinkMacSystemFont, sans-serif';
     c.fillText(isGuest ? 'EXOTIC · GUEST LOADOUT' : 'EXOTIC · RUNNER LOADOUT', 292, 64);
 
-    c.fillStyle = pal.text || pal.playerPrimary;
+    if (pal.colored) {
+      c.fillStyle = pal.text || pal.playerPrimary;
+    }
     c.font = '900 32px -apple-system, BlinkMacSystemFont, sans-serif';
     c.fillText(callsign.slice(0, 16), 292, 108);
 
@@ -1069,8 +1071,8 @@
       c.beginPath();
       c.roundRect(px, py, 98, 72, 16);
       c.fill();
-      c.globalAlpha = 0.72;
-      c.fillStyle = pal.text || pal.playerPrimary;
+      c.globalAlpha = pal.colored ? 0.72 : 0.62;
+      c.fillStyle = pal.colored ? pal.text || pal.playerPrimary : pal.playerPrimary;
       c.font = '700 10px ui-monospace, SFMono-Regular, Menlo, monospace';
       c.fillText(lbl, px + 14, py + 24);
       c.globalAlpha = 1;

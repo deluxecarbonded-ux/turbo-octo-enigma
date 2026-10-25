@@ -1399,7 +1399,7 @@
       ctx.fill();
 
       // Triangular rabbit nose + signature twin rectangular buck teeth!
-      ctx.fillStyle = bugsPink;
+      ctx.fillStyle = cc.colored ? bugsPink : bugsInk;
       fillDiamond(ctx, facing * 3.4 * sc, -2.4 * sc, 1.5 * sc, 1.05 * sc);
       ctx.fillStyle = bugsWhite;
       fillRoundRect(ctx, (facing * 2.8 - 1.8) * sc, -0.7 * sc, 3.6 * sc, 2.5 * sc, 0.5 * sc);
@@ -1590,7 +1590,7 @@
     if (charId === 'char_slime') {
       // Floating inner bubbles + bouncy wide eyes
       ctx.fillStyle = cc.colored ? cc.mid : eyeFill;
-      ctx.globalAlpha = 0.55;
+      ctx.globalAlpha = cc.colored ? 0.55 : 0.45;
       ctx.beginPath();
       ctx.arc(-6 * sc, 5 * sc + Math.sin(time * 5) * 1.5, 2.1 * sc, 0, Math.PI * 2);
       ctx.arc(6.5 * sc, 6.5 * sc + Math.cos(time * 4) * 1.2, 1.5 * sc, 0, Math.PI * 2);
@@ -1879,7 +1879,7 @@
       }
     } else if (emoteId === 'emote_spin') {
       if (isColored) ctx.fillStyle = isLight ? '#4f46e5' : '#818cf8';
-      ctx.globalAlpha = 0.55;
+      ctx.globalAlpha = isColored ? 0.55 : 0.45;
       fillRing(ctx, 0, 2, 18, 14);
       fillRing(ctx, 0, 8, 12, 9);
     } else if (emoteId === 'emote_rip') {

@@ -99,7 +99,7 @@
                 ? '#0284c7'
                 : '#38bdf8'
             : pal.auraBright;
-          ctx.globalAlpha = t * 0.88;
+          ctx.globalAlpha = t * (isColored ? 0.88 : 0.85);
           ctx.beginPath();
           ctx.moveTo(a.x, a.y + offA - thick);
           ctx.lineTo(b.x, b.y + offB - thick);
@@ -142,10 +142,10 @@
             facing: n.facing,
             gravitySign: n.gravitySign,
             characterId: charId,
-            skinId: skinId || 'skin_solid',
+            skinId: isColored ? skinId || 'skin_solid' : 'skin_solid',
             palette: pal,
             time,
-            alpha: lifeLeft * 0.34
+            alpha: lifeLeft * (isColored ? 0.34 : 0.28)
           });
         } else if (trailId === 'trail_rings') {
           ctx.globalAlpha = lifeLeft * (isColored ? 0.78 : 0.62);

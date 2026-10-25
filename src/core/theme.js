@@ -1,86 +1,76 @@
 (function () {
   const PALETTES = {
+    // Exact original Monochrome Dark palette preserved 1:1
     dark_monochrome: {
       mode: 'dark',
       colorMode: 'monochrome',
       colored: false,
-      sky: '#0a0a0a',
-      stageBg: '#0d0d0d',
+      sky: '#0c0c0c',
+      stageBg: '#0e0e0e',
       bgPillar: '#141414',
-      bgPillarAlt: '#1a1a1a',
+      bgPillarAlt: '#181818',
       bgMote: '#2b2b2b',
-      moteColors: ['#2b2b2b', '#333333', '#242424', '#383838'],
-      platform: '#262626',
-      platformFill: '#262626',
-      platformCap: '#f5f5f5',
-      platformDetail: '#383838',
-      platformShadow: '#080808',
-      trapHint: '#333333',
-      hazard: '#fafafa',
-      hazardInner: '#0a0a0a',
-      springBase: '#424242',
+      platform: '#e6e6e6',
+      platformCap: '#ffffff',
+      platformDetail: '#b0b0b0',
+      platformShadow: '#1a1a1a',
+      trapHint: '#8f8f8f',
+      hazard: '#ffffff',
+      hazardInner: '#595959',
+      springBase: '#bdbdbd',
       springTop: '#ffffff',
-      coinOuter: '#fafafa',
-      coinInner: '#1a1a1a',
+      coinOuter: '#ffffff',
+      coinInner: '#0e0e0e',
       skillOuter: '#ffffff',
-      skillInner: '#525252',
-      doorFrame: '#fafafa',
-      doorVoid: '#141414',
-      doorCore: '#ffffff',
+      skillInner: '#6e6e6e',
+      doorFrame: '#ffffff',
+      doorVoid: '#1c1c1c',
+      doorCore: '#9e9e9e',
       playerPrimary: '#ffffff',
-      playerSecondary: '#0a0a0a',
-      playerMid: '#a3a3a3',
+      playerSecondary: '#0e0e0e',
+      playerMid: '#8a8a8a',
       auraBright: '#ffffff',
-      auraSoft: '#d4d4d4',
-      auraDim: '#737373',
-      gravityZone: 'rgba(255, 255, 255, 0.05)',
-      signBg: '#262626',
-      signTriggeredBg: '#fafafa',
-      signTriggeredFg: '#0a0a0a',
-      ghostBody: '#a3a3a3',
+      auraSoft: '#bdbdbd',
+      auraDim: '#5c5c5c',
+      gravityZone: 'rgba(255, 255, 255, 0.06)',
       text: '#fafafa',
-      textMuted: '#a3a3a3'
+      textMuted: '#787878'
     },
+    // Exact original Monochrome Light palette preserved 1:1
     light_monochrome: {
       mode: 'light',
       colorMode: 'monochrome',
       colored: false,
-      sky: '#f5f5f5',
-      stageBg: '#eeeeee',
-      bgPillar: '#e6e6e6',
-      bgPillarAlt: '#dedede',
-      bgMote: '#cccccc',
-      moteColors: ['#cccccc', '#c2c2c2', '#d4d4d4', '#b8b8b8'],
-      platform: '#242424',
-      platformFill: '#242424',
-      platformCap: '#0a0a0a',
-      platformDetail: '#3d3d3d',
-      platformShadow: '#dcdcdc',
-      trapHint: '#383838',
+      sky: '#f4f4f4',
+      stageBg: '#ededed',
+      bgPillar: '#e3e3e3',
+      bgPillarAlt: '#dcdcdc',
+      bgMote: '#c8c8c8',
+      platform: '#1a1a1a',
+      platformCap: '#050505',
+      platformDetail: '#4d4d4d',
+      platformShadow: '#dadada',
+      trapHint: '#757575',
       hazard: '#0a0a0a',
-      hazardInner: '#f5f5f5',
-      springBase: '#525252',
+      hazardInner: '#9e9e9e',
+      springBase: '#424242',
       springTop: '#0a0a0a',
       coinOuter: '#0a0a0a',
-      coinInner: '#ffffff',
+      coinInner: '#f4f4f4',
       skillOuter: '#0a0a0a',
-      skillInner: '#a3a3a3',
+      skillInner: '#8a8a8a',
       doorFrame: '#0a0a0a',
-      doorVoid: '#e5e5e5',
-      doorCore: '#0a0a0a',
+      doorVoid: '#dbdbdb',
+      doorCore: '#5c5c5c',
       playerPrimary: '#0a0a0a',
-      playerSecondary: '#ffffff',
-      playerMid: '#525252',
+      playerSecondary: '#f5f5f5',
+      playerMid: '#737373',
       auraBright: '#0a0a0a',
-      auraSoft: '#262626',
-      auraDim: '#737373',
-      gravityZone: 'rgba(10, 10, 10, 0.055)',
-      signBg: '#d4d4d4',
-      signTriggeredBg: '#0a0a0a',
-      signTriggeredFg: '#fafafa',
-      ghostBody: '#525252',
+      auraSoft: '#424242',
+      auraDim: '#9e9e9e',
+      gravityZone: 'rgba(0, 0, 0, 0.05)',
       text: '#0a0a0a',
-      textMuted: '#525252'
+      textMuted: '#707070'
     },
     dark_colored: {
       mode: 'dark',
@@ -180,13 +170,14 @@
 
   function syncTabFavicon(mode, colorMode) {
     if (typeof document === 'undefined') return;
-    let badgeBg = mode === 'light' ? '#09090b' : '#fafafa';
-    let glyphFg = mode === 'light' ? '#fafafa' : '#09090b';
+    const isLight = mode === 'light';
+    let bg = isLight ? '#0a0a0a' : '#fafafa';
+    let fg = isLight ? '#fafafa' : '#0a0a0a';
     if (colorMode === 'colored') {
-      badgeBg = mode === 'light' ? '#4f46e5' : '#6366f1';
-      glyphFg = '#ffffff';
+      bg = isLight ? '#4f46e5' : '#6366f1';
+      fg = '#ffffff';
     }
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="20" fill="${badgeBg}"/><g transform="translate(11 11) scale(1.75)"><path fill="${glyphFg}" fill-rule="evenodd" clip-rule="evenodd" d="M4 3h16l-3 5H9v2.5h7l-2.2 3.5H9v2.5h8l3 4.5H4V3zm13.5 7.5L21 12l-3.5 1.5L16 17l-1.5-3.5L11 12l3.5-1.5L16 7l1.5 3.5z"/></g></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="0" y="0" width="64" height="64" rx="20" ry="20" fill="${bg}"/><g transform="translate(13.2 13.2) scale(1.5667)"><path fill="${fg}" fill-rule="evenodd" clip-rule="evenodd" d="M4 3h16l-3 5H9v2.5h7l-2.2 3.5H9v2.5h8l3 4.5H4V3zm13.5 7.5L21 12l-3.5 1.5L16 17l-1.5-3.5L11 12l3.5-1.5L16 7l1.5 3.5z"/></g></svg>`;
     const dataUri = `data:image/svg+xml,${encodeURIComponent(svg)}`;
     let link = document.getElementById('app-favicon') || document.querySelector('link[rel="icon"]');
     if (!link) {
@@ -199,7 +190,13 @@
     link.href = dataUri;
   }
 
-  function applyAttributesAndNotify() {
+  function resolvePalette(mode, colorMode) {
+    const m = normalizeMode(mode || currentMode);
+    const c = normalizeColorMode(colorMode || currentColorMode);
+    return PALETTES[`${m}_${c}`] || PALETTES.dark_colored;
+  }
+
+  function applyAttributesAndNotify(notify = true) {
     document.documentElement.setAttribute('data-theme', currentMode);
     document.documentElement.setAttribute('data-color-mode', currentColorMode);
     syncTabFavicon(currentMode, currentColorMode);
@@ -209,27 +206,23 @@
     } catch {
       // Ignore storage write error
     }
-    const pal = resolvePalette(currentMode, currentColorMode);
-    listeners.forEach((fn) => {
-      try {
-        fn(currentMode, pal, currentColorMode);
-      } catch {
-        // Ignore listener error
-      }
-    });
-  }
-
-  function resolvePalette(mode, colorMode) {
-    const m = normalizeMode(mode || currentMode);
-    const c = normalizeColorMode(colorMode || currentColorMode);
-    return PALETTES[`${m}_${c}`] || PALETTES.dark_colored;
+    if (notify) {
+      const pal = resolvePalette(currentMode, currentColorMode);
+      listeners.forEach((fn) => {
+        try {
+          fn(currentMode, pal, currentColorMode);
+        } catch {
+          // Ignore listener error
+        }
+      });
+    }
   }
 
   window.ExoticTheme = {
     init(initialMode = 'dark', initialColorMode = 'colored') {
       currentMode = normalizeMode(initialMode);
       currentColorMode = normalizeColorMode(initialColorMode);
-      applyAttributesAndNotify();
+      applyAttributesAndNotify(false);
     },
     getMode() {
       return currentMode;
@@ -249,7 +242,7 @@
         return;
       }
       currentMode = next;
-      applyAttributesAndNotify();
+      applyAttributesAndNotify(true);
     },
     setColorMode(colorMode) {
       const next = normalizeColorMode(colorMode);
@@ -260,7 +253,7 @@
         return;
       }
       currentColorMode = next;
-      applyAttributesAndNotify();
+      applyAttributesAndNotify(true);
     },
     toggle() {
       const next = currentMode === 'dark' ? 'light' : 'dark';
@@ -275,9 +268,9 @@
     getPalette(overrideMode, overrideColorMode) {
       return resolvePalette(overrideMode || currentMode, overrideColorMode || currentColorMode);
     },
-    onChange(fn) {
-      listeners.add(fn);
-      return () => listeners.delete(fn);
+    onChange(cb) {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
     }
   };
 })();

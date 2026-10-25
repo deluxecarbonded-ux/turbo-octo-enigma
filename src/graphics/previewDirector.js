@@ -66,9 +66,11 @@
         ctx.fillStyle = pal.platform;
         ctx.fillRect(14, floorY, dim.w * 0.34, dim.h - floorY);
         ctx.fillRect(dim.w * 0.66, floorY, dim.w * 0.3, dim.h - floorY);
-        ctx.fillStyle = pal.platformCap;
-        ctx.fillRect(14, floorY, dim.w * 0.34, 3);
-        ctx.fillRect(dim.w * 0.66, floorY, dim.w * 0.3, 3);
+        if (pal.colored) {
+          ctx.fillStyle = pal.platformCap;
+          ctx.fillRect(14, floorY, dim.w * 0.34, 3);
+          ctx.fillRect(dim.w * 0.66, floorY, dim.w * 0.3, 3);
+        }
 
         const px = 22 + norm * (dim.w - 68);
         let py = floorY - 26;
@@ -97,8 +99,10 @@
       } else if (item.id === 'upg_magnet') {
         ctx.fillStyle = pal.platform;
         ctx.fillRect(12, floorY, dim.w - 24, dim.h - floorY);
-        ctx.fillStyle = pal.platformCap;
-        ctx.fillRect(12, floorY, dim.w - 24, 3);
+        if (pal.colored) {
+          ctx.fillStyle = pal.platformCap;
+          ctx.fillRect(12, floorY, dim.w - 24, 3);
+        }
         const px = dim.w * 0.5 + Math.sin(norm * Math.PI * 2) * (dim.w * 0.25) - 12;
         const py = floorY - 26;
 
@@ -133,9 +137,11 @@
         ctx.fillStyle = pal.platform;
         ctx.fillRect(12, floorY, dim.w * 0.26, dim.h - floorY);
         ctx.fillRect(dim.w * 0.74, floorY, dim.w * 0.22, dim.h - floorY);
-        ctx.fillStyle = pal.platformCap;
-        ctx.fillRect(12, floorY, dim.w * 0.26, 3);
-        ctx.fillRect(dim.w * 0.74, floorY, dim.w * 0.22, 3);
+        if (pal.colored) {
+          ctx.fillStyle = pal.platformCap;
+          ctx.fillRect(12, floorY, dim.w * 0.26, 3);
+          ctx.fillRect(dim.w * 0.74, floorY, dim.w * 0.22, 3);
+        }
 
         const px = 22 + norm * (dim.w - 68);
         let py = floorY - 26;
@@ -167,9 +173,11 @@
         ctx.fillStyle = pal.platform;
         ctx.fillRect(10, floorY, dim.w * 0.28, dim.h - floorY);
         ctx.fillRect(dim.w * 0.72, floorY, dim.w * 0.24, dim.h - floorY);
-        ctx.fillStyle = pal.platformCap;
-        ctx.fillRect(10, floorY, dim.w * 0.28, 3);
-        ctx.fillRect(dim.w * 0.72, floorY, dim.w * 0.24, 3);
+        if (pal.colored) {
+          ctx.fillStyle = pal.platformCap;
+          ctx.fillRect(10, floorY, dim.w * 0.28, 3);
+          ctx.fillRect(dim.w * 0.72, floorY, dim.w * 0.24, 3);
+        }
         window.ExoticWorldDraw.drawSpikes(
           ctx,
           { x: dim.w * 0.4, y: dim.h - 4, count: 4, dir: 'up' },
@@ -233,9 +241,11 @@
         ctx.fillStyle = pal.platform;
         ctx.fillRect(10, floorY, dim.w * 0.26, dim.h - floorY);
         ctx.fillRect(dim.w * 0.64, floorY, dim.w * 0.32, dim.h - floorY);
-        ctx.fillStyle = pal.platformCap;
-        ctx.fillRect(10, floorY, dim.w * 0.26, 3);
-        ctx.fillRect(dim.w * 0.64, floorY, dim.w * 0.32, 3);
+        if (pal.colored) {
+          ctx.fillStyle = pal.platformCap;
+          ctx.fillRect(10, floorY, dim.w * 0.26, 3);
+          ctx.fillRect(dim.w * 0.64, floorY, dim.w * 0.32, 3);
+        }
         window.ExoticWorldDraw.drawPlatform(ctx, fakePlat, pal, true, time);
         window.ExoticWorldDraw.drawSpikes(
           ctx,
@@ -269,8 +279,10 @@
         // upg_shield Second Wind parry bounce
         ctx.fillStyle = pal.platform;
         ctx.fillRect(12, floorY, dim.w - 24, dim.h - floorY);
-        ctx.fillStyle = pal.platformCap;
-        ctx.fillRect(12, floorY, dim.w - 24, 3);
+        if (pal.colored) {
+          ctx.fillStyle = pal.platformCap;
+          ctx.fillRect(12, floorY, dim.w - 24, 3);
+        }
         window.ExoticWorldDraw.drawSpikes(
           ctx,
           { x: dim.w * 0.5 - 18, y: floorY, count: 2, dir: 'up' },
