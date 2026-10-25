@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "publickey-credentials-get=*, publickey-credentials-create=*, camera=*"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/((?!gateway$).*)",
+      "destination": "/api/gateway?__pathname=/api/$1"
+    },
+    {
+      "source": "/functions/v1/(.*)",
+      "destination": "/api/gateway?__pathname=/functions/v1/$1"
+    },
+    {
+      "source": "/storage/v1/(.*)",
+      "destination": "/api/gateway?__pathname=/storage/v1/$1"
+    }
+  ]
+}

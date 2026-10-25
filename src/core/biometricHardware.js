@@ -247,6 +247,18 @@
     }
   }
 
+  function resolveCanonicalRpId() {
+    try {
+      const host = String(window.location.hostname || '').toLowerCase();
+      if (host === 'devilexotix.com' || host === 'www.devilexotix.com') {
+        return 'devilexotix.com';
+      }
+    } catch {
+      // Ignore
+    }
+    return undefined;
+  }
+
   // Must be invoked synchronously inside user click handler to preserve Safari/iOS user activation
   function startInlineWebAuthnEnrollSync({ username, method, challenge }) {
     const label = method === 'faceid' ? 'Face ID' : 'Fingerprint';
@@ -254,13 +266,14 @@
     const userBytes = new TextEncoder().encode(
       `${method}:${String(username).trim().toLowerCase()}`
     );
+    const rpObj = { name: 'Exotic' };
+    const canonicalRpId = resolveCanonicalRpId();
+    if (canonicalRpId) rpObj.id = canonicalRpId;
 
     const createPromise = navigator.credentials.create({
       publicKey: {
         challenge: challengeBytes,
-        rp: {
-          name: 'Exotic'
-        },
+        rp: rpObj,
         user: {
           id: userBytes,
           name: `${username}`,
@@ -375,6 +388,8 @@
       userVerification: 'required',
       timeout: 45000
     };
+    const canonicalRpId = resolveCanonicalRpId();
+    if (canonicalRpId) publicKeyOpts.rpId = canonicalRpId;
 
     if (credentialId) {
       publicKeyOpts.allowCredentials = [

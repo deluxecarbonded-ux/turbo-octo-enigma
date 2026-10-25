@@ -1,29 +1,70 @@
 const crypto = require('crypto');
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
-const challenges = new Map();
+const usedChallenges = new Map();
+
+function getChallengeSecret() {
+  return (
+    process.env.SUPABASE_DB_URL ||
+    process.env.SUPABASE_DB_PASSWORD ||
+    process.env.SUPABASE_ANON_KEY ||
+    'exotic-hardware-webauthn-hmac-v1'
+  );
+}
 
 function pruneChallenges() {
   const now = Date.now();
-  for (const [k, exp] of challenges.entries()) {
-    if (exp <= now) challenges.delete(k);
+  for (const [k, exp] of usedChallenges.entries()) {
+    if (exp <= now) usedChallenges.delete(k);
   }
 }
 
+// Stateless 32-byte HMAC-signed challenge (16B random || 6B timestampMs || 10B HMAC-SHA256)
+// Works identically across multi-instance serverless functions and standalone Node servers.
 function createChallenge() {
   pruneChallenges();
-  const challenge = crypto.randomBytes(32).toString('base64url');
-  challenges.set(challenge, Date.now() + CHALLENGE_TTL_MS);
-  return challenge;
+  const buf = Buffer.alloc(32);
+  crypto.randomBytes(16).copy(buf, 0);
+  buf.writeUIntBE(Date.now(), 16, 6);
+  const tag = crypto
+    .createHmac('sha256', getChallengeSecret())
+    .update(buf.subarray(0, 22))
+    .digest();
+  tag.copy(buf, 22, 0, 10);
+  return buf.toString('base64url');
 }
 
 function consumeChallenge(challenge) {
   pruneChallenges();
   if (!challenge || typeof challenge !== 'string') return false;
-  const exp = challenges.get(challenge);
-  if (!exp) return false;
-  challenges.delete(challenge);
-  return exp > Date.now();
+  if (usedChallenges.has(challenge)) return false;
+
+  let buf;
+  try {
+    buf = Buffer.from(challenge, 'base64url');
+  } catch {
+    return false;
+  }
+  if (buf.length !== 32) return false;
+
+  const now = Date.now();
+  const issuedAt = buf.readUIntBE(16, 6);
+  if (issuedAt > now + 10000 || now - issuedAt > CHALLENGE_TTL_MS) {
+    return false;
+  }
+
+  const expectedTag = crypto
+    .createHmac('sha256', getChallengeSecret())
+    .update(buf.subarray(0, 22))
+    .digest()
+    .subarray(0, 10);
+  const actualTag = buf.subarray(22, 32);
+  if (!crypto.timingSafeEqual(expectedTag, actualTag)) {
+    return false;
+  }
+
+  usedChallenges.set(challenge, issuedAt + CHALLENGE_TTL_MS);
+  return true;
 }
 
 function fromBase64Url(str) {
@@ -206,14 +247,19 @@ function verifyOriginAndRpHash(clientData, authData, expectedHost) {
       throw new Error('Origin mismatch');
     }
   }
-  const expectedRpHash = crypto
-    .createHash('sha256')
-    .update(originUrl.hostname)
-    .digest();
+  const hostName = originUrl.hostname.toLowerCase();
   const actualRpHash = authData.subarray(0, 32);
-  if (!crypto.timingSafeEqual(expectedRpHash, actualRpHash)) {
-    throw new Error('RP ID hash mismatch');
+  const exactHash = crypto.createHash('sha256').update(hostName).digest();
+  if (crypto.timingSafeEqual(exactHash, actualRpHash)) {
+    return;
   }
+  if (hostName.startsWith('www.') && hostName.length > 4) {
+    const apexHash = crypto.createHash('sha256').update(hostName.slice(4)).digest();
+    if (crypto.timingSafeEqual(apexHash, actualRpHash)) {
+      return;
+    }
+  }
+  throw new Error('RP ID hash mismatch');
 }
 
 function verifyRegistration({ attestation, expectedHost }) {

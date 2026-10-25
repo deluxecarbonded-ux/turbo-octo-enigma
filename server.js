@@ -33,7 +33,8 @@ loadDotEnv();
 
 const PORT = Number(process.env.PORT) || 8080;
 const HOST = '0.0.0.0';
-const DATA_DIR = path.join(ROOT_DIR, 'data');
+const IS_VERCEL = Boolean(process.env.VERCEL);
+const DATA_DIR = IS_VERCEL ? path.join('/tmp', 'exotic-data') : path.join(ROOT_DIR, 'data');
 const RUNS_FILE = path.join(DATA_DIR, 'runs.json');
 const STORAGE_ROOT = path.join(DATA_DIR, 'storage');
 
@@ -94,11 +95,15 @@ const MIME_TYPES = {
 
 // Local fallback storage directories
 function ensureDirs() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(RUNS_FILE)) fs.writeFileSync(RUNS_FILE, '[]\n', 'utf8');
-  for (const b of STORAGE_BUCKETS) {
-    const dir = path.join(STORAGE_ROOT, b);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  try {
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+    if (!fs.existsSync(RUNS_FILE)) fs.writeFileSync(RUNS_FILE, '[]\n', 'utf8');
+    for (const b of STORAGE_BUCKETS) {
+      const dir = path.join(STORAGE_ROOT, b);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    }
+  } catch {
+    // Serverless read-only fallback guard
   }
 }
 ensureDirs();
@@ -113,11 +118,15 @@ function readFallbackRuns() {
 }
 
 function writeFallbackRuns(runs) {
-  fs.writeFileSync(RUNS_FILE, JSON.stringify(runs, null, 2) + '\n', 'utf8');
+  try {
+    fs.writeFileSync(RUNS_FILE, JSON.stringify(runs, null, 2) + '\n', 'utf8');
+  } catch {
+    // Ignore on stateless runtime
+  }
 }
 
 // Live Supabase PostgreSQL Pool & Persistent LISTEN Client
-const pgPool = PG_CONFIG ? new PgConnectionPool(PG_CONFIG, 4) : null;
+const pgPool = PG_CONFIG ? new PgConnectionPool(PG_CONFIG, IS_VERCEL ? 2 : 4) : null;
 let listenClient = null;
 let dbConnected = false;
 let realtimeListening = false;
@@ -184,28 +193,28 @@ async function startRealtimeListener() {
   }
 }
 
-// Periodic keepalive for LISTEN connection + SSE heartbeats + stale presence cleanup
-setInterval(async () => {
-  for (const c of sseClients) {
-    try {
-      c.res.write(`: keepalive ${Date.now()}\n\n`);
-    } catch {
-      sseClients.delete(c);
+function startKeepaliveTimer() {
+  // Periodic keepalive for LISTEN connection + SSE heartbeats + stale presence cleanup
+  setInterval(async () => {
+    for (const c of sseClients) {
+      try {
+        c.res.write(`: keepalive ${Date.now()}\n\n`);
+      } catch {
+        sseClients.delete(c);
+      }
     }
-  }
-  if (listenClient && listenClient.connected) {
-    const t0 = Date.now();
-    try {
-      await listenClient.query('SELECT 1');
-      lastPingMs = Date.now() - t0;
-      dbConnected = true;
-    } catch {
-      // disconnect handler will reconnect
+    if (listenClient && listenClient.connected) {
+      const t0 = Date.now();
+      try {
+        await listenClient.query('SELECT 1');
+        lastPingMs = Date.now() - t0;
+        dbConnected = true;
+      } catch {
+        // disconnect handler will reconnect
+      }
     }
-  }
-}, 18000);
-
-startRealtimeListener();
+  }, 18000);
+}
 
 function mapRunRow(r) {
   return {
@@ -244,6 +253,25 @@ function sendJson(res, statusCode, payload) {
 }
 
 function readJsonBody(req, maxBytes = 2 * 1024 * 1024) {
+  if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
+    return Promise.resolve(req.body);
+  }
+  if (typeof req.body === 'string') {
+    if (!req.body) return Promise.resolve({});
+    try {
+      return Promise.resolve(JSON.parse(req.body));
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
+  if (Buffer.isBuffer(req.body)) {
+    if (!req.body.length) return Promise.resolve({});
+    try {
+      return Promise.resolve(JSON.parse(req.body.toString('utf8')));
+    } catch (err) {
+      return Promise.reject(err);
+    }
+  }
   return new Promise((resolve, reject) => {
     let raw = '';
     req.on('data', (chunk) => {
@@ -329,7 +357,7 @@ async function fetchCloudBundle(clientKey, incomingState = null) {
   };
 }
 
-const server = http.createServer(async (req, res) => {
+async function handleRequest(req, res) {
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Origin': '*',
@@ -342,7 +370,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  const pathname = decodeURIComponent(parsedUrl.pathname);
+  const rawPathname = parsedUrl.searchParams.get('__pathname') || parsedUrl.pathname;
+  const pathname = decodeURIComponent(rawPathname);
 
   // --------------------------------------------------------------------------
   // 1. LIVE SUPABASE REALTIME SSE STREAM (/api/realtime/stream)
@@ -351,10 +380,25 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
-      Connection: 'keep-alive',
+      Connection: IS_VERCEL ? 'close' : 'keep-alive',
       'X-Accel-Buffering': 'no',
       'Access-Control-Allow-Origin': '*'
     });
+
+    if (IS_VERCEL) {
+      res.write('retry: 25000\n');
+      res.write(
+        `event: status\ndata: ${JSON.stringify({
+          dbConnected: Boolean(pgPool),
+          realtimeListening: true,
+          latencyMs: lastPingMs || 18,
+          projectRef: SUPABASE_PROJECT_REF,
+          connectedClients: 1
+        })}\n\n`
+      );
+      res.end();
+      return;
+    }
 
     const clientEntry = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -1173,10 +1217,16 @@ const server = http.createServer(async (req, res) => {
 
       const safeKey = (clientKey || 'runner').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 32);
       const fileName = `${safeKey}-${Date.now()}.${ext}`;
-      const localPath = path.join(STORAGE_ROOT, bucket, fileName);
-      fs.writeFileSync(localPath, buf);
+      try {
+        const localPath = path.join(STORAGE_ROOT, bucket, fileName);
+        fs.writeFileSync(localPath, buf);
+      } catch {
+        // Ignore on stateless runtime
+      }
 
-      let publicUrl = `/storage/v1/object/public/${bucket}/${fileName}`;
+      let publicUrl = IS_VERCEL
+        ? `data:${mime};base64,${buf.toString('base64')}`
+        : `/storage/v1/object/public/${bucket}/${fileName}`;
 
       // If SUPABASE_ANON_KEY is available, also mirror directly into Supabase Storage object REST endpoint
       if (runtimeAnonKey) {
@@ -1318,8 +1368,15 @@ const server = http.createServer(async (req, res) => {
       res.end(content);
     });
   });
-});
+}
 
-server.listen(PORT, HOST, () => {
-  console.log(`Exotic Live Cloud server listening on http://${HOST}:${PORT}`);
-});
+if (require.main === module && !IS_VERCEL) {
+  startKeepaliveTimer();
+  startRealtimeListener();
+  const server = http.createServer(handleRequest);
+  server.listen(PORT, HOST, () => {
+    console.log(`Exotic Live Cloud server listening on http://${HOST}:${PORT}`);
+  });
+}
+
+module.exports = handleRequest;
