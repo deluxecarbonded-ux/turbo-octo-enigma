@@ -8,8 +8,14 @@
   let nativeFsActive = false;
   let signupDebounceTimer = null;
   let signinDebounceTimer = null;
+  let guestSignupDebounceTimer = null;
+  let guestRenameDebounceTimer = null;
   let signupCheckSeq = 0;
   let signinCheckSeq = 0;
+  let guestSignupCheckSeq = 0;
+  let guestRenameCheckSeq = 0;
+  let guestSignupCandidateLoaded = false;
+  let signinTargetIsGuest = false;
   let signupAuthMethod = 'password';
   let signinAuthMethod = 'password';
   let signupBioEnrollment = null;
@@ -146,7 +152,10 @@
 
   function getNextPlayableLevelId() {
     const state = window.ExoticStorage.getState();
+    const isGuest = Boolean(window.ExoticAuth?.isGuest());
+    const maxStage = isGuest ? window.ExoticAuth.GUEST_MAX_LEVEL : 8;
     for (const lvl of window.ExoticLevels.LEVELS) {
+      if (lvl.id > maxStage) break;
       const st = state.levelStats[lvl.id];
       if (!st || !st.cleared) return lvl.id;
     }
@@ -227,7 +236,9 @@
     const headerUsername = document.getElementById('header-username');
     if (headerUsername && window.ExoticAuth) {
       const uname = window.ExoticAuth.getUsername() || state.callsign || 'runner';
-      headerUsername.textContent = `@${uname}`;
+      headerUsername.textContent = window.ExoticAuth.isGuest()
+        ? `@${uname} · Guest`
+        : `@${uname}`;
     }
 
     syncThemeButtonsUI();
@@ -244,7 +255,11 @@
 
   function renderMenuSummary() {
     const state = window.ExoticStorage.getState();
-    const clearedCount = Object.values(state.levelStats).filter((s) => s && s.cleared).length;
+    const isGuest = Boolean(window.ExoticAuth?.isGuest());
+    const maxStages = isGuest ? window.ExoticAuth.GUEST_MAX_LEVEL : 8;
+    const clearedCount = Object.entries(state.levelStats).filter(
+      ([lvlId, s]) => Number(lvlId) <= maxStages && s && s.cleared
+    ).length;
     const nextLvl = window.ExoticLevels.getById(getNextPlayableLevelId());
 
     const playBtnLabel = document.getElementById('menu-play-label');
@@ -252,18 +267,44 @@
       playBtnLabel.textContent =
         clearedCount === 0
           ? `Play — Level ${nextLvl.code}: ${nextLvl.title}`
-          : clearedCount < 8
+          : clearedCount < maxStages
           ? `Continue — Level ${nextLvl.code}: ${nextLvl.title}`
+          : isGuest
+          ? 'Play — Replay Guest Stages'
           : 'Play — Replay Campaign';
     }
 
     const statCleared = document.getElementById('menu-stat-cleared');
     const statDeaths = document.getElementById('menu-stat-deaths');
     const statAch = document.getElementById('menu-stat-ach');
-    if (statCleared) statCleared.textContent = `${clearedCount} / 8`;
+    if (statCleared) statCleared.textContent = `${clearedCount} / ${maxStages}`;
     if (statDeaths) statDeaths.textContent = String(state.telemetry.totalDeaths);
     if (statAch) {
-      statAch.textContent = `${state.unlockedAchievements.length} / ${window.ExoticAchievements.ACHIEVEMENTS.length}`;
+      statAch.textContent = isGuest
+        ? 'Disabled'
+        : `${state.unlockedAchievements.length} / ${window.ExoticAchievements.ACHIEVEMENTS.length}`;
+    }
+
+    const achBtn = document.getElementById('menu-btn-achievements');
+    const achBtnLabel = document.getElementById('menu-ach-btn-label');
+    if (achBtn) {
+      achBtn.disabled = isGuest;
+      achBtn.setAttribute('aria-disabled', String(isGuest));
+      achBtn.title = isGuest ? 'Achievements are disabled for Guest accounts' : '';
+    }
+    if (achBtnLabel) {
+      achBtnLabel.textContent = isGuest ? 'Achievements · Locked' : 'Achievements';
+    }
+
+    const lbBtn = document.getElementById('menu-btn-leaderboards');
+    const lbBtnLabel = document.getElementById('menu-lb-btn-label');
+    if (lbBtn) {
+      lbBtn.disabled = isGuest;
+      lbBtn.setAttribute('aria-disabled', String(isGuest));
+      lbBtn.title = isGuest ? 'Leaderboards are disabled for Guest accounts' : '';
+    }
+    if (lbBtnLabel) {
+      lbBtnLabel.textContent = isGuest ? 'Leaderboards · Locked' : 'Leaderboards';
     }
 
     const loadoutLabel = document.getElementById('menu-loadout-chip');
@@ -283,15 +324,20 @@
     const stats = state.levelStats[lvl.id];
     const cleared = Boolean(stats && stats.cleared);
     const hasOrb = window.ExoticStorage.hasCollectedOrb(lvl.id);
+    const guestLocked = Boolean(
+      window.ExoticAuth?.isGuest() && !window.ExoticAuth.isGuestAllowedLevel(lvl.id)
+    );
 
-    const statusHtml = cleared
+    const statusHtml = guestLocked
+      ? `<span class="ex-chip ex-chip--subtle mono">${window.ExoticIcons.get('lock')}<span>Guest Locked</span></span>`
+      : cleared
       ? `<span class="ex-chip ex-chip--inverted">${window.ExoticIcons.get('check')}<span>Cleared</span></span>`
       : `<span class="ex-video-badge">+${lvl.rewardCoins ?? 15} COINS · +${lvl.rewardSP ?? 1} SP</span>`;
 
     const badgeText = `STAGE ${lvl.code}`;
 
     const wrPill =
-      lvl.worldRecordTimeMs != null
+      !guestLocked && lvl.worldRecordTimeMs != null
         ? `<span class="ex-chip ex-chip--subtle mono">WR: ${formatTime(lvl.worldRecordTimeMs)}${
             lvl.worldRecordCallsign ? ` · ${escapeHtml(lvl.worldRecordCallsign)}` : ''
           }</span>`
@@ -311,10 +357,15 @@
     return {
       cleared,
       hasOrb,
+      guestLocked,
       badgeText,
       statusHtml,
       metaHtml,
-      btnLabel: cleared ? `Replay Stage ${lvl.code}` : `Play Stage ${lvl.code}`
+      btnLabel: guestLocked
+        ? `Full Account Required · Stage ${lvl.code}`
+        : cleared
+        ? `Replay Stage ${lvl.code}`
+        : `Play Stage ${lvl.code}`
     };
   }
 
@@ -324,11 +375,18 @@
     window.ExoticPreviewDirector.clear();
     grid.innerHTML = '';
 
+    const levelsChip = document.getElementById('levels-header-chip');
+    if (levelsChip) {
+      levelsChip.textContent = window.ExoticAuth?.isGuest()
+        ? 'Guest Access · Stages 01–03 (04–08 Locked)'
+        : '8 Stages · Hidden Skill Orbs · Par Targets';
+    }
+
     window.ExoticLevels.LEVELS.forEach((lvl, idx) => {
       const parts = buildLevelCardParts(lvl);
 
       const card = document.createElement('article');
-      card.className = 'ex-video-card';
+      card.className = `ex-video-card${parts.guestLocked ? ' is-guest-locked' : ''}`;
       card.setAttribute('data-level-card-id', String(lvl.id));
       card.innerHTML = `
         <div class="ex-video-stage">
@@ -350,10 +408,14 @@
           <div class="level-meta-pills" data-lvl-meta>${parts.metaHtml}</div>
         </div>
         <div class="ex-card-footer">
-          <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--md ex-pill-btn--full" data-play-level="${
-            lvl.id
-          }">
-            ${window.ExoticIcons.get('play')}
+          <button type="button" class="ex-pill-btn ${
+            parts.guestLocked ? 'ex-pill-btn--secondary' : 'ex-pill-btn--primary'
+          } ex-pill-btn--md ex-pill-btn--full" data-play-level="${lvl.id}" ${
+        parts.guestLocked ? 'disabled' : ''
+      }>
+            <span data-lvl-btn-icon>${window.ExoticIcons.get(
+              parts.guestLocked ? 'lock' : 'play'
+            )}</span>
             <span data-lvl-btn-label>${escapeHtml(parts.btnLabel)}</span>
           </button>
         </div>
@@ -381,10 +443,19 @@
       return;
     }
 
+    const levelsChip = document.getElementById('levels-header-chip');
+    if (levelsChip) {
+      levelsChip.textContent = window.ExoticAuth?.isGuest()
+        ? 'Guest Access · Stages 01–03 (04–08 Locked)'
+        : '8 Stages · Hidden Skill Orbs · Par Targets';
+    }
+
     for (const lvl of window.ExoticLevels.LEVELS) {
       const card = grid.querySelector(`[data-level-card-id="${lvl.id}"]`);
       if (!card) continue;
       const parts = buildLevelCardParts(lvl);
+
+      card.classList.toggle('is-guest-locked', Boolean(parts.guestLocked));
 
       const badgeEl = card.querySelector('[data-lvl-badge]');
       if (badgeEl) badgeEl.textContent = parts.badgeText;
@@ -404,6 +475,17 @@
       const metaEl = card.querySelector('[data-lvl-meta]');
       if (metaEl) metaEl.innerHTML = parts.metaHtml;
 
+      const btn = card.querySelector('[data-play-level]');
+      if (btn) {
+        btn.disabled = Boolean(parts.guestLocked);
+        btn.className = `ex-pill-btn ${
+          parts.guestLocked ? 'ex-pill-btn--secondary' : 'ex-pill-btn--primary'
+        } ex-pill-btn--md ex-pill-btn--full`;
+      }
+      const btnIcon = card.querySelector('[data-lvl-btn-icon]');
+      if (btnIcon) {
+        btnIcon.innerHTML = window.ExoticIcons.get(parts.guestLocked ? 'lock' : 'play');
+      }
       const btnLbl = card.querySelector('[data-lvl-btn-label]');
       if (btnLbl) btnLbl.textContent = parts.btnLabel;
     }
@@ -432,7 +514,10 @@
 
   function buildShopCardParts(item) {
     const state = window.ExoticStorage.getState();
-    const owned = window.ExoticStorage.ownsItem(item.id);
+    const guestLocked = Boolean(
+      window.ExoticAuth?.isGuest() && !window.ExoticAuth.isGuestAllowedShopItem(item.id)
+    );
+    const owned = !guestLocked && window.ExoticStorage.ownsItem(item.id);
     const isUpgrade = item.category === 'upgrades';
     const slotMap = {
       auras: 'aura',
@@ -441,16 +526,25 @@
       trails: 'trail',
       emotes: 'emote'
     };
-    const isEquipped = isUpgrade
-      ? window.ExoticStorage.isUpgradeActive(item.id)
-      : state.equipped[slotMap[item.category]] === item.id;
+    const isEquipped =
+      !guestLocked &&
+      (isUpgrade
+        ? window.ExoticStorage.isUpgradeActive(item.id)
+        : state.equipped[slotMap[item.category]] === item.id);
 
     const canAfford = isUpgrade ? state.skillPoints >= item.cost : state.coins >= item.cost;
     const currIcon = window.ExoticIcons.get(isUpgrade ? 'skill' : 'coin');
     const currUnit = isUpgrade ? 'SP' : 'Coins';
 
     let actionHtml = '';
-    if (!owned) {
+    if (guestLocked) {
+      actionHtml = `
+        <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full" disabled>
+          ${window.ExoticIcons.get('lock')}
+          <span>Full Account Only</span>
+        </button>
+      `;
+    } else if (!owned) {
       actionHtml = `
         <button type="button" class="ex-pill-btn ${
           canAfford ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
@@ -485,7 +579,9 @@
       `;
     }
 
-    const statusHtml = isEquipped
+    const statusHtml = guestLocked
+      ? `<span class="ex-chip ex-chip--subtle mono">Guest Locked</span>`
+      : isEquipped
       ? `<span class="ex-chip ex-chip--inverted">${isUpgrade ? 'Active' : 'Equipped'}</span>`
       : owned
       ? `<span class="ex-video-badge">Owned</span>`
@@ -497,6 +593,7 @@
         : '';
 
     return {
+      guestLocked,
       actionHtml,
       statusHtml,
       globalUnlocksPill
@@ -570,7 +667,7 @@
       const parts = buildShopCardParts(item);
 
       const card = document.createElement('article');
-      card.className = 'ex-video-card';
+      card.className = `ex-video-card${parts.guestLocked ? ' is-guest-locked' : ''}`;
       card.setAttribute('data-shop-card-id', item.id);
       card.innerHTML = `
         <div class="ex-video-stage">
@@ -617,6 +714,7 @@
       const card = grid.querySelector(`[data-shop-card-id="${item.id}"]`);
       if (!card) continue;
       const parts = buildShopCardParts(item);
+      card.classList.toggle('is-guest-locked', Boolean(parts.guestLocked));
 
       const tierEl = card.querySelector('[data-shop-tier]');
       if (tierEl) tierEl.textContent = item.tier;
@@ -890,15 +988,19 @@
     window.ExoticAuraRenderer.drawFront(c, state.equipped.aura, 0, 0, t, pal);
     c.restore();
 
+    const isGuest = Boolean(window.ExoticAuth?.isGuest());
+    const maxStages = isGuest ? window.ExoticAuth.GUEST_MAX_LEVEL : 8;
     const callsign = (state.callsign || 'EXOTIC RUNNER').toUpperCase();
-    const cleared = Object.values(state.levelStats).filter((s) => s && s.cleared).length;
+    const cleared = Object.entries(state.levelStats).filter(
+      ([lvlId, s]) => Number(lvlId) <= maxStages && s && s.cleared
+    ).length;
     const charItem = window.ExoticShopData.getById(state.equipped.character);
     const skinItem = window.ExoticShopData.getById(state.equipped.skin);
     const auraItem = window.ExoticShopData.getById(state.equipped.aura);
 
     c.fillStyle = pal.playerPrimary;
     c.font = '900 13px -apple-system, BlinkMacSystemFont, sans-serif';
-    c.fillText('EXOTIC · RUNNER LOADOUT', 292, 64);
+    c.fillText(isGuest ? 'EXOTIC · GUEST LOADOUT' : 'EXOTIC · RUNNER LOADOUT', 292, 64);
 
     c.font = '900 32px -apple-system, BlinkMacSystemFont, sans-serif';
     c.fillText(callsign.slice(0, 16), 292, 108);
@@ -911,14 +1013,16 @@
       142
     );
     c.fillText(
-      `Aura: ${auraItem ? auraItem.name : 'None'} · ${state.unlockedAchievements.length}/10 Achievements`,
+      isGuest
+        ? `Aura: ${auraItem ? auraItem.name : 'None'} · Guest Runner`
+        : `Aura: ${auraItem ? auraItem.name : 'None'} · ${state.unlockedAchievements.length}/10 Achievements`,
       292,
       168
     );
     c.globalAlpha = 1;
 
     const pills = [
-      ['CLEARED', `${cleared} / 8`],
+      ['CLEARED', `${cleared} / ${maxStages}`],
       ['DEATHS', `${state.telemetry.totalDeaths}`],
       ['COINS', `${state.coins}`]
     ];
@@ -988,15 +1092,56 @@
       ghostsBtn.textContent = gOn ? 'Enabled' : 'Hidden';
     }
 
+    const isGuest = Boolean(window.ExoticAuth?.isGuest());
+    const roleTitle = document.getElementById('set-account-role-title');
+    const roleDesc = document.getElementById('set-account-role-desc');
+    const delBtnLabel = document.getElementById('set-delete-account-label');
     const accountBadge = document.getElementById('set-account-username');
+    const guestWrap = document.getElementById('set-guest-username-wrap');
+    const authMethodsWrap = document.getElementById('set-auth-methods-wrap');
+
+    if (roleTitle) {
+      roleTitle.textContent = isGuest ? 'Registered Guest Account' : 'Registered Account';
+    }
+    if (roleDesc) {
+      roleDesc.textContent = isGuest
+        ? 'You remain bound to this Guest account across sign-outs until deleted below. No password or authentication methods are used.'
+        : 'You remain bound to this account across sign-outs until deleted below.';
+    }
+    if (delBtnLabel) {
+      delBtnLabel.textContent = isGuest ? 'Delete Guest Account' : 'Delete Account';
+    }
     if (accountBadge && window.ExoticAuth) {
       const uname = window.ExoticAuth.getUsername() || state.callsign || 'runner';
-      const activeList = window.ExoticAuth.getAuthMethods();
-      const methodLabel = window.ExoticAuth.formatMethodListLabel(activeList);
-      accountBadge.textContent = `@${uname} · ${methodLabel}`;
+      if (isGuest) {
+        accountBadge.textContent = `@${uname} · Guest Account`;
+      } else {
+        const activeList = window.ExoticAuth.getAuthMethods();
+        const methodLabel = window.ExoticAuth.formatMethodListLabel(activeList);
+        accountBadge.textContent = `@${uname} · ${methodLabel}`;
+      }
     }
 
-    renderSettingsAuthMethods();
+    if (guestWrap) guestWrap.classList.toggle('is-hidden', !isGuest);
+    if (authMethodsWrap) authMethodsWrap.classList.toggle('is-hidden', isGuest);
+
+    if (isGuest) {
+      const guestInput = document.getElementById('set-guest-username-input');
+      const curUname = window.ExoticAuth?.getUsername() || state.callsign || '';
+      if (guestInput && document.activeElement !== guestInput) {
+        guestInput.value = curUname;
+        guestInput.setCustomValidity('');
+        setAuthValidationUI(
+          'set-guest',
+          'neutral',
+          `Current Guest username @${curUname} · Edit to check availability`,
+          'GUEST',
+          'user'
+        );
+      }
+    } else {
+      renderSettingsAuthMethods();
+    }
 
     const delConfirmBox = document.getElementById('set-delete-confirm-box');
     if (delConfirmBox && !window.ExoticAuth?.isSignedIn?.()) {
@@ -1026,6 +1171,10 @@
   }
 
   function launchLevel(levelId) {
+    if (window.ExoticAuth?.isGuest() && !window.ExoticAuth.isGuestAllowedLevel(levelId)) {
+      showToast('Stages 04–08 require a full account. Delete Guest in Settings to register.');
+      return;
+    }
     closeModals();
     window.ExoticRouter.navigate('play', { levelId });
     const touchWrap = document.getElementById('touch-controls');
@@ -1051,10 +1200,14 @@
     if (!modal) return;
 
     const state = window.ExoticStorage.getState();
+    const isGuest = Boolean(window.ExoticAuth?.isGuest());
+    const maxStage = isGuest ? window.ExoticAuth.GUEST_MAX_LEVEL : 8;
     const titleEl = document.getElementById('vic-stage-title');
     const timeEl = document.getElementById('vic-time');
     const deathsEl = document.getElementById('vic-deaths');
     const rewardsEl = document.getElementById('vic-rewards');
+    const publishWrap = document.getElementById('vic-publish-wrap');
+    const guestLbNote = document.getElementById('vic-guest-lb-disabled');
     const callsignInput = document.getElementById('vic-callsign-input');
     const publishBtn = document.getElementById('vic-publish-btn');
     const nextBtn = document.getElementById('vic-next-btn');
@@ -1067,16 +1220,18 @@
         ? `+${payload.rewardSummary.earnedCoins} Coins · +${payload.rewardSummary.earnedSP} SP`
         : 'Already Completed';
     }
+    if (publishWrap) publishWrap.classList.toggle('is-hidden', isGuest);
+    if (guestLbNote) guestLbNote.classList.toggle('is-hidden', !isGuest);
     if (callsignInput) {
       callsignInput.value =
         (window.ExoticAuth && window.ExoticAuth.getUsername()) || state.callsign || '';
     }
     if (publishBtn) {
-      publishBtn.disabled = false;
+      publishBtn.disabled = isGuest;
       publishBtn.innerHTML = `${window.ExoticIcons.get('leaderboards')}<span>Publish Verified Run</span>`;
     }
     if (nextBtn) {
-      const hasNext = payload.level.id < 8;
+      const hasNext = payload.level.id < maxStage;
       nextBtn.style.display = hasNext ? 'inline-flex' : 'none';
     }
 
@@ -1754,12 +1909,186 @@
     return false;
   }
 
+  async function validateGuestSignupUsername(immediate = false) {
+    const input = document.getElementById('guest-signup-username-input');
+    if (!input || !window.ExoticAuth) return false;
+
+    if (window.ExoticAuth.hasBoundAccount()) {
+      const bound = window.ExoticAuth.getBoundUsername();
+      const lockMsg = `Cannot re-register until @${bound} is deleted in Settings`;
+      input.setCustomValidity(lockMsg);
+      setAuthValidationUI('guest-signup', 'invalid', lockMsg, 'LOCKED', 'lock');
+      return false;
+    }
+
+    const raw = input.value.trim();
+    if (!raw || !window.ExoticAuth.isValidFormat(raw)) {
+      input.setCustomValidity('username is invalid');
+      setAuthValidationUI(
+        'guest-signup',
+        'invalid',
+        'username is invalid (3–20 letters, numbers, or _)',
+        'INVALID',
+        'skull'
+      );
+      return false;
+    }
+
+    const seq = ++guestSignupCheckSeq;
+    if (!immediate) {
+      input.setCustomValidity('Checking username availability...');
+      setAuthValidationUI('guest-signup', 'neutral', 'Checking availability...', 'WAIT', 'user');
+    }
+
+    const res = await window.ExoticAuth.checkUsername(raw);
+    if (seq !== guestSignupCheckSeq) return false;
+
+    if (window.ExoticAuth.hasBoundAccount()) {
+      const bound = window.ExoticAuth.getBoundUsername();
+      const lockMsg = `Cannot re-register until @${bound} is deleted in Settings`;
+      input.setCustomValidity(lockMsg);
+      setAuthValidationUI('guest-signup', 'invalid', lockMsg, 'LOCKED', 'lock');
+      return false;
+    }
+
+    if (res && (res.taken || res.exists)) {
+      input.setCustomValidity('username is taken');
+      setAuthValidationUI('guest-signup', 'invalid', 'username is taken', 'TAKEN', 'skull');
+      return false;
+    }
+
+    if (res && res.available) {
+      input.setCustomValidity('');
+      setAuthValidationUI(
+        'guest-signup',
+        'valid',
+        'username is available',
+        'AVAILABLE',
+        'check'
+      );
+      return true;
+    }
+
+    input.setCustomValidity('username is invalid');
+    setAuthValidationUI('guest-signup', 'invalid', 'username is invalid', 'INVALID', 'skull');
+    return false;
+  }
+
+  async function ensureGuestSignupCandidate(forceNew = false) {
+    const input = document.getElementById('guest-signup-username-input');
+    if (!input || !window.ExoticAuth) return;
+
+    if (window.ExoticAuth.hasBoundAccount()) {
+      const bound = window.ExoticAuth.getBoundUsername();
+      const lockMsg = `Cannot re-register until @${bound} is deleted in Settings`;
+      input.setCustomValidity(lockMsg);
+      setAuthValidationUI('guest-signup', 'invalid', lockMsg, 'LOCKED', 'lock');
+      return;
+    }
+
+    if (!forceNew && input.value.trim()) {
+      await validateGuestSignupUsername(false);
+      return;
+    }
+
+    const generated = await window.ExoticAuth.generateGuestUsername();
+    if (window.ExoticAuth.hasBoundAccount()) return;
+    if (forceNew || !input.value.trim()) {
+      guestSignupCheckSeq += 1;
+      input.value = generated;
+      input.setCustomValidity('');
+      setAuthValidationUI(
+        'guest-signup',
+        'valid',
+        'username is available',
+        'AVAILABLE',
+        'check'
+      );
+      guestSignupCandidateLoaded = true;
+    }
+  }
+
+  async function validateSettingsGuestUsername(immediate = false) {
+    const input = document.getElementById('set-guest-username-input');
+    if (!input || !window.ExoticAuth || !window.ExoticAuth.isGuest()) return false;
+
+    const raw = input.value.trim();
+    const current = window.ExoticAuth.getUsername() || '';
+
+    if (!raw || !window.ExoticAuth.isValidFormat(raw)) {
+      input.setCustomValidity('username is invalid');
+      setAuthValidationUI(
+        'set-guest',
+        'invalid',
+        'username is invalid (3–20 letters, numbers, or _)',
+        'INVALID',
+        'skull'
+      );
+      return false;
+    }
+
+    if (raw.toLowerCase() === current.toLowerCase()) {
+      if (raw === current) {
+        input.setCustomValidity('Enter a new Guest username to change');
+        setAuthValidationUI(
+          'set-guest',
+          'neutral',
+          `Current Guest username @${current} · Edit to check availability`,
+          'CURRENT',
+          'user'
+        );
+        return false;
+      }
+      input.setCustomValidity('');
+      setAuthValidationUI(
+        'set-guest',
+        'valid',
+        'username is available',
+        'AVAILABLE',
+        'check'
+      );
+      return true;
+    }
+
+    const seq = ++guestRenameCheckSeq;
+    if (!immediate) {
+      input.setCustomValidity('Checking username availability...');
+      setAuthValidationUI('set-guest', 'neutral', 'Checking availability...', 'WAIT', 'user');
+    }
+
+    const res = await window.ExoticAuth.checkUsername(raw);
+    if (seq !== guestRenameCheckSeq) return false;
+
+    if (res && (res.taken || res.exists)) {
+      input.setCustomValidity('username is taken');
+      setAuthValidationUI('set-guest', 'invalid', 'username is taken', 'TAKEN', 'skull');
+      return false;
+    }
+
+    if (res && res.available) {
+      input.setCustomValidity('');
+      setAuthValidationUI(
+        'set-guest',
+        'valid',
+        'username is available',
+        'AVAILABLE',
+        'check'
+      );
+      return true;
+    }
+
+    input.setCustomValidity('username is invalid');
+    setAuthValidationUI('set-guest', 'invalid', 'username is invalid', 'INVALID', 'skull');
+    return false;
+  }
+
   async function validateSignInUsername(immediate = false) {
     const input = document.getElementById('signin-username-input');
     if (!input || !window.ExoticAuth) return false;
 
     const raw = input.value.trim();
     if (!raw) {
+      signinTargetIsGuest = false;
       applySigninAllowedMethods([]);
       input.setCustomValidity('username is invalid');
       setAuthValidationUI(
@@ -1773,6 +2102,7 @@
     }
 
     if (!window.ExoticAuth.isValidFormat(raw)) {
+      signinTargetIsGuest = false;
       applySigninAllowedMethods([]);
       input.setCustomValidity('username is invalid');
       setAuthValidationUI('signin', 'invalid', 'username is invalid', 'INVALID', 'skull');
@@ -1789,6 +2119,7 @@
     if (seq !== signinCheckSeq) return false;
 
     if (!res || !res.valid) {
+      signinTargetIsGuest = false;
       applySigninAllowedMethods([]);
       input.setCustomValidity('username is invalid');
       setAuthValidationUI('signin', 'invalid', 'username is invalid', 'INVALID', 'skull');
@@ -1796,6 +2127,7 @@
     }
 
     if (!res.exists) {
+      signinTargetIsGuest = false;
       applySigninAllowedMethods([]);
       input.setCustomValidity('username is not registered');
       setAuthValidationUI(
@@ -1810,11 +2142,27 @@
 
     const bound = res.boundUsername || window.ExoticAuth.getBoundUsername();
     if (bound && raw.toLowerCase() !== bound.toLowerCase()) {
+      signinTargetIsGuest = false;
       applySigninAllowedMethods([]);
       const lockMsg = `Account locked to @${bound} until deleted in Settings`;
       input.setCustomValidity(lockMsg);
       setAuthValidationUI('signin', 'invalid', lockMsg, 'LOCKED', 'lock');
       return false;
+    }
+
+    signinTargetIsGuest = Boolean(res.isGuest);
+
+    if (signinTargetIsGuest) {
+      applySigninAllowedMethods([]);
+      input.setCustomValidity('');
+      setAuthValidationUI(
+        'signin',
+        'valid',
+        `@${res.canonicalUsername || raw} verified · Guest Account (No Password)`,
+        'GUEST',
+        'check'
+      );
+      return true;
     }
 
     const registeredMethods = window.ExoticAuth.normalizeMethodList(
@@ -1845,12 +2193,16 @@
   function renderSignUpView() {
     const input = document.getElementById('signup-username-input');
     const submitBtn = document.getElementById('signup-submit-btn');
+    const guestInput = document.getElementById('guest-signup-username-input');
+    const guestShuffleBtn = document.getElementById('guest-signup-shuffle-btn');
+    const guestSubmitBtn = document.getElementById('guest-signup-submit-btn');
     const lockBanner = document.getElementById('signup-lock-banner');
     const lockTitle = document.getElementById('signup-lock-title');
     const lockDesc = document.getElementById('signup-lock-desc');
 
     const hasBound = window.ExoticAuth ? window.ExoticAuth.hasBoundAccount() : false;
     const bound = window.ExoticAuth ? window.ExoticAuth.getBoundUsername() : null;
+    const boundIsGuest = window.ExoticAuth ? window.ExoticAuth.isBoundGuest() : false;
 
     applyAuthMethodUI('signup', signupAuthMethod);
 
@@ -1858,9 +2210,15 @@
       lockBanner.classList.toggle('is-visible', hasBound);
     }
     if (hasBound && bound) {
-      if (lockTitle) lockTitle.textContent = `Registration Locked to @${bound}`;
+      if (lockTitle) {
+        lockTitle.textContent = boundIsGuest
+          ? `Guest Account Locked to @${bound}`
+          : `Registration Locked to @${bound}`;
+      }
       if (lockDesc) {
-        lockDesc.textContent = `This device is already registered as @${bound}. Sign back in as @${bound} — you cannot re-register until @${bound} is deleted from Settings.`;
+        lockDesc.textContent = boundIsGuest
+          ? `This device is registered as Guest @${bound}. Sign back in as @${bound} — you cannot register a new Guest or account until @${bound} is deleted from Settings.`
+          : `This device is already registered as @${bound}. Sign back in as @${bound} — you cannot re-register until @${bound} is deleted from Settings.`;
       }
       if (input) {
         input.setCustomValidity(`Cannot re-register until @${bound} is deleted in Settings`);
@@ -1873,8 +2231,25 @@
         'LOCKED',
         'lock'
       );
+
+      if (guestInput) {
+        guestInput.value = boundIsGuest ? bound : guestInput.value;
+        guestInput.setCustomValidity(`Cannot re-register until @${bound} is deleted in Settings`);
+      }
+      if (guestShuffleBtn) guestShuffleBtn.disabled = true;
+      if (guestSubmitBtn) guestSubmitBtn.disabled = false;
+      setAuthValidationUI(
+        'guest-signup',
+        'invalid',
+        `Cannot re-register until @${bound} is deleted in Settings`,
+        'LOCKED',
+        'lock'
+      );
       return;
     }
+
+    if (guestShuffleBtn) guestShuffleBtn.disabled = false;
+    ensureGuestSignupCandidate(!guestSignupCandidateLoaded && !guestInput?.value?.trim());
 
     if (input) {
       if (input.value.trim()) {
@@ -1902,13 +2277,17 @@
 
     const hasBound = window.ExoticAuth ? window.ExoticAuth.hasBoundAccount() : false;
     const bound = window.ExoticAuth ? window.ExoticAuth.getBoundUsername() : null;
+    const boundIsGuest = window.ExoticAuth ? window.ExoticAuth.isBoundGuest() : false;
     const boundMethods = window.ExoticAuth ? window.ExoticAuth.getBoundAuthMethods() : [];
     const authState = window.ExoticAuth ? window.ExoticAuth.getState() : {};
 
     if (hasBound && bound && input && !input.value.trim()) {
       input.value = bound;
     }
-    if (hasBound && boundMethods.length > 0) {
+    if (hasBound && boundIsGuest) {
+      signinTargetIsGuest = true;
+      applySigninAllowedMethods([]);
+    } else if (hasBound && boundMethods.length > 0) {
       if (!signinManualMethodOverride || !boundMethods.includes(signinAuthMethod)) {
         signinAuthMethod = boundMethods[0];
       }
@@ -1925,13 +2304,20 @@
       lockBanner.classList.toggle('is-visible', hasBound);
     }
     if (hasBound && bound) {
-      const mLabel =
-        boundMethods.length > 0
-          ? ` with ${window.ExoticAuth.formatMethodListLabel(boundMethods)}`
-          : '';
-      if (lockTitle) lockTitle.textContent = `Bound Account: @${bound}`;
-      if (lockDesc) {
-        lockDesc.textContent = `Signed out of @${bound}. Verify @${bound}${mLabel} below to sign back into the same account (re-registration stays locked until deleted from Settings).`;
+      if (boundIsGuest) {
+        if (lockTitle) lockTitle.textContent = `Bound Guest Account: @${bound}`;
+        if (lockDesc) {
+          lockDesc.textContent = `Signed out of Guest @${bound}. Press Sign In below to enter the same Guest account with no password required (re-registration stays locked until deleted from Settings).`;
+        }
+      } else {
+        const mLabel =
+          boundMethods.length > 0
+            ? ` with ${window.ExoticAuth.formatMethodListLabel(boundMethods)}`
+            : '';
+        if (lockTitle) lockTitle.textContent = `Bound Account: @${bound}`;
+        if (lockDesc) {
+          lockDesc.textContent = `Signed out of @${bound}. Verify @${bound}${mLabel} below to sign back into the same account (re-registration stays locked until deleted from Settings).`;
+        }
       }
       if (fillLabel) fillLabel.textContent = `Use @${bound}`;
       if (switchHint) switchHint.textContent = `Bound to @${bound}`;
@@ -2339,6 +2725,118 @@
       }
     });
 
+    // Guest Sign-Up: Auto-Generated, Changeable Username with Custom HTML5 Validation (No Password / No Auth Methods)
+    document.getElementById('guest-signup-shuffle-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.unlock();
+      window.ExoticAudio.click();
+      ensureGuestSignupCandidate(true);
+    });
+
+    const guestSignupInput = document.getElementById('guest-signup-username-input');
+    if (guestSignupInput) {
+      guestSignupInput.addEventListener('input', () => {
+        if (guestSignupDebounceTimer) clearTimeout(guestSignupDebounceTimer);
+        const val = guestSignupInput.value.trim();
+        if (window.ExoticAuth?.hasBoundAccount()) {
+          validateGuestSignupUsername(true);
+          return;
+        }
+        if (!val || !window.ExoticAuth?.isValidFormat(val)) {
+          validateGuestSignupUsername(true);
+          return;
+        }
+        guestSignupInput.setCustomValidity('Checking username availability...');
+        setAuthValidationUI(
+          'guest-signup',
+          'neutral',
+          'Checking availability...',
+          'WAIT',
+          'user'
+        );
+        guestSignupDebounceTimer = setTimeout(() => {
+          validateGuestSignupUsername(false);
+        }, 160);
+      });
+
+      guestSignupInput.addEventListener('invalid', () => {
+        if (
+          !guestSignupInput.validationMessage ||
+          guestSignupInput.validity.valueMissing ||
+          guestSignupInput.validity.tooShort ||
+          guestSignupInput.validity.patternMismatch
+        ) {
+          if (window.ExoticAuth?.hasBoundAccount()) {
+            const b = window.ExoticAuth.getBoundUsername();
+            guestSignupInput.setCustomValidity(
+              `Cannot re-register until @${b} is deleted in Settings`
+            );
+            setAuthValidationUI(
+              'guest-signup',
+              'invalid',
+              `Cannot re-register until @${b} is deleted in Settings`,
+              'LOCKED',
+              'lock'
+            );
+          } else {
+            guestSignupInput.setCustomValidity('username is invalid');
+            setAuthValidationUI(
+              'guest-signup',
+              'invalid',
+              'username is invalid (3–20 letters, numbers, or _)',
+              'INVALID',
+              'skull'
+            );
+          }
+        }
+      });
+    }
+
+    document.getElementById('guest-signup-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      window.ExoticAudio.unlock();
+      window.ExoticAudio.click();
+      const input = document.getElementById('guest-signup-username-input');
+      const submitBtn = document.getElementById('guest-signup-submit-btn');
+      if (!input || !window.ExoticAuth) return;
+
+      if (!input.value.trim() && !window.ExoticAuth.hasBoundAccount()) {
+        await ensureGuestSignupCandidate(true);
+      }
+
+      const isValid = await validateGuestSignupUsername(true);
+      if (!isValid || !input.checkValidity()) {
+        input.reportValidity();
+        return;
+      }
+
+      const guestUsername = input.value.trim();
+      if (submitBtn) submitBtn.disabled = true;
+      const res = await window.ExoticAuth.signUpGuest(guestUsername);
+      if (submitBtn) submitBtn.disabled = false;
+
+      if (res && res.ok) {
+        window.ExoticAudio.buy();
+        showToast(`Entered as Guest @${res.username}.`);
+        window.ExoticRouter.navigate('menu');
+        return;
+      }
+
+      if (res?.code === 'USERNAME_TAKEN' || res?.error === 'username_taken') {
+        input.setCustomValidity('username is taken');
+        setAuthValidationUI('guest-signup', 'invalid', 'username is taken', 'TAKEN', 'skull');
+        input.reportValidity();
+      } else if (res?.code === 'ACCOUNT_LOCKED' || res?.error === 'device_account_exists') {
+        const b = res.boundUsername || window.ExoticAuth.getBoundUsername() || 'existing user';
+        input.setCustomValidity(`Cannot re-register until @${b} is deleted in Settings`);
+        renderSignUpView();
+        input.reportValidity();
+      } else {
+        input.setCustomValidity('username is invalid');
+        setAuthValidationUI('guest-signup', 'invalid', 'username is invalid', 'INVALID', 'skull');
+        input.reportValidity();
+      }
+    });
+
     const signinInput = document.getElementById('signin-username-input');
     if (signinInput) {
       signinInput.addEventListener('input', () => {
@@ -2393,7 +2891,11 @@
 
       // Start hardware biometric scan synchronously BEFORE any network await to preserve user gesture!
       let pendingBioPromise = null;
-      if (signinAuthMethod === 'fingerprint' || signinAuthMethod === 'faceid') {
+      if (
+        !signinTargetIsGuest &&
+        signinAllowedMethods.length > 0 &&
+        (signinAuthMethod === 'fingerprint' || signinAuthMethod === 'faceid')
+      ) {
         if (
           !signinBioAssertion ||
           signinBioAssertion.method !== signinAuthMethod ||
@@ -2412,23 +2914,25 @@
         return;
       }
 
-      let authPayload = { authMethod: signinAuthMethod };
+      let authPayload = signinTargetIsGuest
+        ? { authMethod: 'none', isGuest: true }
+        : { authMethod: signinAuthMethod };
 
-      if (signinAuthMethod === 'password') {
+      if (!signinTargetIsGuest && signinAuthMethod === 'password') {
         const pwInput = document.getElementById('signin-password-input');
         if (!validateCredentialFieldLive('signin') || !pwInput?.checkValidity()) {
           pwInput?.reportValidity();
           return;
         }
         authPayload.credential = pwInput.value;
-      } else if (signinAuthMethod === 'pin') {
+      } else if (!signinTargetIsGuest && signinAuthMethod === 'pin') {
         const pinInput = document.getElementById('signin-pin-input');
         if (!validateCredentialFieldLive('signin') || !pinInput?.checkValidity()) {
           pinInput?.reportValidity();
           return;
         }
         authPayload.credential = pinInput.value.trim();
-      } else {
+      } else if (!signinTargetIsGuest) {
         if (pendingBioPromise) {
           const verified = await pendingBioPromise;
           if (!verified) return;
@@ -2675,7 +3179,10 @@
 
     document.getElementById('vic-next-btn')?.addEventListener('click', () => {
       window.ExoticAudio.click();
-      if (lastWinPayload && lastWinPayload.level.id < 8) {
+      const maxStage = window.ExoticAuth?.isGuest()
+        ? window.ExoticAuth.GUEST_MAX_LEVEL
+        : 8;
+      if (lastWinPayload && lastWinPayload.level.id < maxStage) {
         launchLevel(lastWinPayload.level.id + 1);
       }
     });
@@ -2787,14 +3294,126 @@
       document.getElementById('set-delete-confirm-box')?.classList.remove('is-open');
       if (res && res.ok) {
         const signupInput = document.getElementById('signup-username-input');
+        const guestInput = document.getElementById('guest-signup-username-input');
         const signinInput = document.getElementById('signin-username-input');
         if (signupInput) signupInput.value = '';
+        if (guestInput) guestInput.value = '';
         if (signinInput) signinInput.value = '';
+        guestSignupCandidateLoaded = false;
+        signinTargetIsGuest = false;
         applySigninAllowedMethods([]);
         showToast(`Deleted @${res.deletedUsername}. You may register a new account.`);
         window.ExoticRouter.navigate('signup');
       } else {
         showToast('Could not delete account.');
+      }
+    });
+
+    // Settings Guest Username Change (Custom HTML5 Validation: username is available / username is taken)
+    document.getElementById('set-guest-shuffle-btn')?.addEventListener('click', async () => {
+      window.ExoticAudio.unlock();
+      window.ExoticAudio.click();
+      const input = document.getElementById('set-guest-username-input');
+      if (!input || !window.ExoticAuth?.isGuest()) return;
+      const candidate = await window.ExoticAuth.generateGuestUsername();
+      guestRenameCheckSeq += 1;
+      input.value = candidate;
+      input.setCustomValidity('');
+      setAuthValidationUI(
+        'set-guest',
+        'valid',
+        'username is available',
+        'AVAILABLE',
+        'check'
+      );
+    });
+
+    const setGuestInput = document.getElementById('set-guest-username-input');
+    if (setGuestInput) {
+      setGuestInput.addEventListener('input', () => {
+        if (guestRenameDebounceTimer) clearTimeout(guestRenameDebounceTimer);
+        const val = setGuestInput.value.trim();
+        const cur = window.ExoticAuth?.getUsername() || '';
+        if (!val || !window.ExoticAuth?.isValidFormat(val) || val.toLowerCase() === cur.toLowerCase()) {
+          validateSettingsGuestUsername(true);
+          return;
+        }
+        setGuestInput.setCustomValidity('Checking username availability...');
+        setAuthValidationUI(
+          'set-guest',
+          'neutral',
+          'Checking availability...',
+          'WAIT',
+          'user'
+        );
+        guestRenameDebounceTimer = setTimeout(() => {
+          validateSettingsGuestUsername(false);
+        }, 160);
+      });
+
+      setGuestInput.addEventListener('invalid', () => {
+        if (
+          !setGuestInput.validationMessage ||
+          setGuestInput.validity.valueMissing ||
+          setGuestInput.validity.tooShort ||
+          setGuestInput.validity.patternMismatch
+        ) {
+          setGuestInput.setCustomValidity('username is invalid');
+          setAuthValidationUI(
+            'set-guest',
+            'invalid',
+            'username is invalid (3–20 letters, numbers, or _)',
+            'INVALID',
+            'skull'
+          );
+        }
+      });
+    }
+
+    document.getElementById('set-guest-username-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      window.ExoticAudio.unlock();
+      window.ExoticAudio.click();
+      const input = document.getElementById('set-guest-username-input');
+      const saveBtn = document.getElementById('set-guest-save-btn');
+      if (!input || !window.ExoticAuth?.isGuest()) return;
+
+      const isValid = await validateSettingsGuestUsername(true);
+      if (!isValid || !input.checkValidity()) {
+        input.reportValidity();
+        return;
+      }
+
+      const nextName = input.value.trim();
+      if (saveBtn) saveBtn.disabled = true;
+      const res = await window.ExoticAuth.renameGuestUsername(nextName);
+      if (saveBtn) saveBtn.disabled = false;
+
+      if (res && res.ok) {
+        window.ExoticAudio.buy();
+        input.value = res.username;
+        input.setCustomValidity('');
+        setAuthValidationUI(
+          'set-guest',
+          'valid',
+          `Saved Guest username @${res.username}`,
+          'SAVED',
+          'check'
+        );
+        updateGlobalHeader();
+        renderSettingsView();
+        showToast(`Guest username updated to @${res.username}.`);
+        return;
+      }
+
+      if (res?.code === 'USERNAME_TAKEN') {
+        input.setCustomValidity('username is taken');
+        setAuthValidationUI('set-guest', 'invalid', 'username is taken', 'TAKEN', 'skull');
+        input.reportValidity();
+      } else {
+        input.setCustomValidity('username is invalid');
+        setAuthValidationUI('set-guest', 'invalid', 'username is invalid', 'INVALID', 'skull');
+        input.reportValidity();
       }
     });
 

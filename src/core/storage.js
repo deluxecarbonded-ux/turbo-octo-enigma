@@ -493,6 +493,9 @@
     },
     buyShopItem(item) {
       if (!item) return { ok: false, reason: 'Invalid item.' };
+      if (window.ExoticAuth && !window.ExoticAuth.isGuestAllowedShopItem(item.id)) {
+        return { ok: false, reason: 'This item requires a full account.' };
+      }
       if (item.category === 'upgrades') {
         if (state.unlockedUpgrades.includes(item.id)) {
           return { ok: false, reason: 'Already unlocked.' };
@@ -545,6 +548,9 @@
     },
     equipItem(item) {
       if (!item) return;
+      if (window.ExoticAuth && !window.ExoticAuth.isGuestAllowedShopItem(item.id)) {
+        return;
+      }
       if (item.category === 'upgrades') {
         const idx = state.activeUpgrades.indexOf(item.id);
         if (idx >= 0) {
@@ -708,6 +714,7 @@
       };
     },
     unlockAchievement(ach) {
+      if (window.ExoticAuth && window.ExoticAuth.isGuest()) return false;
       if (state.unlockedAchievements.includes(ach.id)) return false;
       state.unlockedAchievements.push(ach.id);
       if (ach.rewardCoins) state.coins += ach.rewardCoins;
@@ -740,6 +747,9 @@
       return localRuns;
     },
     async submitRun(payload) {
+      if (window.ExoticAuth && window.ExoticAuth.isGuest()) {
+        return { ok: false, reason: 'Leaderboards are disabled for Guest accounts.' };
+      }
       const cleanCallsign = String(payload.callsign || state.callsign || '').trim().slice(0, 20);
       if (!cleanCallsign) {
         return { ok: false, reason: 'Enter your Callsign to publish this run.' };

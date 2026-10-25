@@ -57,6 +57,15 @@ Deno.serve(async (req: Request) => {
     if (req.method === 'GET') {
       const url = new URL(req.url);
       const action = url.searchParams.get('action') ?? 'session';
+      if (action === 'guest_candidate') {
+        const { data, error } = await supabase.rpc('rpc_generate_guest_username');
+        if (error) throw error;
+        return new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       if (action === 'check') {
         const username = url.searchParams.get('username') ?? '';
         const { data, error } = await supabase.rpc('rpc_check_username', {
@@ -116,6 +125,39 @@ Deno.serve(async (req: Request) => {
     const credential = body.credential != null ? String(body.credential) : null;
     const biometricCredentialId =
       body.biometricCredentialId != null ? String(body.biometricCredentialId) : null;
+
+    if (action === 'guest_candidate') {
+      const { data, error } = await supabase.rpc('rpc_generate_guest_username');
+      if (error) throw error;
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (action === 'guest_signup') {
+      const { data, error } = await supabase.rpc('rpc_auth_guest_signup', {
+        p_client_key: clientKey,
+        p_username: username || null
+      });
+      if (error) throw error;
+      return new Response(JSON.stringify(data), {
+        status: data?.ok === false ? 400 : 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (action === 'rename_guest') {
+      const { data, error } = await supabase.rpc('rpc_auth_rename_guest', {
+        p_client_key: clientKey,
+        p_new_username: username
+      });
+      if (error) throw error;
+      return new Response(JSON.stringify(data), {
+        status: data?.ok === false ? 400 : 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     if (action === 'check') {
       const { data, error } = await supabase.rpc('rpc_check_username', {

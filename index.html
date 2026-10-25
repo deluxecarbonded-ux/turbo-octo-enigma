@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c16" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c16" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c16" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c16" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c16" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c17" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c17" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c17" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c17" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c17" />
 </head>
 <body>
   <div id="app">
@@ -255,6 +255,61 @@
               </button>
             </form>
 
+            <div id="guest-signup-box" class="auth-guest-box">
+              <div class="auth-guest-head">
+                <div class="auth-guest-title-wrap">
+                  <span class="ex-chip ex-chip--subtle">
+                    <span data-icon="ghost"></span>
+                    <span>Guest Runner · Auto-Generated</span>
+                  </span>
+                  <span class="mono auth-guest-tag">NO PASSWORD</span>
+                </div>
+                <p class="auth-guest-desc">
+                  Enter with an auto-generated changeable Guest username. Includes Stages 01–03 and select armory items, with Leaderboards and Achievements disabled. Persisted until deleted in Settings.
+                </p>
+              </div>
+
+              <form id="guest-signup-form" class="auth-form" novalidate>
+                <div class="auth-field-label">
+                  <label for="guest-signup-username-input">Guest Username</label>
+                  <button type="button" id="guest-signup-shuffle-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs">
+                    <span data-icon="retry"></span>
+                    <span>Randomize</span>
+                  </button>
+                </div>
+
+                <div class="auth-input-wrap">
+                  <span class="auth-input-prefix">@</span>
+                  <input
+                    type="text"
+                    id="guest-signup-username-input"
+                    name="guestUsername"
+                    class="ex-pill-input"
+                    required
+                    minlength="3"
+                    maxlength="20"
+                    pattern="[A-Za-z0-9_]{3,20}"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="guest_runner"
+                  />
+                </div>
+
+                <div id="guest-signup-validation-pill" class="auth-validation-pill" aria-live="polite">
+                  <span class="auth-validation-main">
+                    <span id="guest-signup-validation-icon" data-icon="check"></span>
+                    <span id="guest-signup-validation-msg">username is available</span>
+                  </span>
+                  <span id="guest-signup-validation-badge" class="mono">AVAILABLE</span>
+                </div>
+
+                <button type="submit" id="guest-signup-submit-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg ex-pill-btn--full">
+                  <span data-icon="ghost"></span>
+                  <span>Continue as Guest</span>
+                </button>
+              </form>
+            </div>
+
             <div class="auth-switch-row">
               <span class="auth-switch-hint">Already have a registered account?</span>
               <button type="button" id="signup-switch-signin-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
@@ -489,14 +544,14 @@
                 <span>Shop</span>
               </button>
 
-              <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="achievements">
+              <button type="button" id="menu-btn-achievements" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="achievements">
                 <span data-icon="achievements"></span>
-                <span>Achievements</span>
+                <span id="menu-ach-btn-label">Achievements</span>
               </button>
 
-              <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="leaderboards">
+              <button type="button" id="menu-btn-leaderboards" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="leaderboards">
                 <span data-icon="leaderboards"></span>
-                <span>Leaderboards</span>
+                <span id="menu-lb-btn-label">Leaderboards</span>
               </button>
 
               <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="settings">
@@ -624,7 +679,7 @@
               <h2 class="page-title">Handcrafted Stages</h2>
               <p class="page-subtitle">Animated stage previews showing actual traps, geometry, and runner progression.</p>
             </div>
-            <span class="ex-chip">8 Stages · Hidden Skill Orbs · Par Targets</span>
+            <span id="levels-header-chip" class="ex-chip">8 Stages · Hidden Skill Orbs · Par Targets</span>
           </div>
 
           <div id="levels-grid" class="levels-grid"></div>
@@ -765,8 +820,8 @@
               <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:12px;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
                   <div class="settings-row-info">
-                    <span class="settings-row-title">Registered Account</span>
-                    <span class="settings-row-desc">You remain bound to this account across sign-outs until deleted below.</span>
+                    <span id="set-account-role-title" class="settings-row-title">Registered Account</span>
+                    <span id="set-account-role-desc" class="settings-row-desc">You remain bound to this account across sign-outs until deleted below.</span>
                   </div>
                   <span id="set-account-username" class="ex-chip ex-chip--inverted mono">@runner</span>
                 </div>
@@ -778,7 +833,7 @@
                   </button>
                   <button type="button" id="set-delete-account-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
                     <span data-icon="trash"></span>
-                    <span>Delete Account</span>
+                    <span id="set-delete-account-label">Delete Account</span>
                   </button>
                 </div>
 
@@ -796,6 +851,64 @@
                     </button>
                   </div>
                 </div>
+              </div>
+
+              <!-- Guest Username Manager (Visible ONLY for Guest Accounts; No Password & No Auth Methods) -->
+              <div id="set-guest-username-wrap" class="settings-row is-hidden" style="flex-direction:column; align-items:stretch; gap:12px;">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Change Guest Username</span>
+                  <span class="settings-row-desc">
+                    Guest accounts have no password and no authentication methods. Edit your Guest username anytime; your progress persists across sign-outs until deleted above.
+                  </span>
+                </div>
+
+                <div class="guest-limits-pills">
+                  <span class="ex-chip ex-chip--subtle mono">Stages 01–03</span>
+                  <span class="ex-chip ex-chip--subtle mono">Select Armory</span>
+                  <span class="ex-chip ex-chip--subtle mono">Leaderboards Disabled</span>
+                  <span class="ex-chip ex-chip--subtle mono">Achievements Disabled</span>
+                  <span class="ex-chip ex-chip--subtle mono">No Password</span>
+                </div>
+
+                <form id="set-guest-username-form" class="auth-form" novalidate>
+                  <div class="auth-field-label">
+                    <label for="set-guest-username-input">Guest Username</label>
+                    <button type="button" id="set-guest-shuffle-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs">
+                      <span data-icon="retry"></span>
+                      <span>Randomize</span>
+                    </button>
+                  </div>
+
+                  <div class="auth-input-wrap">
+                    <span class="auth-input-prefix">@</span>
+                    <input
+                      type="text"
+                      id="set-guest-username-input"
+                      name="guestRename"
+                      class="ex-pill-input"
+                      required
+                      minlength="3"
+                      maxlength="20"
+                      pattern="[A-Za-z0-9_]{3,20}"
+                      autocomplete="off"
+                      spellcheck="false"
+                      placeholder="guest_username"
+                    />
+                  </div>
+
+                  <div id="set-guest-validation-pill" class="auth-validation-pill" aria-live="polite">
+                    <span class="auth-validation-main">
+                      <span id="set-guest-validation-icon" data-icon="user"></span>
+                      <span id="set-guest-validation-msg">Edit username to verify availability</span>
+                    </span>
+                    <span id="set-guest-validation-badge" class="mono">GUEST</span>
+                  </div>
+
+                  <button type="submit" id="set-guest-save-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm ex-pill-btn--full">
+                    <span data-icon="check"></span>
+                    <span>Save Guest Username</span>
+                  </button>
+                </form>
               </div>
 
               <!-- Authentication Methods Manager (Connect / Disconnect Password, PIN, Touch ID / Fingerprint, Face ID) -->
@@ -1141,13 +1254,18 @@
           </div>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:8px; background:var(--bg-surface-2); padding:14px; border-radius:16px;">
+        <div id="vic-publish-wrap" style="display:flex; flex-direction:column; gap:8px; background:var(--bg-surface-2); padding:14px; border-radius:16px;">
           <span style="font-size:12px; font-weight:600; color:var(--fg-secondary);">Publish Verified Run to Leaderboard</span>
           <input type="text" id="vic-callsign-input" class="ex-pill-input mono" maxlength="20" readonly placeholder="Registered Username" />
           <button type="button" id="vic-publish-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full">
             <span data-icon="leaderboards"></span>
             <span>Publish Verified Run</span>
           </button>
+        </div>
+
+        <div id="vic-guest-lb-disabled" class="is-hidden" style="display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--bg-surface-2); padding:12px 16px; border-radius:16px;">
+          <span style="font-size:12px; font-weight:600; color:var(--fg-secondary);">Leaderboards are disabled for Guest accounts.</span>
+          <span class="ex-chip ex-chip--subtle mono">LOCKED</span>
         </div>
 
         <div style="display:flex; flex-direction:column; gap:10px;">
@@ -1174,28 +1292,28 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c16"></script>
-  <script src="src/core/theme.js?v=20261025c16"></script>
-  <script src="src/core/audio.js?v=20261025c16"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c16"></script>
-  <script src="src/core/storage.js?v=20261025c16"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c16"></script>
-  <script src="src/core/auth.js?v=20261025c16"></script>
-  <script src="src/data/shopItems.js?v=20261025c16"></script>
-  <script src="src/data/achievements.js?v=20261025c16"></script>
-  <script src="src/data/levels.js?v=20261025c16"></script>
-  <script src="src/core/realtime.js?v=20261025c16"></script>
-  <script src="src/graphics/characters.js?v=20261025c16"></script>
-  <script src="src/graphics/auras.js?v=20261025c16"></script>
-  <script src="src/graphics/trails.js?v=20261025c16"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c16"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c16"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c16"></script>
-  <script src="src/game/traps.js?v=20261025c16"></script>
-  <script src="src/game/physics.js?v=20261025c16"></script>
-  <script src="src/game/engine.js?v=20261025c16"></script>
-  <script src="src/ui/router.js?v=20261025c16"></script>
-  <script src="src/ui/views.js?v=20261025c16"></script>
-  <script src="src/ui/main.js?v=20261025c16"></script>
+  <script src="src/core/icons.js?v=20261025c17"></script>
+  <script src="src/core/theme.js?v=20261025c17"></script>
+  <script src="src/core/audio.js?v=20261025c17"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c17"></script>
+  <script src="src/core/storage.js?v=20261025c17"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c17"></script>
+  <script src="src/core/auth.js?v=20261025c17"></script>
+  <script src="src/data/shopItems.js?v=20261025c17"></script>
+  <script src="src/data/achievements.js?v=20261025c17"></script>
+  <script src="src/data/levels.js?v=20261025c17"></script>
+  <script src="src/core/realtime.js?v=20261025c17"></script>
+  <script src="src/graphics/characters.js?v=20261025c17"></script>
+  <script src="src/graphics/auras.js?v=20261025c17"></script>
+  <script src="src/graphics/trails.js?v=20261025c17"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c17"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c17"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c17"></script>
+  <script src="src/game/traps.js?v=20261025c17"></script>
+  <script src="src/game/physics.js?v=20261025c17"></script>
+  <script src="src/game/engine.js?v=20261025c17"></script>
+  <script src="src/ui/router.js?v=20261025c17"></script>
+  <script src="src/ui/views.js?v=20261025c17"></script>
+  <script src="src/ui/main.js?v=20261025c17"></script>
 </body>
 </html>

@@ -109,6 +109,9 @@
   window.ExoticAchievements = {
     ACHIEVEMENTS,
     evaluateAll() {
+      if (window.ExoticAuth && window.ExoticAuth.isGuest()) {
+        return [];
+      }
       const state = window.ExoticStorage.getState();
       const newlyUnlocked = [];
       for (const ach of ACHIEVEMENTS) {

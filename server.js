@@ -496,6 +496,9 @@ async function handleRequest(req, res) {
       if (pathname === '/api/auth/session') action = 'session';
       else if (pathname === '/api/auth/webauthn-challenge') action = 'challenge';
       else if (pathname === '/api/auth/check-username') action = 'check';
+      else if (pathname === '/api/auth/guest-candidate') action = 'guest_candidate';
+      else if (pathname === '/api/auth/guest-signup') action = 'guest_signup';
+      else if (pathname === '/api/auth/guest-rename') action = 'rename_guest';
       else if (pathname === '/api/auth/signup') action = 'signup';
       else if (pathname === '/api/auth/signin') action = 'signin';
       else if (pathname === '/api/auth/signout') action = 'signout';
@@ -559,6 +562,20 @@ async function handleRequest(req, res) {
         q = await pgPool.query(
           'SELECT public.rpc_check_username($1, $2) AS res',
           [username, clientKey || null]
+        );
+      } else if (action === 'guest_candidate') {
+        q = await pgPool.query(
+          'SELECT public.rpc_generate_guest_username() AS res'
+        );
+      } else if (action === 'guest_signup') {
+        q = await pgPool.query(
+          'SELECT public.rpc_auth_guest_signup($1, $2) AS res',
+          [clientKey, username || null]
+        );
+      } else if (action === 'rename_guest') {
+        q = await pgPool.query(
+          'SELECT public.rpc_auth_rename_guest($1, $2) AS res',
+          [clientKey, username]
         );
       } else if (action === 'signup') {
         const chosen = authMethod || 'password';
