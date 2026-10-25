@@ -63,6 +63,7 @@
 .ex-brand-pill svg {
   width: 18px;
   height: 18px;
+  color: var(--accent-brand-fill);
 }
 
 /* Route Viewport */
@@ -170,7 +171,7 @@
   height: 100%;
   width: 0%;
   border-radius: var(--radius-pill);
-  background-color: var(--fg-primary);
+  background-color: var(--accent-brand-fill);
   transition: width 140ms var(--ease-snappy);
 }
 
@@ -498,8 +499,8 @@
   z-index: 30;
   padding: 10px 22px;
   border-radius: var(--radius-pill);
-  background-color: var(--pill-primary-bg);
-  color: var(--pill-primary-fg);
+  background-color: var(--rage-bg);
+  color: var(--rage-fg);
   font-size: 13.5px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -580,8 +581,8 @@
 }
 
 .ach-card.is-unlocked .ach-icon {
-  background-color: var(--pill-primary-bg);
-  color: var(--pill-primary-fg);
+  background-color: var(--valid-pill-bg);
+  color: var(--valid-pill-fg);
 }
 
 .ach-icon svg {
@@ -600,7 +601,7 @@
 .ach-progress-fill {
   height: 100%;
   border-radius: var(--radius-pill);
-  background-color: var(--fg-primary);
+  background-color: var(--accent-brand-fill);
 }
 
 /* Leaderboards */
@@ -675,6 +676,21 @@
 .lb-row:nth-child(2) .lb-rank {
   background-color: var(--pill-primary-bg);
   color: var(--pill-primary-fg);
+}
+
+[data-color-mode="colored"] .lb-row:nth-child(2) .lb-rank {
+  background-color: #f59e0b;
+  color: #111827;
+}
+
+[data-color-mode="colored"] .lb-row:nth-child(3) .lb-rank {
+  background-color: #06b6d4;
+  color: #ffffff;
+}
+
+[data-color-mode="colored"] .lb-row:nth-child(4) .lb-rank {
+  background-color: #8b5cf6;
+  color: #ffffff;
 }
 
 /* Settings */
@@ -931,13 +947,13 @@
 }
 
 .auth-validation-pill.is-valid {
-  background-color: var(--pill-primary-bg);
-  color: var(--pill-primary-fg);
+  background-color: var(--valid-pill-bg);
+  color: var(--valid-pill-fg);
 }
 
 .auth-validation-pill.is-invalid {
-  background-color: var(--bg-surface-4);
-  color: var(--fg-primary);
+  background-color: var(--invalid-pill-bg);
+  color: var(--invalid-pill-fg);
 }
 
 .auth-validation-main {

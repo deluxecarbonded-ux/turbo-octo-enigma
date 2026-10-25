@@ -552,7 +552,7 @@
         ctx.closePath();
         ctx.fill();
         ctx.globalAlpha = 0.92;
-        ctx.fillStyle = pal.stageBg;
+        ctx.fillStyle = pal.colored ? '#ffffff' : pal.stageBg;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(labelText, gx, py + 8.5);
@@ -671,11 +671,18 @@
     }
 
     // Shatter & dust particles
-    for (const pt of particles) {
+    for (let idx = 0; idx < particles.length; idx++) {
+      const pt = particles[idx];
       const lifeLeft = 1 - pt.age / pt.life;
       ctx.save();
       ctx.globalAlpha = lifeLeft;
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = pal.colored
+        ? idx % 3 === 0
+          ? pal.hazard
+          : idx % 3 === 1
+            ? pal.coinOuter
+            : pal.auraBright
+        : pal.playerPrimary;
       ctx.translate(pt.x, pt.y);
       ctx.rotate(pt.rot + pt.age * 8);
       const sz = pt.size * lifeLeft;

@@ -73,7 +73,7 @@
     }
 
     // Drifting geometric motes
-    backdropCtx.fillStyle = pal.bgMote;
+    const motePool = Array.isArray(pal.moteColors) && pal.moteColors.length ? pal.moteColors : [pal.bgMote];
     for (let i = 0; i < motes.length; i++) {
       const m = motes[i];
       m.y -= m.speedY * dt;
@@ -84,6 +84,8 @@
       const mx = m.x * dim.w + Math.sin(time * 1.2 + m.drift) * 14 + parallaxX * 0.4;
       const my = m.y * dim.h;
       backdropCtx.save();
+      if (pal.colored) backdropCtx.globalAlpha = 0.65;
+      backdropCtx.fillStyle = motePool[i % motePool.length];
       backdropCtx.translate(mx, my);
       backdropCtx.rotate(time + m.drift);
       backdropCtx.fillRect(-m.size * 0.5, -m.size * 0.5, m.size, m.size);

@@ -221,6 +221,22 @@
       } ex-pill-btn--sm`;
       themeLightBtn.setAttribute('aria-pressed', String(!isDark));
     }
+
+    const isColored = window.ExoticTheme.getColorMode
+      ? window.ExoticTheme.getColorMode() !== 'monochrome'
+      : true;
+    const colorColoredBtn = document.getElementById('set-color-colored');
+    const colorMonoBtn = document.getElementById('set-color-monochrome');
+    if (colorColoredBtn && colorMonoBtn) {
+      colorColoredBtn.className = `ex-pill-btn ${
+        isColored ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      colorColoredBtn.setAttribute('aria-pressed', String(isColored));
+      colorMonoBtn.className = `ex-pill-btn ${
+        !isColored ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      colorMonoBtn.setAttribute('aria-pressed', String(!isColored));
+    }
   }
 
   function updateGlobalHeader() {
@@ -966,6 +982,12 @@
     c.beginPath();
     c.roundRect(62, 248, 168, 18, 9);
     c.fill();
+    if (pal.colored) {
+      c.fillStyle = pal.platformCap;
+      c.beginPath();
+      c.roundRect(66, 248, 160, 4, 2);
+      c.fill();
+    }
 
     const t = performance.now() / 1000;
     c.save();
@@ -1001,10 +1023,15 @@
     const skinItem = window.ExoticShopData.getById(state.equipped.skin);
     const auraItem = window.ExoticShopData.getById(state.equipped.aura);
 
-    c.fillStyle = pal.playerPrimary;
+    c.fillStyle = pal.colored
+      ? pal.mode === 'light'
+        ? '#4f46e5'
+        : '#818cf8'
+      : pal.playerPrimary;
     c.font = '900 13px -apple-system, BlinkMacSystemFont, sans-serif';
     c.fillText(isGuest ? 'EXOTIC · GUEST LOADOUT' : 'EXOTIC · RUNNER LOADOUT', 292, 64);
 
+    c.fillStyle = pal.text || pal.playerPrimary;
     c.font = '900 32px -apple-system, BlinkMacSystemFont, sans-serif';
     c.fillText(callsign.slice(0, 16), 292, 108);
 
@@ -1029,18 +1056,25 @@
       ['DEATHS', `${state.telemetry.totalDeaths}`],
       ['COINS', `${state.coins}`]
     ];
+    const pillAccents = pal.colored
+      ? pal.mode === 'light'
+        ? ['#059669', '#e11d48', '#d97706']
+        : ['#34d399', '#fb7185', '#fbbf24']
+      : [pal.playerPrimary, pal.playerPrimary, pal.playerPrimary];
     pills.forEach(([lbl, val], idx) => {
       const px = 292 + idx * 108;
       const py = 216;
-      c.globalAlpha = 0.1;
-      c.fillStyle = pal.playerPrimary;
+      c.globalAlpha = pal.colored ? 0.14 : 0.1;
+      c.fillStyle = pillAccents[idx];
       c.beginPath();
       c.roundRect(px, py, 98, 72, 16);
       c.fill();
-      c.globalAlpha = 0.62;
+      c.globalAlpha = 0.72;
+      c.fillStyle = pal.text || pal.playerPrimary;
       c.font = '700 10px ui-monospace, SFMono-Regular, Menlo, monospace';
       c.fillText(lbl, px + 14, py + 24);
       c.globalAlpha = 1;
+      c.fillStyle = pillAccents[idx];
       c.font = '800 19px ui-monospace, SFMono-Regular, Menlo, monospace';
       c.fillText(val, px + 14, py + 52);
     });
@@ -3459,6 +3493,22 @@
       window.ExoticAudio.click();
       window.ExoticTheme.setMode('light');
       window.ExoticStorage.updateSettings({ theme: 'light' });
+      updateGlobalHeader();
+      renderSettingsView();
+    });
+
+    document.getElementById('set-color-colored')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      window.ExoticTheme.setColorMode('colored');
+      window.ExoticStorage.updateSettings({ colorMode: 'colored' });
+      updateGlobalHeader();
+      renderSettingsView();
+    });
+
+    document.getElementById('set-color-monochrome')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      window.ExoticTheme.setColorMode('monochrome');
+      window.ExoticStorage.updateSettings({ colorMode: 'monochrome' });
       updateGlobalHeader();
       renderSettingsView();
     });

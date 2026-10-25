@@ -771,7 +771,15 @@
             // Solid monochrome Face ID corner brackets + progress bar (fillRect only)
             const isLight =
               document.documentElement.getAttribute('data-theme') === 'light';
-            const fg = isLight ? '#09090b' : '#fafafa';
+            const isColored =
+              document.documentElement.getAttribute('data-color-mode') === 'colored';
+            const fg = isColored
+              ? isLight
+                ? '#059669'
+                : '#34d399'
+              : isLight
+                ? '#09090b'
+                : '#fafafa';
             const pad = 22;
             const arm = 24;
             const thick = 4;
@@ -919,6 +927,7 @@
   }) {
     const requestId = `bio_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const colorMode = document.documentElement.getAttribute('data-color-mode') || 'colored';
     const qs = new URLSearchParams({
       reqId: requestId,
       mode: mode || 'signup',
@@ -927,7 +936,8 @@
       username: username || '',
       challenge: challenge || '',
       credId: credentialId || '',
-      theme
+      theme,
+      colorMode
     });
 
     const w = 430;

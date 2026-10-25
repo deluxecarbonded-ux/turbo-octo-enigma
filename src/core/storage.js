@@ -45,6 +45,7 @@
       },
       settings: {
         theme: 'dark',
+        colorMode: 'colored',
         muted: false,
         volume: 0.7,
         screenShake: true,
@@ -61,6 +62,7 @@
   let state = createDefaultState();
   const subscribers = new Set();
   let syncDebounceTimer = null;
+  let lastLocalSettingsMutationAt = 0;
 
   function load() {
     try {
@@ -191,8 +193,17 @@
 
   function applySideEffectSettings(nextSettings) {
     if (!nextSettings) return;
-    if (window.ExoticTheme && nextSettings.theme && window.ExoticTheme.getMode() !== nextSettings.theme) {
-      window.ExoticTheme.setMode(nextSettings.theme);
+    if (window.ExoticTheme) {
+      if (nextSettings.theme && window.ExoticTheme.getMode() !== nextSettings.theme) {
+        window.ExoticTheme.setMode(nextSettings.theme);
+      }
+      if (
+        nextSettings.colorMode &&
+        window.ExoticTheme.getColorMode &&
+        window.ExoticTheme.getColorMode() !== nextSettings.colorMode
+      ) {
+        window.ExoticTheme.setColorMode(nextSettings.colorMode);
+      }
     }
     if (window.ExoticAudio) {
       if (typeof nextSettings.muted === 'boolean') {
@@ -332,6 +343,9 @@
       }
 
       if (sets.theme) state.settings.theme = sets.theme;
+      if (sets.color_mode === 'colored' || sets.color_mode === 'monochrome') {
+        state.settings.colorMode = sets.color_mode;
+      }
       if (typeof sets.muted === 'boolean') state.settings.muted = sets.muted;
       if (sets.volume != null) state.settings.volume = Number(sets.volume);
       if (typeof sets.screen_shake === 'boolean') state.settings.screenShake = sets.screen_shake;
@@ -426,10 +440,17 @@
           rec.deathless_clears ?? state.telemetry.deathlessClears
         );
       } else if (table === 'player_settings' && rec) {
+        if (Date.now() - lastLocalSettingsMutationAt < 2500) {
+          return;
+        }
         const isGuestNow = Boolean(window.ExoticAuth && window.ExoticAuth.isGuest());
         state.settings = {
           ...state.settings,
           theme: rec.theme || state.settings.theme,
+          colorMode:
+            rec.color_mode === 'colored' || rec.color_mode === 'monochrome'
+              ? rec.color_mode
+              : state.settings.colorMode,
           muted: typeof rec.muted === 'boolean' ? rec.muted : state.settings.muted,
           volume: rec.volume != null ? Number(rec.volume) : state.settings.volume,
           screenShake:
@@ -536,12 +557,15 @@
         safePatch.leaderboardPromptEnabled = false;
         safePatch.leaderboardNoticeSeen = false;
       }
+      lastLocalSettingsMutationAt = Date.now();
       state.settings = { ...state.settings, ...safePatch };
-      const touchesLeaderboardPrivacy =
+      const immediateCloudSync =
+        'theme' in safePatch ||
+        'colorMode' in safePatch ||
         'leaderboardShareEnabled' in safePatch ||
         'leaderboardPromptEnabled' in safePatch ||
         'leaderboardNoticeSeen' in safePatch;
-      if (touchesLeaderboardPrivacy) {
+      if (immediateCloudSync) {
         persistLocalOnly();
         notifySubscribers();
         return flushCloudStateSync(false);
@@ -918,18 +942,22 @@
     },
     resetLocalOnly() {
       const currentTheme = state.settings.theme;
+      const currentColorMode = state.settings.colorMode || 'colored';
       state = createDefaultState();
       state.settings.theme = currentTheme;
+      state.settings.colorMode = currentColorMode;
       persistLocalOnly();
       notifySubscribers();
     },
     async resetAllData() {
       const currentTheme = state.settings.theme;
+      const currentColorMode = state.settings.colorMode || 'colored';
       const keepNoticeSeen = Boolean(state.settings.leaderboardNoticeSeen);
       const keepUsername =
         (window.ExoticAuth && window.ExoticAuth.getUsername()) || state.callsign || '';
       state = createDefaultState();
       state.settings.theme = currentTheme;
+      state.settings.colorMode = currentColorMode;
       state.settings.leaderboardNoticeSeen = keepNoticeSeen;
       state.callsign = keepUsername;
       persistLocalOnly();

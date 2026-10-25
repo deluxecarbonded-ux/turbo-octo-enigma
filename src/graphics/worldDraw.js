@@ -11,11 +11,23 @@
     ctx.fillStyle = pal.bgPillarAlt;
     ctx.fillRect(sign.x - 3, y + h, 6, 38);
 
-    // Solid monochrome sign board (inverts when triggered for comedic punch!)
-    ctx.fillStyle = sign.triggered ? pal.platform : pal.bgPillarAlt;
+    // Sign board (inverts/lights up when triggered for comedic punch)
+    ctx.fillStyle = sign.triggered
+      ? pal.colored
+        ? pal.signTriggeredBg
+        : pal.platform
+      : pal.colored
+        ? pal.signBg
+        : pal.bgPillarAlt;
     window.ExoticCharacterRenderer.fillRoundRect(ctx, x, y, w, h, 8);
 
-    ctx.fillStyle = sign.triggered ? pal.playerSecondary : pal.textMuted;
+    ctx.fillStyle = sign.triggered
+      ? pal.colored
+        ? pal.signTriggeredFg
+        : pal.playerSecondary
+      : pal.colored
+        ? pal.text
+        : pal.textMuted;
     ctx.font = '800 11px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -298,7 +310,7 @@
     fillRing(ctx, 0, 0, 12.5, 9.5);
     ctx.rotate(time * 2.2);
     fillDiamond(ctx, 0, 0, 6.5, 6.5);
-    ctx.fillStyle = pal.coinInner;
+    ctx.fillStyle = pal.colored ? pal.skillInner : pal.coinInner;
     fillDiamond(ctx, 0, 0, 2.5, 2.5);
     ctx.restore();
   }
@@ -330,7 +342,7 @@
     ctx.fill();
 
     const pulse = 5 + Math.sin(time * 5) * 1.6;
-    ctx.fillStyle = pal.doorFrame;
+    ctx.fillStyle = pal.colored ? pal.doorCore : pal.doorFrame;
     window.ExoticCharacterRenderer.fillDiamond(ctx, d.x + archR, d.y + h * 0.56, pulse, pulse * 1.35);
     ctx.restore();
   }

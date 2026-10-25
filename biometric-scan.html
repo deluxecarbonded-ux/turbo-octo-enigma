@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-color-mode="colored">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC — Biometric Sensor</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c16" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c16" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c16" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c16" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c20" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c20" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c20" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c20" />
   <style>
     body {
       min-height: 100vh;
@@ -142,8 +142,9 @@
     </div>
   </main>
 
-  <script src="src/core/icons.js?v=20261025c16"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c16"></script>
+  <script src="src/core/icons.js?v=20261025c20"></script>
+  <script src="src/core/theme.js?v=20261025c20"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c20"></script>
   <script>
     (function () {
       const qs = new URLSearchParams(window.location.search);
@@ -155,10 +156,14 @@
       let activeChallenge = qs.get('challenge') || '';
       const credentialId = qs.get('credId') || '';
       let currentTheme = qs.get('theme') === 'light' ? 'light' : 'dark';
+      let currentColorMode = qs.get('colorMode') === 'monochrome' ? 'monochrome' : 'colored';
       try {
-        if (!qs.has('theme')) {
-          const saved = JSON.parse(localStorage.getItem('exotic_save_state_v1') || '{}');
-          if (saved?.settings?.theme === 'light') currentTheme = 'light';
+        const saved = JSON.parse(localStorage.getItem('exotic_save_state_v1') || '{}');
+        if (!qs.has('theme') && saved?.settings?.theme === 'light') {
+          currentTheme = 'light';
+        }
+        if (!qs.has('colorMode') && saved?.settings?.colorMode === 'monochrome') {
+          currentColorMode = 'monochrome';
         }
       } catch {
         // Ignore storage read error
@@ -170,7 +175,12 @@
 
       function applyBridgeTheme(nextMode) {
         currentTheme = nextMode === 'light' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', currentTheme);
+        if (window.ExoticTheme) {
+          window.ExoticTheme.init(currentTheme, currentColorMode);
+        } else {
+          document.documentElement.setAttribute('data-theme', currentTheme);
+          document.documentElement.setAttribute('data-color-mode', currentColorMode);
+        }
         if (themeBtnEl) {
           const isDark = currentTheme === 'dark';
           const nextLabel = isDark ? 'Light Mode' : 'Dark Mode';

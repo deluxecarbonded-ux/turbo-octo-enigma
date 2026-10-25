@@ -1,14 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <style>
-    .bg { fill: #fafafa; }
-    .fg { fill: #0a0a0a; }
-    @media (prefers-color-scheme: light) {
-      .bg { fill: #0a0a0a; }
-      .fg { fill: #fafafa; }
-    }
-  </style>
-  <rect class="bg" x="0" y="0" width="64" height="64" rx="20" ry="20" />
-  <g transform="translate(13.2 13.2) scale(1.5667)">
-    <path class="fg" fill-rule="evenodd" clip-rule="evenodd" d="M4 3h16l-3 5H9v2.5h7l-2.2 3.5H9v2.5h8l3 4.5H4V3zm13.5 7.5L21 12l-3.5 1.5L16 17l-1.5-3.5L11 12l3.5-1.5L16 7l1.5 3.5z" />
+  <rect width="64" height="64" rx="20" fill="#6366f1"/>
+  <g transform="translate(11 11) scale(1.75)">
+    <path fill="#ffffff" fill-rule="evenodd" clip-rule="evenodd" d="M4 3h16l-3 5H9v2.5h7l-2.2 3.5H9v2.5h8l3 4.5H4V3zm13.5 7.5L21 12l-3.5 1.5L16 17l-1.5-3.5L11 12l3.5-1.5L16 7l1.5 3.5z"/>
   </g>
 </svg>

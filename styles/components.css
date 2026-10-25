@@ -303,7 +303,7 @@
   height: 100%;
   width: 0%;
   border-radius: var(--radius-pill);
-  background-color: var(--fg-primary);
+  background-color: var(--accent-brand-fill);
 }
 
 .ex-card-body {
@@ -426,3 +426,39 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+
+/* Semantic Solid Icon Accents in Colored Mode (Dark & Light) */
+[data-color-mode="colored"] [data-icon="coin"] {
+  color: var(--accent-coin);
+}
+
+[data-color-mode="colored"] [data-icon="skill"] {
+  color: var(--accent-skill);
+}
+
+[data-color-mode="colored"] [data-icon="skull"] {
+  color: var(--accent-danger);
+}
+
+[data-color-mode="colored"] [data-icon="achievements"],
+[data-color-mode="colored"] [data-icon="leaderboards"] {
+  color: var(--accent-trophy);
+}
+
+[data-color-mode="colored"] [data-icon="bolt"],
+[data-color-mode="colored"] [data-icon="palette"] {
+  color: var(--accent-aura);
+}
+
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon] {
+  color: #ffffff;
+}
+
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon="coin"] {
+  color: #fde047;
+}
+
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon="skill"] {
+  color: #67e8f9;
+}
+

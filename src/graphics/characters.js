@@ -478,15 +478,308 @@
     addRoundRectSubpath(ctx, -hw, -hh, w, h, rad);
   }
 
+  function resolveCharacterColors(charId, pal) {
+    if (!pal || !pal.colored) {
+      return {
+        colored: false,
+        primary: pal.playerPrimary,
+        secondary: pal.playerSecondary,
+        mid: pal.playerMid,
+        accent: pal.playerMid,
+        eyeWhite: pal.playerSecondary,
+        pupil: pal.playerPrimary
+      };
+    }
+    const isLight = pal.mode === 'light';
+    switch (charId) {
+      case 'char_classic':
+        return {
+          colored: true,
+          primary: isLight ? '#4f46e5' : '#6366f1',
+          secondary: '#ffffff',
+          mid: '#38bdf8',
+          accent: '#fbbf24',
+          eyeWhite: '#ffffff',
+          pupil: '#0f172a'
+        };
+      case 'char_mickey':
+        return {
+          colored: true,
+          primary: '#18181b',
+          secondary: '#fde6d2',
+          mid: '#ef4444',
+          accent: '#facc15',
+          glove: '#ffffff',
+          eyeWhite: '#fde6d2',
+          pupil: '#18181b'
+        };
+      case 'char_stickman':
+        return {
+          colored: true,
+          primary: isLight ? '#0284c7' : '#38bdf8',
+          secondary: '#ffffff',
+          mid: '#f43f5e',
+          accent: '#fbbf24',
+          eyeWhite: '#ffffff',
+          pupil: '#0f172a'
+        };
+      case 'char_tom':
+        return {
+          colored: true,
+          primary: '#5b6e8c',
+          secondary: '#f8fafc',
+          mid: '#f472b6',
+          accent: '#bef264',
+          eyeWhite: '#d9f99d',
+          pupil: '#0f172a'
+        };
+      case 'char_jerry':
+        return {
+          colored: true,
+          primary: '#b45309',
+          secondary: '#fde68a',
+          mid: '#f9a8d4',
+          accent: '#78350f',
+          eyeWhite: '#ffffff',
+          pupil: '#1c1917'
+        };
+      case 'char_bugs_bunny':
+        return {
+          colored: true,
+          primary: '#7c8ba1',
+          secondary: '#ffffff',
+          mid: '#f472b6',
+          accent: '#cbd5e1',
+          eyeWhite: '#ffffff',
+          pupil: '#0f172a'
+        };
+      case 'char_donald_duck':
+        return {
+          colored: true,
+          primary: isLight ? '#f8fafc' : '#ffffff',
+          secondary: '#2563eb',
+          mid: '#f97316',
+          accent: '#ef4444',
+          eyeWhite: '#ffffff',
+          pupil: '#0f172a'
+        };
+      case 'char_cat':
+        return {
+          colored: true,
+          primary: isLight ? '#f59e0b' : '#fde68a',
+          secondary: '#1e293b',
+          mid: '#f472b6',
+          accent: '#ffffff',
+          eyeWhite: '#1e293b',
+          pupil: '#1e293b'
+        };
+      case 'char_bunny':
+        return {
+          colored: true,
+          primary: '#8b5cf6',
+          secondary: '#ffffff',
+          mid: '#f43f5e',
+          accent: '#ddd6fe',
+          eyeWhite: '#ffffff',
+          pupil: '#1e1b4b'
+        };
+      case 'char_shinobi':
+        return {
+          colored: true,
+          primary: '#1e293b',
+          secondary: '#fde68a',
+          mid: '#ef4444',
+          accent: '#dc2626',
+          eyeWhite: '#fde68a',
+          pupil: '#0f172a'
+        };
+      case 'char_slime':
+        return {
+          colored: true,
+          primary: isLight ? '#059669' : '#10b981',
+          secondary: '#064e3b',
+          mid: '#6ee7b7',
+          accent: '#ecfdf5',
+          eyeWhite: '#064e3b',
+          pupil: '#ffffff'
+        };
+      case 'char_knight':
+        return {
+          colored: true,
+          primary: isLight ? '#64748b' : '#cbd5e1',
+          secondary: '#0f172a',
+          mid: '#fbbf24',
+          accent: '#f59e0b',
+          eyeWhite: '#0f172a',
+          pupil: '#38bdf8'
+        };
+      case 'char_skeleton':
+        return {
+          colored: true,
+          primary: isLight ? '#cbd5e1' : '#f8fafc',
+          secondary: '#0f172a',
+          mid: '#22d3ee',
+          accent: '#94a3b8',
+          eyeWhite: '#0f172a',
+          pupil: '#22d3ee'
+        };
+      case 'char_imp':
+        return {
+          colored: true,
+          primary: '#e11d48',
+          secondary: '#fef08a',
+          mid: '#fbbf24',
+          accent: '#881337',
+          eyeWhite: '#fef08a',
+          pupil: '#450a0a'
+        };
+      case 'char_astronaut':
+        return {
+          colored: true,
+          primary: isLight ? '#dbeafe' : '#f8fafc',
+          secondary: '#0891b2',
+          mid: '#f97316',
+          accent: '#bae6fd',
+          eyeWhite: '#0891b2',
+          pupil: '#e0f2fe'
+        };
+      case 'char_phantom':
+        return {
+          colored: true,
+          primary: '#7c3aed',
+          secondary: '#67e8f9',
+          mid: '#c084fc',
+          accent: '#312e81',
+          eyeWhite: '#67e8f9',
+          pupil: '#ffffff'
+        };
+      case 'char_tvhead':
+        return {
+          colored: true,
+          primary: '#334155',
+          secondary: '#052e16',
+          mid: '#4ade80',
+          accent: '#fbbf24',
+          eyeWhite: '#052e16',
+          pupil: '#4ade80'
+        };
+      case 'char_cyborg':
+        return {
+          colored: true,
+          primary: '#2563eb',
+          secondary: '#0f172a',
+          mid: '#ef4444',
+          accent: '#fbbf24',
+          eyeWhite: '#0f172a',
+          pupil: '#ef4444'
+        };
+      case 'char_ronin':
+        return {
+          colored: true,
+          primary: '#312e81',
+          secondary: '#fef08a',
+          mid: '#eab308',
+          accent: '#ef4444',
+          eyeWhite: '#fef08a',
+          pupil: '#ffffff'
+        };
+      case 'char_monolith':
+        return {
+          colored: true,
+          primary: '#4c1d95',
+          secondary: '#fbbf24',
+          mid: '#f43f5e',
+          accent: '#a855f7',
+          eyeWhite: '#fbbf24',
+          pupil: '#be123c'
+        };
+      default:
+        return {
+          colored: true,
+          primary: '#6366f1',
+          secondary: '#ffffff',
+          mid: '#38bdf8',
+          accent: '#fbbf24',
+          eyeWhite: '#ffffff',
+          pupil: '#0f172a'
+        };
+    }
+  }
+
+  function resolveSkinColors(skinId, cc, pal) {
+    if (!pal || !pal.colored) {
+      return {
+        primary: pal.playerPrimary,
+        secondary: pal.playerSecondary,
+        mid: pal.playerMid
+      };
+    }
+    switch (skinId) {
+      case 'skin_solid':
+        return { primary: cc.primary, secondary: cc.secondary, mid: cc.mid };
+      case 'skin_steamboat':
+        return { primary: '#18181b', secondary: '#facc15', mid: '#ef4444' };
+      case 'skin_sketch':
+        return { primary: '#fef3c7', secondary: '#1e3a8a', mid: '#2563eb' };
+      case 'skin_inverted':
+        return { primary: '#4c1d95', secondary: '#22d3ee', mid: '#c084fc' };
+      case 'skin_tuxedo':
+        return { primary: '#0f172a', secondary: '#ffffff', mid: '#e11d48' };
+      case 'skin_toon_ink':
+        return { primary: '#312e81', secondary: '#38bdf8', mid: '#f472b6' };
+      case 'skin_split':
+        return { primary: '#f43f5e', secondary: '#ffffff', mid: '#06b6d4' };
+      case 'skin_checker':
+        return { primary: '#6d28d9', secondary: '#fbbf24', mid: '#f472b6' };
+      case 'skin_tiger':
+        return { primary: '#f97316', secondary: '#18181b', mid: '#fde047' };
+      case 'skin_halftone':
+        return { primary: '#db2777', secondary: '#fde047', mid: '#38bdf8' };
+      case 'skin_bandage':
+        return { primary: '#fde68a', secondary: '#92400e', mid: '#d97706' };
+      case 'skin_scanline':
+        return { primary: '#0f172a', secondary: '#34d399', mid: '#10b981' };
+      case 'skin_xray':
+        return { primary: '#0c4a6e', secondary: '#67e8f9', mid: '#38bdf8' };
+      case 'skin_hollow':
+        return { primary: '#f59e0b', secondary: '#2e1065', mid: '#fde047' };
+      case 'skin_stardust':
+        return { primary: '#1e1b4b', secondary: '#fde047', mid: '#c084fc' };
+      case 'skin_glitch':
+        return { primary: '#111827', secondary: '#22d3ee', mid: '#f43f5e' };
+      case 'skin_sailor':
+        return { primary: '#2563eb', secondary: '#ffffff', mid: '#ef4444' };
+      case 'skin_polka':
+        return { primary: '#e11d48', secondary: '#ffffff', mid: '#fde047' };
+      case 'skin_chevron':
+        return { primary: '#1e3a8a', secondary: '#22d3ee', mid: '#818cf8' };
+      case 'skin_harlequin':
+        return { primary: '#581c87', secondary: '#f43f5e', mid: '#fbbf24' };
+      case 'skin_filmstrip':
+        return { primary: '#78350f', secondary: '#fef3c7', mid: '#fbbf24' };
+      case 'skin_mosaic':
+        return { primary: '#0f172a', secondary: '#14b8a6', mid: '#fb7185' };
+      case 'skin_eclipse':
+        return { primary: '#1e1b4b', secondary: '#fde047', mid: '#f97316' };
+      case 'skin_cipher':
+        return { primary: '#052e16', secondary: '#4ade80', mid: '#10b981' };
+      default:
+        return { primary: cc.primary, secondary: cc.secondary, mid: cc.mid };
+    }
+  }
+
   function drawSkinFill(ctx, skinId, charId, w, h, facing, vx, vy, pal, time) {
     const bx = -w - 10;
     const by = -h - 14;
     const bw = (w + 10) * 2;
     const bh = (h + 14) * 2;
+    const sc = h / 26;
 
-    const primary = pal.playerPrimary;
-    const secondary = pal.playerSecondary;
-    const mid = pal.playerMid;
+    const cc = resolveCharacterColors(charId, pal);
+    const sk = resolveSkinColors(skinId, cc, pal);
+    const primary = sk.primary;
+    const secondary = sk.secondary;
+    const mid = sk.mid;
 
     ctx.save();
     applyBodyPath(ctx, charId, w, h, facing, vx, vy, time);
@@ -812,6 +1105,36 @@
     } else {
       ctx.fillStyle = primary;
       ctx.fillRect(bx, by, bw, bh);
+      // Iconic signature garment color blocks on base skin in Colored Mode
+      if (cc.colored) {
+        if (charId === 'char_mickey') {
+          // Red buttoned shorts + golden shoes + white gloves
+          ctx.fillStyle = cc.mid;
+          ctx.fillRect(-6.8 * sc, 2.8 * sc, 13.6 * sc, 6.2 * sc);
+          ctx.fillStyle = cc.accent;
+          ctx.fillRect(bx, 9.6 * sc, bw, bh);
+          ctx.fillStyle = cc.glove || '#ffffff';
+          ctx.fillRect(bx, 1.5 * sc, -bx - 6.6 * sc, 8.0 * sc);
+          ctx.fillRect(6.6 * sc, 1.5 * sc, bw, 8.0 * sc);
+        } else if (charId === 'char_donald_duck') {
+          // Royal blue sailor cap + royal blue sailor tunic + bright orange webbed feet
+          ctx.fillStyle = cc.secondary;
+          ctx.fillRect(bx, by, bw, -by - 9.8 * sc);
+          ctx.fillRect(-7.2 * sc, 1.4 * sc, 14.4 * sc, 5.6 * sc);
+          ctx.fillStyle = cc.mid;
+          ctx.fillRect(bx, 9.6 * sc, bw, bh);
+        } else if (charId === 'char_tom') {
+          // Snowy white cat paws
+          ctx.fillStyle = cc.secondary;
+          ctx.fillRect(bx, 10.2 * sc, bw, bh);
+        } else if (charId === 'char_bugs_bunny') {
+          // Crisp white rabbit feet & gloves
+          ctx.fillStyle = cc.secondary;
+          ctx.fillRect(bx, 10.2 * sc, bw, bh);
+          ctx.fillRect(bx, 2.0 * sc, -bx - 6.8 * sc, 7.6 * sc);
+          ctx.fillRect(6.8 * sc, 2.0 * sc, bw, 7.6 * sc);
+        }
+      }
     }
 
     ctx.restore();
@@ -821,17 +1144,25 @@
     const hw = w * 0.5;
     const hh = h * 0.5;
     const sc = h / 26;
+    const cc = resolveCharacterColors(charId, pal);
+    const sk = resolveSkinColors(skinId, cc, pal);
     const invertedInterior =
       skinId === 'skin_inverted' || skinId === 'skin_hollow';
-    const eyeFill = invertedInterior ? pal.playerPrimary : pal.playerSecondary;
-    const crestFill = pal.playerPrimary;
+    const eyeFill = cc.colored
+      ? cc.eyeWhite
+      : invertedInterior
+        ? pal.playerPrimary
+        : pal.playerSecondary;
+    const crestFill = cc.colored ? sk.primary : pal.playerPrimary;
     const lookX = facing * 2.3 + Math.max(-2, Math.min(2, vx * 0.005));
     const lookY = Math.max(-2, Math.min(2.2, vy * 0.003));
 
     if (charId === 'char_mickey') {
+      const mFace = cc.colored ? cc.secondary : pal.playerSecondary;
+      const mInk = cc.colored ? cc.pupil : pal.playerPrimary;
       // Whippy curved vintage mouse tail behind character
       const wag = Math.sin(time * 11) * 3.2 * sc;
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.primary : crestFill;
       ctx.beginPath();
       ctx.moveTo(-facing * 5 * sc, 7.5 * sc);
       ctx.quadraticCurveTo(-facing * 12 * sc, (6 + wag) * sc, -facing * 14.5 * sc, (1.5 - wag) * sc);
@@ -840,7 +1171,7 @@
       ctx.fill();
 
       // Classic 1928 widow's-peak cartoon face mask
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = mFace;
       ctx.beginPath();
       addEllipseSubpath(ctx, facing * 0.6 * sc, -5.8 * sc, 2.9 * sc, 4.4 * sc);
       addEllipseSubpath(ctx, facing * 4.2 * sc, -5.8 * sc, 2.7 * sc, 4.2 * sc);
@@ -850,7 +1181,7 @@
       // Pie-cut vintage cartoon eyes
       const blink = Math.sin(time * 2.9) > 0.985;
       if (blink) {
-        ctx.fillStyle = pal.playerPrimary;
+        ctx.fillStyle = mInk;
         ctx.fillRect(facing * 0.2 * sc, -5.5 * sc, 3 * sc, 1.2 * sc);
         ctx.fillRect(facing * 3.8 * sc, -5.5 * sc, 3 * sc, 1.2 * sc);
       } else {
@@ -861,8 +1192,8 @@
           1.45 * sc,
           2.7 * sc,
           facing,
-          pal.playerPrimary,
-          pal.playerSecondary
+          mInk,
+          mFace
         );
         fillPieEye(
           ctx,
@@ -871,23 +1202,24 @@
           1.35 * sc,
           2.55 * sc,
           facing,
-          pal.playerPrimary,
-          pal.playerSecondary
+          mInk,
+          mFace
         );
       }
 
       // Iconic shiny button nose at tip of snout
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = mInk;
       ctx.beginPath();
       addEllipseSubpath(ctx, facing * 9.8 * sc, -3.8 * sc, 2.3 * sc, 1.65 * sc, -facing * 0.2);
       ctx.fill();
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = '#ffffff';
+      if (!cc.colored) ctx.fillStyle = pal.playerSecondary;
       ctx.beginPath();
       ctx.arc(facing * 9.4 * sc, -4.3 * sc, 0.65 * sc, 0, Math.PI * 2);
       ctx.fill();
 
       // Cheerful cartoon smile crescent
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = mInk;
       ctx.beginPath();
       ctx.moveTo(facing * 0.5 * sc, -1.6 * sc);
       ctx.quadraticCurveTo(facing * 3.5 * sc, 0.8 * sc, facing * 6.2 * sc, -1.4 * sc);
@@ -897,7 +1229,7 @@
 
       // Classic two shorts buttons (unless tuxedo overrides torso)
       if (skinId !== 'skin_tuxedo') {
-        ctx.fillStyle = pal.playerSecondary;
+        ctx.fillStyle = cc.colored ? cc.accent : pal.playerSecondary;
         ctx.beginPath();
         addEllipseSubpath(ctx, (-1.8 + facing * 0.8) * sc, 6.2 * sc, 1.15 * sc, 1.9 * sc);
         addEllipseSubpath(ctx, (2.2 + facing * 0.8) * sc, 6.2 * sc, 1.15 * sc, 1.9 * sc);
@@ -907,6 +1239,10 @@
     }
 
     if (charId === 'char_tom') {
+      const tomWhite = cc.colored ? cc.secondary : pal.playerSecondary;
+      const tomPink = cc.colored ? cc.mid : pal.playerSecondary;
+      const tomEye = cc.colored ? cc.eyeWhite : pal.playerSecondary;
+      const tomInk = cc.colored ? cc.pupil : pal.playerPrimary;
       // Whippy tomcat tail behind body with contrasting white tail tip
       const wag = Math.sin(time * 10) * 3.4 * sc;
       const tipX = -facing * 15.2 * sc;
@@ -914,13 +1250,13 @@
       ctx.fillStyle = crestFill;
       fillCapsule(ctx, -facing * 5.2 * sc, 8.2 * sc, -facing * 10.6 * sc, (6.2 + wag * 0.5) * sc, 1.85 * sc);
       fillCapsule(ctx, -facing * 10.6 * sc, (6.2 + wag * 0.5) * sc, tipX, tipY, 1.75 * sc);
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = tomWhite;
       ctx.beginPath();
       ctx.arc(tipX, tipY, 2.35 * sc, 0, Math.PI * 2);
       ctx.fill();
 
       // Inner ear triangles
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = tomPink;
       ctx.beginPath();
       ctx.moveTo(-7.6 * sc, -6.6 * sc);
       ctx.lineTo(-9.2 * sc, -13.4 * sc);
@@ -936,7 +1272,7 @@
       ctx.fill();
 
       // Lighter cartoon muzzle puff + chest bib
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = tomWhite;
       ctx.beginPath();
       addEllipseSubpath(ctx, facing * 2.6 * sc, -1.8 * sc, 5.4 * sc, 2.8 * sc);
       if (skinId !== 'skin_tuxedo' && skinId !== 'skin_sailor') {
@@ -945,13 +1281,13 @@
       ctx.fill();
 
       // Tall oval cartoon cat eyes + scheming arched brows + slit pupils
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = tomEye;
       ctx.beginPath();
       addEllipseSubpath(ctx, (facing * 0.4 - 1.8) * sc, -5.8 * sc, 1.9 * sc, 3.0 * sc);
       addEllipseSubpath(ctx, (facing * 0.4 + 2.6) * sc, -5.8 * sc, 1.9 * sc, 3.0 * sc);
       ctx.fill();
 
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = tomInk;
       ctx.beginPath();
       addEllipseSubpath(ctx, (facing * 1.1 - 1.8) * sc, -5.6 * sc, 0.85 * sc, 1.9 * sc);
       addEllipseSubpath(ctx, (facing * 1.1 + 2.6) * sc, -5.6 * sc, 0.85 * sc, 1.9 * sc);
@@ -962,7 +1298,9 @@
       fillCapsule(ctx, (1.2 + facing * 0.3) * sc, -7.8 * sc, (4.6 + facing * 0.3) * sc, -8.8 * sc, 0.75 * sc);
 
       // Triangular cat nose + sly smirk + 3 cheek whiskers per side
+      ctx.fillStyle = cc.colored ? tomPink : tomInk;
       fillDiamond(ctx, facing * 5.8 * sc, -2.5 * sc, 1.6 * sc, 1.15 * sc);
+      ctx.fillStyle = tomInk;
       fillCapsule(ctx, facing * 1.2 * sc, -0.8 * sc, facing * 4.8 * sc, -0.5 * sc, 0.55 * sc);
 
       ctx.fillRect(-12.2 * sc, -3.2 * sc, 4.2 * sc, 0.75 * sc);
@@ -973,6 +1311,9 @@
     }
 
     if (charId === 'char_jerry') {
+      const jerryTan = cc.colored ? cc.secondary : pal.playerSecondary;
+      const jerryPink = cc.colored ? cc.mid : pal.playerSecondary;
+      const jerryInk = cc.colored ? cc.pupil : pal.playerPrimary;
       const earBob = Math.sin(time * 10) * 0.8 * sc;
       const wag = Math.sin(time * 13) * 3.0 * sc;
       // Thin playful curved mouse tail
@@ -981,11 +1322,15 @@
       fillCapsule(ctx, -facing * 10.2 * sc, (5.8 + wag * 0.6) * sc, -facing * 13.8 * sc, (2.2 - wag) * sc, 0.85 * sc);
 
       // Huge contrasting inner ear saucers (signature Jerry silhouette!)
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = jerryPink;
       ctx.beginPath();
       addCircleSubpath(ctx, -8.0 * sc, (-9.0 + earBob) * sc, 3.4 * sc);
       addCircleSubpath(ctx, 8.0 * sc, (-9.0 - earBob * 0.7) * sc, 3.4 * sc);
+      ctx.fill();
+
       // Warm lighter belly & cheeky muzzle patch
+      ctx.fillStyle = jerryTan;
+      ctx.beginPath();
       if (skinId !== 'skin_tuxedo' && skinId !== 'skin_sailor') {
         addEllipseSubpath(ctx, facing * 0.6 * sc, 5.8 * sc, 2.9 * sc, 3.2 * sc);
       }
@@ -993,13 +1338,13 @@
       ctx.fill();
 
       // Big bright mouse eyes with lively catchlights
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = cc.colored ? cc.eyeWhite : pal.playerSecondary;
       ctx.beginPath();
       addEllipseSubpath(ctx, (facing * 0.6 - 1.5) * sc, -4.6 * sc, 1.7 * sc, 2.6 * sc);
       addEllipseSubpath(ctx, (facing * 0.6 + 2.1) * sc, -4.6 * sc, 1.7 * sc, 2.6 * sc);
       ctx.fill();
 
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = jerryInk;
       ctx.beginPath();
       addEllipseSubpath(ctx, (facing * 1.1 - 1.4) * sc, -4.5 * sc, 0.9 * sc, 1.6 * sc);
       addEllipseSubpath(ctx, (facing * 1.1 + 2.2) * sc, -4.5 * sc, 0.9 * sc, 1.6 * sc);
@@ -1015,13 +1360,17 @@
     }
 
     if (charId === 'char_bugs_bunny') {
+      const bugsWhite = cc.colored ? cc.secondary : pal.playerSecondary;
+      const bugsPink = cc.colored ? cc.mid : pal.playerSecondary;
+      const bugsInk = cc.colored ? cc.pupil : pal.playerPrimary;
       const earBend = Math.max(-4.5, Math.min(4.5, -vx * 0.016)) * sc;
       // Tall narrow inner ear slots
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = bugsPink;
       fillCapsule(ctx, -2.8 * sc, -9.6 * sc, -4.5 * sc + earBend * 0.85, -18.8 * sc, 1.0 * sc);
       fillCapsule(ctx, 2.4 * sc, -9.6 * sc, 4.1 * sc + earBend * 0.85, -18.8 * sc, 1.0 * sc);
 
       // Puffed white cheek mask + chest bib + fluffy cotton tail puff
+      ctx.fillStyle = bugsWhite;
       ctx.beginPath();
       addEllipseSubpath(ctx, -4.6 * sc, -1.6 * sc, 3.8 * sc, 2.3 * sc);
       addEllipseSubpath(ctx, 4.6 * sc, -1.6 * sc, 3.8 * sc, 2.3 * sc);
@@ -1033,27 +1382,28 @@
       ctx.fill();
 
       // Tall cartoon eyes + suave half-lidded upper lids
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = bugsWhite;
       ctx.beginPath();
       addEllipseSubpath(ctx, (facing * 0.5 - 1.7) * sc, -5.4 * sc, 1.7 * sc, 2.9 * sc);
       addEllipseSubpath(ctx, (facing * 0.5 + 2.1) * sc, -5.4 * sc, 1.7 * sc, 2.9 * sc);
       ctx.fill();
 
-      ctx.fillStyle = pal.playerMid;
+      ctx.fillStyle = cc.colored ? cc.accent : pal.playerMid;
       fillRoundRect(ctx, (facing * 0.5 - 3.4) * sc, -8.3 * sc, 3.4 * sc, 1.8 * sc, 0.8 * sc);
       fillRoundRect(ctx, (facing * 0.5 + 0.4) * sc, -8.3 * sc, 3.4 * sc, 1.8 * sc, 0.8 * sc);
 
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = bugsInk;
       ctx.beginPath();
       addEllipseSubpath(ctx, (facing * 1.0 - 1.6) * sc, -4.9 * sc, 0.85 * sc, 1.55 * sc);
       addEllipseSubpath(ctx, (facing * 1.0 + 2.2) * sc, -4.9 * sc, 0.85 * sc, 1.55 * sc);
       ctx.fill();
 
       // Triangular rabbit nose + signature twin rectangular buck teeth!
+      ctx.fillStyle = bugsPink;
       fillDiamond(ctx, facing * 3.4 * sc, -2.4 * sc, 1.5 * sc, 1.05 * sc);
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = bugsWhite;
       fillRoundRect(ctx, (facing * 2.8 - 1.8) * sc, -0.7 * sc, 3.6 * sc, 2.5 * sc, 0.5 * sc);
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = bugsInk;
       ctx.fillRect((facing * 2.8 - 0.35) * sc, -0.7 * sc, 0.7 * sc, 2.5 * sc);
 
       // Crisp splayed rabbit whiskers
@@ -1065,22 +1415,26 @@
     }
 
     if (charId === 'char_donald_duck') {
+      const duckInk = cc.colored ? cc.pupil : pal.playerPrimary;
+      const duckWhite = cc.colored ? '#ffffff' : pal.playerSecondary;
+      const duckBill = cc.colored ? cc.mid : pal.playerMid;
+      const duckBow = cc.colored ? cc.accent : pal.playerMid;
       const ribbonFlutter = Math.sin(time * 13) * 1.8 * sc;
       // Fluttering sailor cap ribbons behind head + cap tally band
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = duckInk;
       fillCapsule(ctx, -facing * 4.8 * sc, -9.6 * sc, -facing * 10.6 * sc, (-7.8 + ribbonFlutter) * sc, 0.95 * sc);
       fillCapsule(ctx, -facing * 4.8 * sc, -8.8 * sc, -facing * 9.8 * sc, (-5.8 - ribbonFlutter * 0.7) * sc, 0.85 * sc);
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = cc.colored ? '#fbbf24' : pal.playerSecondary;
       fillRoundRect(ctx, -4.6 * sc, -10.1 * sc, 8.6 * sc, 1.4 * sc, 0.6 * sc);
 
       // Expressive tall duck eyes + feisty slanted Donald brow ridge
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = cc.colored ? '#e0f2fe' : pal.playerSecondary;
       ctx.beginPath();
       addEllipseSubpath(ctx, (facing * 0.6 - 1.5) * sc, -5.8 * sc, 1.8 * sc, 2.9 * sc);
       addEllipseSubpath(ctx, (facing * 0.6 + 2.2) * sc, -5.8 * sc, 1.8 * sc, 2.9 * sc);
       ctx.fill();
 
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = duckInk;
       ctx.beginPath();
       addEllipseSubpath(ctx, (facing * 1.2 - 1.4) * sc, -5.5 * sc, 0.9 * sc, 1.7 * sc);
       addEllipseSubpath(ctx, (facing * 1.2 + 2.3) * sc, -5.5 * sc, 0.9 * sc, 1.7 * sc);
@@ -1089,7 +1443,7 @@
       fillCapsule(ctx, -3.2 * sc, -8.4 * sc, 4.2 * sc, (-7.6 + facing * 0.4) * sc, 0.85 * sc);
 
       // Wide contrasting Duck Bill + expressive bill smile crease
-      ctx.fillStyle = pal.playerMid;
+      ctx.fillStyle = duckBill;
       fillRoundRect(
         ctx,
         (facing > 0 ? 1.0 : -11.4) * sc,
@@ -1101,12 +1455,12 @@
       ctx.beginPath();
       ctx.arc(facing * 10.2 * sc, -3.0 * sc, 1.7 * sc, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = cc.colored ? '#9a3412' : pal.playerPrimary;
       fillCapsule(ctx, facing * 2.0 * sc, -2.1 * sc, facing * 9.6 * sc, -2.3 * sc, 0.55 * sc);
 
       // Classic Sailor Tunic V-collar stripe + prominent front Bow Tie
       if (skinId !== 'skin_tuxedo') {
-        ctx.fillStyle = pal.playerSecondary;
+        ctx.fillStyle = duckWhite;
         ctx.beginPath();
         ctx.moveTo(-4.2 * sc, 2.2 * sc);
         ctx.lineTo(4.2 * sc, 2.2 * sc);
@@ -1114,7 +1468,7 @@
         ctx.closePath();
         ctx.fill();
 
-        ctx.fillStyle = pal.playerMid;
+        ctx.fillStyle = duckBow;
         ctx.beginPath();
         ctx.moveTo(facing * 0.8 * sc, 4.4 * sc);
         ctx.lineTo((facing * 0.8 - 3.8) * sc, 2.6 * sc);
@@ -1131,7 +1485,7 @@
     if (charId === 'char_stickman') {
       const j = computeStickmanJoints(w, h, facing, vx, vy, time);
       // Expressive focused eyes on Stickman head
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = cc.colored ? cc.eyeWhite : pal.playerSecondary;
       const ex = j.headX + facing * 1.6 * sc;
       const ey = j.headY - 0.5 * sc;
       const squint = Math.abs(vx) > 40 ? 0.72 : 1;
@@ -1140,7 +1494,7 @@
 
       // Extra bow-tie flair at Stickman's collar if wearing Tuxedo!
       if (skinId === 'skin_tuxedo') {
-        ctx.fillStyle = pal.playerMid;
+        ctx.fillStyle = sk.mid;
         ctx.beginPath();
         ctx.moveTo(j.neckX, j.neckY + 1 * sc);
         ctx.lineTo(j.neckX - 3.6 * sc, j.neckY - 0.8 * sc);
@@ -1161,7 +1515,7 @@
       fillCapsule(ctx, -facing * 5.5 * sc, 8 * sc, -facing * 12.5 * sc, (3 + sway) * sc, 1.7 * sc);
 
       // Inner ear triangles + mischievous Syobon eyes + whiskers
-      ctx.fillStyle = eyeFill;
+      ctx.fillStyle = cc.colored ? cc.mid : eyeFill;
       ctx.beginPath();
       ctx.moveTo(-7.2 * sc, -6.8 * sc);
       ctx.lineTo(-8.0 * sc, -12.0 * sc);
@@ -1178,13 +1532,16 @@
 
       // Eyes + tiny nose + ":3" cat mouth
       const lx = facing * 1.6 * sc;
+      ctx.fillStyle = cc.colored ? cc.pupil : eyeFill;
       ctx.beginPath();
       ctx.arc(lx - 3.4 * sc, -4.2 * sc, 1.65 * sc, 0, Math.PI * 2);
       ctx.arc(lx + 3.4 * sc, -4.2 * sc, 1.65 * sc, 0, Math.PI * 2);
       ctx.fill();
 
+      ctx.fillStyle = cc.colored ? cc.mid : eyeFill;
       fillDiamond(ctx, lx, -1.8 * sc, 1.5 * sc, 1.1 * sc);
 
+      ctx.fillStyle = cc.colored ? cc.pupil : eyeFill;
       // Crisp cheek whiskers
       ctx.fillRect(-10.5 * sc, -3.5 * sc, 3.5 * sc, 0.9 * sc);
       ctx.fillRect(-10.2 * sc, -1.6 * sc, 3.2 * sc, 0.9 * sc);
@@ -1194,8 +1551,10 @@
     }
 
     if (charId === 'char_bunny') {
-      // Pie-cut vintage toon rabbit eyes + nose + single buck tooth
-      ctx.fillStyle = pal.playerSecondary;
+      const bunMuzzle = cc.colored ? cc.secondary : pal.playerSecondary;
+      const bunInk = cc.colored ? cc.pupil : pal.playerPrimary;
+      // Pie-cut vintage toon rabbit eyes + nose
+      ctx.fillStyle = bunMuzzle;
       ctx.beginPath();
       addEllipseSubpath(ctx, facing * 2.2 * sc, -3.2 * sc, 5.2 * sc, 4.4 * sc);
       ctx.fill();
@@ -1207,8 +1566,8 @@
         1.3 * sc,
         2.4 * sc,
         facing,
-        pal.playerPrimary,
-        pal.playerSecondary
+        bunInk,
+        bunMuzzle
       );
       fillPieEye(
         ctx,
@@ -1217,11 +1576,11 @@
         1.3 * sc,
         2.4 * sc,
         facing,
-        pal.playerPrimary,
-        pal.playerSecondary
+        bunInk,
+        bunMuzzle
       );
 
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = cc.colored ? cc.mid : pal.playerPrimary;
       ctx.beginPath();
       ctx.arc(facing * 6.5 * sc, -2.6 * sc, 1.5 * sc, 0, Math.PI * 2);
       ctx.fill();
@@ -1230,8 +1589,8 @@
 
     if (charId === 'char_slime') {
       // Floating inner bubbles + bouncy wide eyes
-      ctx.fillStyle = eyeFill;
-      ctx.globalAlpha = 0.45;
+      ctx.fillStyle = cc.colored ? cc.mid : eyeFill;
+      ctx.globalAlpha = 0.55;
       ctx.beginPath();
       ctx.arc(-6 * sc, 5 * sc + Math.sin(time * 5) * 1.5, 2.1 * sc, 0, Math.PI * 2);
       ctx.arc(6.5 * sc, 6.5 * sc + Math.cos(time * 4) * 1.2, 1.5 * sc, 0, Math.PI * 2);
@@ -1239,12 +1598,13 @@
       ctx.globalAlpha = 1;
 
       const bounce = Math.sin(time * 10) * 1.1;
+      ctx.fillStyle = eyeFill;
       ctx.beginPath();
       ctx.arc(lookX - 4.4 * sc, -1.5 * sc + bounce, 2.3 * sc, 0, Math.PI * 2);
       ctx.arc(lookX + 4.4 * sc, -1.5 * sc - bounce * 0.6, 2.3 * sc, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.pupil : crestFill;
       ctx.beginPath();
       ctx.arc(lookX - 4.0 * sc, -1.8 * sc + bounce, 0.9 * sc, 0, Math.PI * 2);
       ctx.arc(lookX + 4.8 * sc, -1.8 * sc - bounce * 0.6, 0.9 * sc, 0, Math.PI * 2);
@@ -1254,11 +1614,20 @@
 
     if (charId === 'char_skeleton') {
       // Hollow skull eye sockets + nasal triangle + tooth notches + ribs
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = cc.colored ? cc.secondary : pal.playerSecondary;
       ctx.beginPath();
       ctx.arc(lookX * 0.4 - 3.1 * sc, -6.2 * sc, 2.2 * sc, 0, Math.PI * 2);
       ctx.arc(lookX * 0.4 + 3.1 * sc, -6.2 * sc, 2.2 * sc, 0, Math.PI * 2);
       ctx.fill();
+
+      if (cc.colored) {
+        ctx.fillStyle = cc.pupil;
+        ctx.beginPath();
+        ctx.arc(lookX * 0.5 - 3.1 * sc, -6.2 * sc, 0.9 * sc, 0, Math.PI * 2);
+        ctx.arc(lookX * 0.5 + 3.1 * sc, -6.2 * sc, 0.9 * sc, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = cc.secondary;
+      }
 
       ctx.beginPath();
       ctx.moveTo(lookX * 0.4, -4.2 * sc);
@@ -1279,28 +1648,28 @@
 
     if (charId === 'char_astronaut') {
       // Wide reflective lunar dome visor + specular highlight crescent
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = cc.colored ? cc.secondary : pal.playerSecondary;
       fillRoundRect(ctx, (-5.2 + facing * 1.8) * sc, -8.5 * sc, 10.8 * sc, 7.4 * sc, 3.6 * sc);
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = cc.colored ? '#e0f2fe' : pal.playerPrimary;
       fillRoundRect(ctx, (-3.4 + facing * 1.8) * sc, -7.2 * sc, 4.2 * sc, 1.8 * sc, 0.9 * sc);
       // Chest suit console
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = cc.colored ? cc.mid : pal.playerSecondary;
       fillRoundRect(ctx, -3.2 * sc, 3.8 * sc, 6.4 * sc, 3.8 * sc, 1 * sc);
       return;
     }
 
     if (charId === 'char_tvhead') {
       // Rabbit-ear V antennas on top of monitor
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.accent : crestFill;
       fillCapsule(ctx, -2 * sc, -12 * sc, -6.5 * sc, -17.5 * sc, 0.95 * sc);
       fillCapsule(ctx, 2 * sc, -12 * sc, 6.5 * sc, -17.5 * sc, 0.95 * sc);
 
       // Inner CRT screen bezel
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = cc.colored ? cc.secondary : pal.playerSecondary;
       fillRoundRect(ctx, -8.4 * sc, -10.6 * sc, 16.8 * sc, 10.6 * sc, 1.8 * sc);
 
       // Reactive digital CRT eyes
-      ctx.fillStyle = pal.playerPrimary;
+      ctx.fillStyle = cc.colored ? cc.pupil : pal.playerPrimary;
       if (Math.abs(vy) > 130) {
         // Surprised hollow rings in fast air
         fillRing(ctx, lookX * 0.5 - 3.8 * sc, -5.4 * sc, 2.4 * sc, 1.2 * sc);
@@ -1316,7 +1685,7 @@
       const dir = -facing;
       const flutter1 = Math.sin(time * 15) * 3.5;
       const flutter2 = Math.cos(time * 13) * 3.2;
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.mid : crestFill;
       ctx.beginPath();
       ctx.moveTo(dir * (hw - 2), -hh + 5);
       ctx.lineTo(dir * (hw + 13), -hh + 2 + flutter1);
@@ -1325,7 +1694,7 @@
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = pal.playerMid;
+      ctx.fillStyle = cc.colored ? cc.accent : pal.playerMid;
       ctx.beginPath();
       ctx.moveTo(dir * (hw - 2), -hh + 8);
       ctx.lineTo(dir * (hw + 10), -hh + 9 + flutter2);
@@ -1336,14 +1705,14 @@
 
       ctx.fillStyle = eyeFill;
       ctx.fillRect(-hw + 2, -hh + 5, w - 4, 5);
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.pupil : crestFill;
       ctx.fillRect(lookX - 6, -hh + 6.5, 4.5, 2.2);
       ctx.fillRect(lookX + 2, -hh + 6.5, 4.5, 2.2);
       return;
     }
 
     if (charId === 'char_knight') {
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.mid : crestFill;
       ctx.beginPath();
       ctx.moveTo(-hw + 1, -hh + 2);
       ctx.lineTo(-hw - 5, -hh - 7);
@@ -1365,7 +1734,7 @@
     }
 
     if (charId === 'char_imp') {
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.mid : crestFill;
       ctx.beginPath();
       ctx.moveTo(-hw + 3, -hh + 1);
       ctx.lineTo(-hw - 3, -hh - 8);
@@ -1399,7 +1768,7 @@
 
     if (charId === 'char_cyborg') {
       const tilt = Math.max(-5, Math.min(5, -vx * 0.015));
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.accent : crestFill;
       ctx.beginPath();
       ctx.moveTo(-1.5, -hh);
       ctx.lineTo(1.5, -hh);
@@ -1413,14 +1782,14 @@
 
       ctx.fillStyle = eyeFill;
       fillRoundRect(ctx, -hw + 3, -5, w - 6, 5.5, 2);
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.pupil : crestFill;
       const scan = Math.sin(time * 7) * 4 + lookX;
       ctx.fillRect(scan - 2, -4, 4, 3.5);
       return;
     }
 
     if (charId === 'char_ronin') {
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.mid : crestFill;
       ctx.beginPath();
       ctx.moveTo(0, -hh - 9);
       ctx.lineTo(hw + 9, -hh + 2);
@@ -1437,7 +1806,7 @@
     if (charId === 'char_monolith') {
       ctx.fillStyle = eyeFill;
       fillDiamond(ctx, lookX * 0.7, -2 + lookY * 0.6, 6.5, 4.5);
-      ctx.fillStyle = crestFill;
+      ctx.fillStyle = cc.colored ? cc.pupil : crestFill;
       ctx.beginPath();
       ctx.arc(lookX * 0.9, -2 + lookY * 0.6, 1.9, 0, Math.PI * 2);
       ctx.fill();
@@ -1455,34 +1824,43 @@
   function drawEmoteOverlay(ctx, emoteId, progress, pal) {
     if (!emoteId || progress <= 0 || progress >= 1) return;
     const t = progress;
+    const isColored = Boolean(pal && pal.colored);
+    const isLight = pal && pal.mode === 'light';
     ctx.save();
     ctx.fillStyle = pal.playerPrimary;
 
     if (emoteId === 'emote_salute') {
+      if (isColored) ctx.fillStyle = isLight ? '#d97706' : '#fbbf24';
       const yOff = -28 - Math.sin(t * Math.PI) * 7;
       fillRoundRect(ctx, -2.2, yOff - 9, 4.4, 8, 1.5);
       ctx.beginPath();
       ctx.arc(0, yOff + 2.5, 2.2, 0, Math.PI * 2);
       ctx.fill();
     } else if (emoteId === 'emote_clap') {
+      if (isColored) ctx.fillStyle = isLight ? '#0891b2' : '#22d3ee';
       const beat = Math.abs(Math.sin(t * Math.PI * 5));
       const r = 6 + beat * 9;
       ctx.globalAlpha = 1 - beat * 0.55;
       fillRing(ctx, 0, -24, r, r - 2.2);
     } else if (emoteId === 'emote_backflip') {
       for (let i = 0; i < 4; i++) {
+        if (isColored) {
+          ctx.fillStyle = i % 2 === 0 ? (isLight ? '#d97706' : '#fbbf24') : '#a855f7';
+        }
         const ang = t * Math.PI * 2 + (i * Math.PI) / 2;
         const px = Math.cos(ang) * 20;
         const py = Math.sin(ang) * 20;
         fillDiamond(ctx, px, py, 3, 3);
       }
     } else if (emoteId === 'emote_laugh') {
+      if (isColored) ctx.fillStyle = isLight ? '#ca8a04' : '#facc15';
       ctx.font = '800 10px ui-monospace, monospace';
       ctx.textAlign = 'center';
       const bounce = Math.abs(Math.sin(t * Math.PI * 6)) * 6;
       ctx.fillText('HA!', -12, -22 - bounce);
       ctx.fillText('HA!', 13, -18 - bounce * 0.7);
     } else if (emoteId === 'emote_rage') {
+      if (isColored) ctx.fillStyle = isLight ? '#e11d48' : '#fb7185';
       const stomp = (t * 4) % 1;
       ctx.globalAlpha = 1 - stomp;
       fillRing(ctx, 0, 13, 6 + stomp * 20, 4 + stomp * 18);
@@ -1492,6 +1870,7 @@
       ctx.arc(11, -22 - stomp * 6, 2.8, 0, Math.PI * 2);
       ctx.fill();
     } else if (emoteId === 'emote_zen') {
+      if (isColored) ctx.fillStyle = isLight ? '#059669' : '#34d399';
       for (let i = 0; i < 3; i++) {
         const a = t * Math.PI * 4 + (i * Math.PI * 2) / 3;
         ctx.beginPath();
@@ -1499,17 +1878,19 @@
         ctx.fill();
       }
     } else if (emoteId === 'emote_spin') {
-      ctx.globalAlpha = 0.45;
+      if (isColored) ctx.fillStyle = isLight ? '#4f46e5' : '#818cf8';
+      ctx.globalAlpha = 0.55;
       fillRing(ctx, 0, 2, 18, 14);
       fillRing(ctx, 0, 8, 12, 9);
     } else if (emoteId === 'emote_rip') {
+      if (isColored) ctx.fillStyle = isLight ? '#475569' : '#94a3b8';
       const rise = Math.min(1, t * 4);
       const mh = 18 * rise;
       ctx.fillRect(18, 14 - mh, 14, mh);
       ctx.beginPath();
       ctx.arc(25, 14 - mh, 7, Math.PI, 0);
       ctx.fill();
-      ctx.fillStyle = pal.playerSecondary;
+      ctx.fillStyle = isColored ? '#0f172a' : pal.playerSecondary;
       ctx.fillRect(21, 14 - mh + 3, 8, 2);
     }
 

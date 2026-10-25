@@ -57,7 +57,10 @@
     hydrateIcons();
 
     const saved = window.ExoticStorage.init();
-    window.ExoticTheme.init(saved.settings.theme || 'dark');
+    window.ExoticTheme.init(
+      saved.settings.theme || 'dark',
+      saved.settings.colorMode || 'colored'
+    );
     window.ExoticAudio.setMuted(Boolean(saved.settings.muted));
     window.ExoticAudio.setVolume(saved.settings.volume ?? 0.7);
 

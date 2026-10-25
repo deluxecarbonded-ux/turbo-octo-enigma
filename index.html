@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-color-mode="colored">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c19" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c19" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c19" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c19" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c19" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c20" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c20" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c20" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c20" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c20" />
 </head>
 <body>
   <div id="app">
@@ -755,7 +755,7 @@
               <div class="settings-row">
                 <div class="settings-row-info">
                   <span class="settings-row-title">Appearance Theme</span>
-                  <span class="settings-row-desc">Switch between pure neutral Dark Mode and Light Mode.</span>
+                  <span class="settings-row-desc">Switch between Dark Mode and Light Mode.</span>
                 </div>
                 <div style="display:flex; gap:6px; flex-shrink:0;">
                   <button type="button" id="set-theme-dark" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" aria-pressed="true" title="Switch to Dark Mode">
@@ -765,6 +765,23 @@
                   <button type="button" id="set-theme-light" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" title="Switch to Light Mode">
                     <span data-icon="sun"></span>
                     <span>Light</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-row" id="set-color-mode-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Color Mode</span>
+                  <span class="settings-row-desc">Switch between Colored and Monochrome across the whole game and app.</span>
+                </div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                  <button type="button" id="set-color-colored" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" aria-pressed="true" title="Switch to Colored Mode">
+                    <span data-icon="palette"></span>
+                    <span>Colored</span>
+                  </button>
+                  <button type="button" id="set-color-monochrome" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" title="Switch to Monochrome Mode">
+                    <span data-icon="contrast"></span>
+                    <span>Monochrome</span>
                   </button>
                 </div>
               </div>
@@ -1400,28 +1417,28 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c19"></script>
-  <script src="src/core/theme.js?v=20261025c19"></script>
-  <script src="src/core/audio.js?v=20261025c19"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c19"></script>
-  <script src="src/core/storage.js?v=20261025c19"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c19"></script>
-  <script src="src/core/auth.js?v=20261025c19"></script>
-  <script src="src/data/shopItems.js?v=20261025c19"></script>
-  <script src="src/data/achievements.js?v=20261025c19"></script>
-  <script src="src/data/levels.js?v=20261025c19"></script>
-  <script src="src/core/realtime.js?v=20261025c19"></script>
-  <script src="src/graphics/characters.js?v=20261025c19"></script>
-  <script src="src/graphics/auras.js?v=20261025c19"></script>
-  <script src="src/graphics/trails.js?v=20261025c19"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c19"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c19"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c19"></script>
-  <script src="src/game/traps.js?v=20261025c19"></script>
-  <script src="src/game/physics.js?v=20261025c19"></script>
-  <script src="src/game/engine.js?v=20261025c19"></script>
-  <script src="src/ui/router.js?v=20261025c19"></script>
-  <script src="src/ui/views.js?v=20261025c19"></script>
-  <script src="src/ui/main.js?v=20261025c19"></script>
+  <script src="src/core/icons.js?v=20261025c20"></script>
+  <script src="src/core/theme.js?v=20261025c20"></script>
+  <script src="src/core/audio.js?v=20261025c20"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c20"></script>
+  <script src="src/core/storage.js?v=20261025c20"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c20"></script>
+  <script src="src/core/auth.js?v=20261025c20"></script>
+  <script src="src/data/shopItems.js?v=20261025c20"></script>
+  <script src="src/data/achievements.js?v=20261025c20"></script>
+  <script src="src/data/levels.js?v=20261025c20"></script>
+  <script src="src/core/realtime.js?v=20261025c20"></script>
+  <script src="src/graphics/characters.js?v=20261025c20"></script>
+  <script src="src/graphics/auras.js?v=20261025c20"></script>
+  <script src="src/graphics/trails.js?v=20261025c20"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c20"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c20"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c20"></script>
+  <script src="src/game/traps.js?v=20261025c20"></script>
+  <script src="src/game/physics.js?v=20261025c20"></script>
+  <script src="src/game/engine.js?v=20261025c20"></script>
+  <script src="src/ui/router.js?v=20261025c20"></script>
+  <script src="src/ui/views.js?v=20261025c20"></script>
+  <script src="src/ui/main.js?v=20261025c20"></script>
 </body>
 </html>
