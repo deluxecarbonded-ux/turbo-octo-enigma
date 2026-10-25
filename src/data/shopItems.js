@@ -309,7 +309,7 @@
       tier: 'Starter',
       cost: 0,
       currency: 'coins',
-      desc: 'Clean silhouette with zero ambient emission.'
+      desc: 'Clean silhouette with no ambient emission.'
     },
     {
       id: 'aura_sparkle',
@@ -379,7 +379,7 @@
     {
       id: 'trail_none',
       category: 'trails',
-      name: 'Zero Wake',
+      name: 'No Wake',
       tier: 'Starter',
       cost: 0,
       currency: 'coins',

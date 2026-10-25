@@ -6,41 +6,48 @@
     });
   }
 
-  function runSplashBoot() {
+  function runSplashBoot(authReadyPromise) {
     const fillEl = document.getElementById('splash-progress-fill');
     const stepEl = document.getElementById('splash-step-label');
     const pctEl = document.getElementById('splash-pct-label');
     const enterBtn = document.getElementById('splash-enter-btn');
 
     const steps = [
-      { pct: 18, label: 'Loading monochrome palette & save state...' },
-      { pct: 42, label: 'Compiling 2D sub-step collision & trap choreography...' },
-      { pct: 68, label: 'Warming Canvas aura, trail & character renderers...' },
-      { pct: 88, label: 'Calibrating WebAudio synthesizer...' },
+      { pct: 20, label: 'Loading monochrome palette & runner profile...' },
+      { pct: 45, label: 'Verifying account session...' },
+      { pct: 70, label: 'Preparing character, aura & trail systems...' },
+      { pct: 90, label: 'Tuning sound effects & trap triggers...' },
       { pct: 100, label: 'Ready.' }
     ];
 
     let idx = 0;
     let entered = false;
 
-    function enterMainMenu() {
+    async function enterAppAfterAuth() {
       if (entered) return;
       entered = true;
-      window.ExoticRouter.navigate('menu');
+      await authReadyPromise.catch(() => {});
+      const hashRoute = (location.hash || '').replace('#', '').trim();
+      const defaultRoute = window.ExoticAuth
+        ? window.ExoticAuth.getDefaultEntryRoute()
+        : 'menu';
+      const target =
+        hashRoute && hashRoute !== 'splash' ? hashRoute : defaultRoute;
+      window.ExoticRouter.navigate(target);
     }
 
     if (enterBtn) {
       enterBtn.addEventListener('click', () => {
         window.ExoticAudio.unlock();
         window.ExoticAudio.click();
-        enterMainMenu();
+        enterAppAfterAuth();
       });
     }
 
     function advance() {
       if (idx >= steps.length) {
         if (enterBtn) enterBtn.style.opacity = '1';
-        setTimeout(enterMainMenu, 360);
+        setTimeout(enterAppAfterAuth, 280);
         return;
       }
       const s = steps[idx];
@@ -48,7 +55,7 @@
       if (stepEl) stepEl.textContent = s.label;
       if (pctEl) pctEl.textContent = `${s.pct}%`;
       idx += 1;
-      setTimeout(advance, 190);
+      setTimeout(advance, 160);
     }
 
     advance();
@@ -68,11 +75,18 @@
       onHudUpdate: (hud) => window.ExoticViews.onHudUpdate(hud),
       onLevelWin: (payload) => window.ExoticViews.openVictoryModal(payload),
       onPauseToggle: (paused) => window.ExoticViews.openPauseModal(paused),
+      onFullscreenToggle: () => window.ExoticViews.toggleCanvasFullscreen(),
       onToast: (msg) => window.ExoticViews.showToast(msg),
       onRageQuip: (quip) => window.ExoticViews.showRageQuip(quip)
     });
 
     window.ExoticViews.init();
-    runSplashBoot();
+
+    const authReadyPromise = (async () => {
+      await window.ExoticAuth.init();
+      window.ExoticRealtime.init();
+    })();
+
+    runSplashBoot(authReadyPromise);
   });
 })();

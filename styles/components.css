@@ -193,9 +193,9 @@
   color: var(--pill-primary-fg);
 }
 
-/* Pill Input (Borderless, Outline-free, Gradient-free) */
+/* Pill Input (Borderless, Outline-free, Gradient-free, HTML5 Validation Clean) */
 .ex-pill-input {
-  height: 42px;
+  height: 44px;
   padding: 0 18px;
   border-radius: var(--radius-pill);
   background-color: var(--bg-surface-3);
@@ -203,6 +203,9 @@
   font-size: 14px;
   font-weight: 500;
   width: 100%;
+  border: none;
+  outline: none;
+  box-shadow: none;
   transition: background-color 150ms var(--ease-snappy);
 }
 
@@ -210,8 +213,20 @@
   color: var(--fg-muted);
 }
 
-.ex-pill-input:focus {
+.ex-pill-input:focus,
+.ex-pill-input:focus-visible,
+.ex-pill-input:valid,
+.ex-pill-input:invalid,
+.ex-pill-input:-moz-ui-invalid {
   background-color: var(--bg-surface-4);
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.ex-pill-input:not(:focus):valid,
+.ex-pill-input:not(:focus):invalid {
+  background-color: var(--bg-surface-3);
 }
 
 /* Video Card Preview Component (Shop Items & Levels) */
@@ -269,19 +284,6 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-}
-
-.ex-video-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--radius-pill);
-  background-color: var(--fg-primary);
-  animation: exPulseDot 1.6s ease-in-out infinite;
-}
-
-@keyframes exPulseDot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.35; transform: scale(0.8); }
 }
 
 .ex-video-scrubber {

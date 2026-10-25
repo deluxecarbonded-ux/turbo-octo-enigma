@@ -434,6 +434,38 @@
   border-radius: var(--radius-card);
   background-color: var(--bg-preview);
   display: block;
+  transition: border-radius 180ms var(--ease-snappy);
+}
+
+/* Full Screen In-Game Canvas Mode (Native OS Fullscreen + Viewport Fullscreen) */
+#app:fullscreen,
+#app:-webkit-full-screen,
+#view-play:fullscreen,
+#view-play:-webkit-full-screen,
+#game-canvas:fullscreen,
+#game-canvas:-webkit-full-screen {
+  border: none;
+  outline: none;
+  background-color: var(--bg-preview);
+}
+
+#app.is-canvas-fullscreen #view-play {
+  background-color: var(--bg-preview);
+}
+
+#app.is-canvas-fullscreen .game-stage-wrapper {
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--bg-preview);
+}
+
+#app.is-canvas-fullscreen #game-canvas {
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+  max-width: 100vw;
+  max-height: 100vh;
+  border-radius: 0;
 }
 
 /* Rage / Troll Quip Banner */
@@ -662,6 +694,23 @@
   color: var(--fg-secondary);
 }
 
+.runner-card-preview {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  background-color: var(--bg-preview);
+}
+
+.runner-card-preview.is-empty {
+  display: none;
+}
+
+.runner-card-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 /* Credits */
 .credits-grid {
   display: grid;
@@ -697,6 +746,355 @@
   line-height: 1.5;
 }
 
+/* Username-Only Auth Views (Sign Up & Sign In) */
+#view-signup.is-active,
+#view-signin.is-active {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 492px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-card {
+  background-color: var(--bg-surface-1);
+  border-radius: var(--radius-panel);
+  padding: 30px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.auth-subtitle {
+  font-size: 13px;
+  color: var(--fg-secondary);
+  line-height: 1.5;
+}
+
+.auth-lock-banner {
+  display: none;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  background-color: var(--bg-surface-2);
+}
+
+.auth-lock-banner.is-visible {
+  display: flex;
+}
+
+.auth-lock-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-pill);
+  background-color: var(--pill-primary-bg);
+  color: var(--pill-primary-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.auth-lock-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.auth-lock-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  color: var(--fg-secondary);
+  line-height: 1.45;
+}
+
+.auth-lock-text strong {
+  font-size: 13px;
+  color: var(--fg-primary);
+  font-weight: 700;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--fg-secondary);
+}
+
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-prefix {
+  position: absolute;
+  left: 18px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fg-muted);
+  pointer-events: none;
+}
+
+.auth-input-wrap .ex-pill-input {
+  height: 48px;
+  padding-left: 38px;
+  padding-right: 18px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.auth-validation-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface-2);
+  color: var(--fg-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background-color 150ms var(--ease-snappy), color 150ms var(--ease-snappy);
+}
+
+.auth-validation-pill.is-valid {
+  background-color: var(--pill-primary-bg);
+  color: var(--pill-primary-fg);
+}
+
+.auth-validation-pill.is-invalid {
+  background-color: var(--bg-surface-4);
+  color: var(--fg-primary);
+}
+
+.auth-validation-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-validation-main svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.auth-method-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.auth-method-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.auth-method-tabs .ex-pill-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.auth-cred-panel {
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.auth-cred-panel.is-active {
+  display: flex;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--fg-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.auth-input-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.auth-input-wrap--cred .ex-pill-input {
+  padding-left: 42px;
+  padding-right: 48px;
+  font-family: var(--font-sans);
+}
+
+.auth-input-wrap--cred .ex-pill-input.auth-pin-input {
+  font-family: var(--font-mono);
+  letter-spacing: 0.2em;
+  font-size: 17px;
+}
+
+.auth-reveal-btn {
+  position: absolute;
+  right: 8px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--fg-secondary);
+}
+
+.auth-reveal-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.auth-bio-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-card);
+  background-color: var(--bg-surface-2);
+  transition: background-color 160ms var(--ease-snappy);
+}
+
+.auth-bio-card.is-verified {
+  background-color: var(--bg-surface-3);
+}
+
+.auth-bio-emblem {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface-3);
+  color: var(--fg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 180ms var(--ease-snappy), background-color 180ms var(--ease-snappy), color 180ms var(--ease-snappy);
+}
+
+.auth-bio-emblem svg {
+  width: 22px;
+  height: 22px;
+}
+
+.auth-bio-card.is-scanning .auth-bio-emblem {
+  background-color: var(--pill-primary-bg);
+  color: var(--pill-primary-fg);
+  animation: authBioPulse 720ms ease-in-out infinite;
+}
+
+.auth-bio-card.is-verified .auth-bio-emblem {
+  background-color: var(--pill-primary-bg);
+  color: var(--pill-primary-fg);
+}
+
+@keyframes authBioPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.91);
+    opacity: 0.65;
+  }
+}
+
+.auth-bio-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.auth-bio-info strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-primary);
+}
+
+.auth-bio-info span {
+  font-size: 11.5px;
+  color: var(--fg-secondary);
+  line-height: 1.4;
+}
+
+.auth-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.auth-switch-hint {
+  font-size: 13px;
+  color: var(--fg-secondary);
+}
+
+/* Settings Account Delete Confirmation Bar */
+.settings-delete-confirm {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--radius-card);
+  background-color: var(--bg-surface-3);
+}
+
+.settings-delete-confirm.is-open {
+  display: flex;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 900px) {
   .menu-layout {
@@ -716,6 +1114,10 @@
   }
 
   .lb-hide-sm {
+    display: none;
+  }
+
+  .play-fs-text {
     display: none;
   }
 }

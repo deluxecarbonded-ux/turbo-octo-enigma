@@ -33,6 +33,7 @@
       parDeaths: blueprint.parDeaths,
       parTimeMs: blueprint.parTimeMs,
       rewardCoins: blueprint.rewardCoins,
+      rewardSP: blueprint.rewardSP ?? 1,
       spawn: { ...blueprint.spawn },
       quips: [...blueprint.quips],
       signs: (blueprint.signs || []).map((sg) => ({
@@ -90,17 +91,33 @@
         compress: 0
       })),
       gravityZones: blueprint.gravityZones.map((gz) => ({ ...gz })),
-      coins: blueprint.coins.map((c) => ({
-        ...c,
-        baseX: c.x,
-        baseY: c.y,
-        targetX: c.x,
-        targetY: c.y,
-        shyUsed: false,
-        collected: false
-      })),
+      coins: blueprint.coins.map((c, idx) => {
+        const coinId = c.id || `coin_${idx}`;
+        const alreadyCollected = Boolean(
+          window.ExoticStorage &&
+            window.ExoticStorage.isCoinCollected &&
+            window.ExoticStorage.isCoinCollected(blueprint.id, coinId)
+        );
+        return {
+          ...c,
+          id: coinId,
+          baseX: c.x,
+          baseY: c.y,
+          targetX: c.x,
+          targetY: c.y,
+          shyUsed: false,
+          collected: alreadyCollected
+        };
+      }),
       skillOrb: blueprint.skillOrb
-        ? { ...blueprint.skillOrb, collected: false }
+        ? {
+            ...blueprint.skillOrb,
+            collected: Boolean(
+              window.ExoticStorage &&
+                window.ExoticStorage.hasCollectedOrb &&
+                window.ExoticStorage.hasCollectedOrb(blueprint.id)
+            )
+          }
         : null,
       doors: blueprint.doors.map((d) => ({
         ...d,

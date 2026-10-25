@@ -1,36 +1,39 @@
 (function () {
   const VALID_ROUTES = [
     'splash',
+    'signup',
+    'signin',
     'menu',
     'play',
     'levels',
     'shop',
-    'settings',
     'achievements',
     'leaderboards',
+    'settings',
     'credits'
   ];
+
+  const TOPBAR_HIDDEN_ROUTES = new Set(['splash', 'signup', 'signin', 'play']);
 
   let currentRoute = 'splash';
   const listeners = new Set();
 
-  function navigate(route, opts = {}) {
-    const target = VALID_ROUTES.includes(route) ? route : 'menu';
+  function setRouteView(route, options = {}) {
+    const requested = VALID_ROUTES.includes(route) ? route : 'menu';
+    const target = window.ExoticAuth
+      ? window.ExoticAuth.resolveGuardedRoute(requested)
+      : requested;
     const prev = currentRoute;
     currentRoute = target;
 
-    // Toggle active view element
-    for (const id of VALID_ROUTES) {
-      const el = document.getElementById(`view-${id}`);
-      if (el) {
-        el.classList.toggle('is-active', id === target);
-      }
-    }
+    document.querySelectorAll('.ex-view').forEach((el) => {
+      const isMatch = el.id === `view-${target}`;
+      el.classList.toggle('is-active', isMatch);
+    });
 
-    // Topbar visibility (shown on Menu and sub-pages, hidden on Splash & Play)
     const topbar = document.getElementById('global-topbar');
     if (topbar) {
-      topbar.classList.toggle('is-hidden', target === 'splash' || target === 'play');
+      topbar.classList.toggle('is-hidden', TOPBAR_HIDDEN_ROUTES.has(target));
     }
 
     const backBtn = document.getElementById('topbar-back-btn');
@@ -38,24 +41,51 @@
       backBtn.style.display = target === 'menu' ? 'none' : 'inline-flex';
     }
 
-    // Stop active gameplay loop when leaving Play route
-    if (prev === 'play' && target !== 'play') {
+    if (prev === 'play' && target !== 'play' && window.ExoticEngine) {
       window.ExoticEngine.stop();
     }
 
-    // Pause backdrop heavy drawing during fullscreen Play to dedicate 100% GPU to stage
-    window.ExoticBackdrop.setActive(target !== 'play');
+    if (window.ExoticBackdrop && typeof window.ExoticBackdrop.setActive === 'function') {
+      window.ExoticBackdrop.setActive(target !== 'play');
+    }
 
-    // Clear offscreen video card observers when leaving Levels/Shop
-    if (target !== 'levels' && target !== 'shop') {
+    if (
+      target !== 'levels' &&
+      target !== 'shop' &&
+      window.ExoticPreviewDirector &&
+      typeof window.ExoticPreviewDirector.clear === 'function'
+    ) {
       window.ExoticPreviewDirector.clear();
     }
 
-    listeners.forEach((fn) => fn(target, opts));
+    if (!options.silentHash && target !== 'splash') {
+      try {
+        history.replaceState(null, '', `#${target}`);
+      } catch {
+        // Ignore history restrictions in sandboxed frames
+      }
+    }
+
+    listeners.forEach((fn) => {
+      try {
+        fn(target, options);
+      } catch (err) {
+        console.error('[ExoticRouter] Navigation listener error:', err);
+      }
+    });
   }
 
+  window.addEventListener('popstate', () => {
+    const hash = (location.hash || '').replace('#', '').trim();
+    if (VALID_ROUTES.includes(hash) && hash !== 'splash') {
+      setRouteView(hash, { silentHash: true });
+    }
+  });
+
   window.ExoticRouter = {
-    navigate,
+    navigate(route, options = {}) {
+      setRouteView(route, options);
+    },
     getCurrent() {
       return currentRoute;
     },

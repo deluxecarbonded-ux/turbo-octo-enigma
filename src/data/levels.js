@@ -10,7 +10,8 @@
       height: 540,
       parDeaths: 4,
       parTimeMs: 11000,
-      rewardCoins: 45,
+      rewardCoins: 15,
+      rewardSP: 1,
       spawn: { x: 64, y: 398 },
       quips: [
         'The sign literally lied to your face.',
@@ -117,7 +118,8 @@
       height: 540,
       parDeaths: 6,
       parTimeMs: 14000,
-      rewardCoins: 55,
+      rewardCoins: 15,
+      rewardSP: 1,
       spawn: { x: 56, y: 398 },
       quips: [
         'Jumping greedy for coins builds character.',
@@ -248,7 +250,8 @@
       height: 540,
       parDeaths: 6,
       parTimeMs: 14500,
-      rewardCoins: 65,
+      rewardCoins: 15,
+      rewardSP: 1,
       spawn: { x: 54, y: 398 },
       quips: [
         'Bouncing straight up was a bold mistake.',
@@ -348,7 +351,8 @@
       height: 540,
       parDeaths: 6,
       parTimeMs: 17000,
-      rewardCoins: 75,
+      rewardCoins: 15,
+      rewardSP: 1,
       spawn: { x: 54, y: 398 },
       quips: [
         'The coin literally led you onto a trapdoor.',
@@ -457,7 +461,8 @@
       height: 540,
       parDeaths: 7,
       parTimeMs: 16000,
-      rewardCoins: 85,
+      rewardCoins: 15,
+      rewardSP: 1,
       spawn: { x: 54, y: 398 },
       quips: [
         'The island scooted away mid-jump.',
@@ -555,7 +560,8 @@
       height: 540,
       parDeaths: 7,
       parTimeMs: 18000,
-      rewardCoins: 95,
+      rewardCoins: 15,
+      rewardSP: 1,
       spawn: { x: 62, y: 398 },
       quips: [
         'Checking behind spawn? Cheeky spike says hi.',
@@ -659,7 +665,8 @@
       height: 540,
       parDeaths: 9,
       parTimeMs: 20000,
-      rewardCoins: 115,
+      rewardCoins: 15,
+      rewardSP: 1,
       spawn: { x: 54, y: 398 },
       quips: [
         'First half was honest. Second half vanished.',
@@ -779,7 +786,8 @@
       height: 540,
       parDeaths: 12,
       parTimeMs: 24000,
-      rewardCoins: 175,
+      rewardCoins: 15,
+      rewardSP: 1,
       spawn: { x: 54, y: 398 },
       quips: [
         'Act I claimed another optimist.',

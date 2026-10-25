@@ -288,12 +288,11 @@
   }
 
   function drawSkillOrb(ctx, orb, alreadyOwned, pal, time) {
-    if (!orb || orb.collected) return;
+    if (!orb || orb.collected || alreadyOwned) return;
     const { fillRing, fillDiamond } = window.ExoticCharacterRenderer;
     const bob = Math.sin(time * 3.2) * 3.5;
     ctx.save();
     ctx.translate(orb.x, orb.y + bob);
-    ctx.globalAlpha = alreadyOwned ? 0.38 : 1;
 
     ctx.fillStyle = pal.skillOuter;
     fillRing(ctx, 0, 0, 12.5, 9.5);

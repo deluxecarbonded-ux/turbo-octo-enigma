@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>EXOTIC — Monochrome 2D Troll Platformer</title>
-  <link rel="stylesheet" href="styles/tokens.css" />
-  <link rel="stylesheet" href="styles/components.css" />
-  <link rel="stylesheet" href="styles/views.css" />
+  <title>EXOTIC — Monochrome Troll Platformer</title>
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c8" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c8" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c8" />
 </head>
 <body>
   <div id="app">
@@ -27,6 +27,10 @@
       </div>
 
       <div class="ex-topbar-right">
+        <button type="button" id="header-account-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" title="Account — Manage in Settings">
+          <span data-icon="user"></span>
+          <span id="header-username" class="mono">@runner</span>
+        </button>
         <div class="ex-chip" title="Coins — Spend on Auras, Characters, Skins, Trails & Emotes">
           <span data-icon="coin"></span>
           <span id="header-coins" class="mono">0</span>
@@ -55,7 +59,7 @@
           <canvas id="splash-logo-canvas"></canvas>
           <div>
             <h1 class="splash-title">EXOTIC</h1>
-            <p class="splash-sub" style="margin-top:6px;">Monochrome 2D Troll Platformer</p>
+            <p class="splash-sub" style="margin-top:6px;">Monochrome Troll Platformer</p>
           </div>
           <div class="splash-progress-wrap">
             <div class="splash-track">
@@ -70,6 +74,377 @@
             <span data-icon="play"></span>
             <span>Skip &amp; Enter</span>
           </button>
+        </div>
+      </section>
+
+      <!-- 1b. SIGN UP ROUTE -->
+      <section id="view-signup" class="ex-view" aria-label="Sign Up">
+        <div class="auth-shell">
+          <div class="auth-topbar">
+            <div class="ex-brand-pill">
+              <span data-icon="logo"></span>
+              <span>EXOTIC</span>
+            </div>
+            <button type="button" id="signup-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+              <span data-icon="sun"></span>
+              <span>Light Mode</span>
+            </button>
+          </div>
+
+          <div class="auth-card">
+            <div class="auth-header">
+              <span class="ex-chip ex-chip--subtle" style="align-self:flex-start;">
+                <span data-icon="user"></span>
+                <span>Runner Account · Sign Up</span>
+              </span>
+              <h1 class="auth-title">Register Username</h1>
+              <p class="auth-subtitle">
+                Choose your unique runner username. Once registered, your session remains bound to this account until deleted in Settings.
+              </p>
+            </div>
+
+            <div id="signup-lock-banner" class="auth-lock-banner">
+              <div class="auth-lock-icon" data-icon="lock"></div>
+              <div class="auth-lock-text">
+                <strong id="signup-lock-title">Account Already Registered</strong>
+                <span id="signup-lock-desc">You cannot re-register a new username until your existing account is deleted from Settings.</span>
+              </div>
+            </div>
+
+            <form id="signup-form" class="auth-form">
+              <label for="signup-username-input" class="auth-field-label">
+                <span>Username</span>
+                <span class="mono">3–20 · A-Z 0-9 _</span>
+              </label>
+
+              <div class="auth-input-wrap">
+                <span class="auth-input-prefix">@</span>
+                <input
+                  type="text"
+                  id="signup-username-input"
+                  name="username"
+                  class="ex-pill-input"
+                  required
+                  minlength="3"
+                  maxlength="20"
+                  pattern="[A-Za-z0-9_]{3,20}"
+                  autocomplete="username"
+                  spellcheck="false"
+                  placeholder="enter_username"
+                />
+              </div>
+
+              <div id="signup-validation-pill" class="auth-validation-pill" aria-live="polite">
+                <span class="auth-validation-main">
+                  <span id="signup-validation-icon" data-icon="user"></span>
+                  <span id="signup-validation-msg">Type a username to verify availability</span>
+                </span>
+                <span id="signup-validation-badge" class="mono">CHECK</span>
+              </div>
+
+              <div class="auth-method-block">
+                <div class="auth-field-label">
+                  <span>Authentication Method</span>
+                  <span class="mono">YOUR CHOICE</span>
+                </div>
+
+                <div class="auth-method-tabs" role="radiogroup" aria-label="Sign Up Authentication Method">
+                  <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" data-signup-method="password" aria-pressed="true">
+                    <span data-icon="key"></span>
+                    <span>Password</span>
+                  </button>
+                  <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-signup-method="pin" aria-pressed="false">
+                    <span data-icon="pin"></span>
+                    <span>PIN</span>
+                  </button>
+                  <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-signup-method="fingerprint" aria-pressed="false">
+                    <span data-icon="fingerprint"></span>
+                    <span>Fingerprint</span>
+                  </button>
+                  <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-signup-method="faceid" aria-pressed="false">
+                    <span data-icon="faceid"></span>
+                    <span>Face ID</span>
+                  </button>
+                </div>
+
+                <!-- Dynamic Choice 1: Password -->
+                <div id="signup-panel-password" class="auth-cred-panel is-active">
+                  <label for="signup-password-input" class="auth-field-label">
+                    <span>Password</span>
+                    <span class="mono">4–64 CHARS</span>
+                  </label>
+                  <div class="auth-input-wrap auth-input-wrap--cred">
+                    <span class="auth-input-icon" data-icon="key"></span>
+                    <input
+                      type="password"
+                      id="signup-password-input"
+                      name="signupPassword"
+                      class="ex-pill-input"
+                      minlength="4"
+                      maxlength="64"
+                      autocomplete="new-password"
+                      placeholder="Create account password"
+                    />
+                    <button type="button" id="signup-pw-reveal-btn" class="ex-pill-btn ex-pill-btn--ghost ex-pill-btn--xs auth-reveal-btn" aria-label="Toggle password visibility">
+                      <span data-icon="eye"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Dynamic Choice 2: Numeric PIN -->
+                <div id="signup-panel-pin" class="auth-cred-panel">
+                  <label for="signup-pin-input" class="auth-field-label">
+                    <span>PIN Code</span>
+                    <span class="mono">4–8 DIGITS</span>
+                  </label>
+                  <div class="auth-input-wrap auth-input-wrap--cred">
+                    <span class="auth-input-icon" data-icon="pin"></span>
+                    <input
+                      type="password"
+                      id="signup-pin-input"
+                      name="signupPin"
+                      class="ex-pill-input auth-pin-input"
+                      inputmode="numeric"
+                      maxlength="8"
+                      autocomplete="off"
+                      placeholder="Enter 4–8 digit PIN"
+                    />
+                    <button type="button" id="signup-pin-reveal-btn" class="ex-pill-btn ex-pill-btn--ghost ex-pill-btn--xs auth-reveal-btn" aria-label="Toggle PIN visibility">
+                      <span data-icon="eye"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Dynamic Choice 3 & 4: Fingerprint / Face ID -->
+                <div id="signup-panel-biometric" class="auth-cred-panel">
+                  <div class="auth-field-label">
+                    <span id="signup-bio-label">Fingerprint Passkey</span>
+                    <span class="mono" id="signup-bio-tag">BIOMETRIC</span>
+                  </div>
+                  <div id="signup-bio-card" class="auth-bio-card">
+                    <div id="signup-bio-emblem" class="auth-bio-emblem" data-icon="fingerprint"></div>
+                    <div class="auth-bio-info">
+                      <strong id="signup-bio-title">Enroll Fingerprint</strong>
+                      <span id="signup-bio-desc">Scan your Fingerprint to protect this account, or press Create Account to scan automatically.</span>
+                    </div>
+                    <button type="button" id="signup-bio-scan-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                      <span id="signup-bio-btn-icon" data-icon="fingerprint"></span>
+                      <span id="signup-bio-btn-label">Scan</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div id="signup-cred-pill" class="auth-validation-pill" aria-live="polite">
+                  <span class="auth-validation-main">
+                    <span id="signup-cred-icon" data-icon="key"></span>
+                    <span id="signup-cred-msg">Choose Password, PIN, Fingerprint, or Face ID</span>
+                  </span>
+                  <span id="signup-cred-badge" class="mono">READY</span>
+                </div>
+              </div>
+
+              <button type="submit" id="signup-submit-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+                <span data-icon="play"></span>
+                <span>Create Account &amp; Enter</span>
+              </button>
+            </form>
+
+            <div class="auth-switch-row">
+              <span class="auth-switch-hint">Already have a registered account?</span>
+              <button type="button" id="signup-switch-signin-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                <span data-icon="user"></span>
+                <span>Sign In</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 1c. SIGN IN ROUTE -->
+      <section id="view-signin" class="ex-view" aria-label="Sign In">
+        <div class="auth-shell">
+          <div class="auth-topbar">
+            <div class="ex-brand-pill">
+              <span data-icon="logo"></span>
+              <span>EXOTIC</span>
+            </div>
+            <button type="button" id="signin-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+              <span data-icon="sun"></span>
+              <span>Light Mode</span>
+            </button>
+          </div>
+
+          <div class="auth-card">
+            <div class="auth-header">
+              <span class="ex-chip ex-chip--subtle" style="align-self:flex-start;">
+                <span data-icon="lock"></span>
+                <span>Runner Account · Sign In</span>
+              </span>
+              <h1 class="auth-title">Sign In</h1>
+              <p class="auth-subtitle">
+                Enter your registered Exotic username to restore your saved Coins, Skill Points, Loadout, and Stage Clears.
+              </p>
+            </div>
+
+            <div id="signin-lock-banner" class="auth-lock-banner">
+              <div class="auth-lock-icon" data-icon="lock"></div>
+              <div class="auth-lock-text" style="flex:1;">
+                <strong id="signin-lock-title">Bound Account: @runner</strong>
+                <span id="signin-lock-desc">Sign back in with this registered username. Re-registration is locked until deleted from Settings.</span>
+                <div style="margin-top:8px;">
+                  <button type="button" id="signin-fill-bound-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs">
+                    <span data-icon="check"></span>
+                    <span id="signin-fill-bound-label">Fill @runner</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <form id="signin-form" class="auth-form">
+              <label for="signin-username-input" class="auth-field-label">
+                <span>Registered Username</span>
+                <span class="mono">3–20 · A-Z 0-9 _</span>
+              </label>
+
+              <div class="auth-input-wrap">
+                <span class="auth-input-prefix">@</span>
+                <input
+                  type="text"
+                  id="signin-username-input"
+                  name="username"
+                  class="ex-pill-input"
+                  required
+                  minlength="3"
+                  maxlength="20"
+                  pattern="[A-Za-z0-9_]{3,20}"
+                  autocomplete="username"
+                  spellcheck="false"
+                  placeholder="your_username"
+                />
+              </div>
+
+              <div id="signin-validation-pill" class="auth-validation-pill" aria-live="polite">
+                <span class="auth-validation-main">
+                  <span id="signin-validation-icon" data-icon="user"></span>
+                  <span id="signin-validation-msg">Enter your registered username</span>
+                </span>
+                <span id="signin-validation-badge" class="mono">CHECK</span>
+              </div>
+
+              <div class="auth-method-block">
+                <div class="auth-field-label">
+                  <span>Authentication Method</span>
+                  <span class="mono" id="signin-method-hint-tag">YOUR CHOICE</span>
+                </div>
+
+                <div class="auth-method-tabs" role="radiogroup" aria-label="Sign In Authentication Method">
+                  <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" data-signin-method="password" aria-pressed="true">
+                    <span data-icon="key"></span>
+                    <span>Password</span>
+                  </button>
+                  <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-signin-method="pin" aria-pressed="false">
+                    <span data-icon="pin"></span>
+                    <span>PIN</span>
+                  </button>
+                  <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-signin-method="fingerprint" aria-pressed="false">
+                    <span data-icon="fingerprint"></span>
+                    <span>Fingerprint</span>
+                  </button>
+                  <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-signin-method="faceid" aria-pressed="false">
+                    <span data-icon="faceid"></span>
+                    <span>Face ID</span>
+                  </button>
+                </div>
+
+                <!-- Dynamic Choice 1: Password -->
+                <div id="signin-panel-password" class="auth-cred-panel is-active">
+                  <label for="signin-password-input" class="auth-field-label">
+                    <span>Password</span>
+                    <span class="mono">ACCOUNT SECRET</span>
+                  </label>
+                  <div class="auth-input-wrap auth-input-wrap--cred">
+                    <span class="auth-input-icon" data-icon="key"></span>
+                    <input
+                      type="password"
+                      id="signin-password-input"
+                      name="signinPassword"
+                      class="ex-pill-input"
+                      minlength="4"
+                      maxlength="64"
+                      autocomplete="current-password"
+                      placeholder="Enter your password"
+                    />
+                    <button type="button" id="signin-pw-reveal-btn" class="ex-pill-btn ex-pill-btn--ghost ex-pill-btn--xs auth-reveal-btn" aria-label="Toggle password visibility">
+                      <span data-icon="eye"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Dynamic Choice 2: Numeric PIN -->
+                <div id="signin-panel-pin" class="auth-cred-panel">
+                  <label for="signin-pin-input" class="auth-field-label">
+                    <span>PIN Code</span>
+                    <span class="mono">4–8 DIGITS</span>
+                  </label>
+                  <div class="auth-input-wrap auth-input-wrap--cred">
+                    <span class="auth-input-icon" data-icon="pin"></span>
+                    <input
+                      type="password"
+                      id="signin-pin-input"
+                      name="signinPin"
+                      class="ex-pill-input auth-pin-input"
+                      inputmode="numeric"
+                      maxlength="8"
+                      autocomplete="off"
+                      placeholder="Enter your PIN"
+                    />
+                    <button type="button" id="signin-pin-reveal-btn" class="ex-pill-btn ex-pill-btn--ghost ex-pill-btn--xs auth-reveal-btn" aria-label="Toggle PIN visibility">
+                      <span data-icon="eye"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Dynamic Choice 3 & 4: Fingerprint / Face ID -->
+                <div id="signin-panel-biometric" class="auth-cred-panel">
+                  <div class="auth-field-label">
+                    <span id="signin-bio-label">Fingerprint Passkey</span>
+                    <span class="mono" id="signin-bio-tag">BIOMETRIC</span>
+                  </div>
+                  <div id="signin-bio-card" class="auth-bio-card">
+                    <div id="signin-bio-emblem" class="auth-bio-emblem" data-icon="fingerprint"></div>
+                    <div class="auth-bio-info">
+                      <strong id="signin-bio-title">Verify Fingerprint</strong>
+                      <span id="signin-bio-desc">Verify your Fingerprint to unlock sign-in, or press Sign In to scan automatically.</span>
+                    </div>
+                    <button type="button" id="signin-bio-scan-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                      <span id="signin-bio-btn-icon" data-icon="fingerprint"></span>
+                      <span id="signin-bio-btn-label">Verify</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div id="signin-cred-pill" class="auth-validation-pill" aria-live="polite">
+                  <span class="auth-validation-main">
+                    <span id="signin-cred-icon" data-icon="key"></span>
+                    <span id="signin-cred-msg">Provide your chosen authentication credential</span>
+                  </span>
+                  <span id="signin-cred-badge" class="mono">READY</span>
+                </div>
+              </div>
+
+              <button type="submit" id="signin-submit-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+                <span data-icon="play"></span>
+                <span>Sign In to Exotic</span>
+              </button>
+            </form>
+
+            <div class="auth-switch-row">
+              <span id="signin-switch-hint" class="auth-switch-hint">No registered account yet?</span>
+              <button type="button" id="signin-switch-signup-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                <span>Sign Up</span>
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -127,7 +502,7 @@
             </nav>
           </div>
 
-          <aside class="menu-showcase-card" aria-label="Equipped Runner Live Preview">
+          <aside class="menu-showcase-card" aria-label="Equipped Runner Preview">
             <div class="ex-card-title-row">
               <span class="ex-chip ex-chip--subtle">Active Loadout Showcase</span>
               <span id="menu-loadout-chip" class="ex-chip ex-chip--subtle">Exotic Cube · No Aura</span>
@@ -153,7 +528,7 @@
         </div>
       </section>
 
-      <!-- 3. PLAY ROUTE (2D CANVAS PLATFORMER) -->
+      <!-- 3. PLAY ROUTE -->
       <section id="view-play" class="ex-view" aria-label="Gameplay Stage">
         <div class="play-hud-top">
           <div class="play-hud-group">
@@ -187,6 +562,10 @@
             <button type="button" id="play-retry-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" title="Quick Retry (R)">
               <span data-icon="retry"></span>
               <span>Retry (R)</span>
+            </button>
+            <button type="button" id="play-fullscreen-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" title="Full Screen (F)" aria-label="Toggle Full Screen" aria-pressed="false">
+              <span data-icon="fullscreen"></span>
+              <span class="play-fs-text">Full Screen (F)</span>
             </button>
             <button type="button" id="play-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--icon" aria-label="Switch Theme">
               <span data-icon="sun"></span>
@@ -227,13 +606,13 @@
         </div>
       </section>
 
-      <!-- 4. LEVELS ROUTE (LIVE VIDEO CARD PREVIEWS) -->
+      <!-- 4. LEVELS ROUTE -->
       <section id="view-levels" class="ex-view" aria-label="Select Stage">
         <div class="ex-container">
           <div class="page-header">
             <div class="page-header-text">
               <h2 class="page-title">Handcrafted Stages</h2>
-              <p class="page-subtitle">Live real-time stage video previews showing actual traps, geometry, and runner paths.</p>
+              <p class="page-subtitle">Animated stage previews showing actual traps, geometry, and runner progression.</p>
             </div>
             <span class="ex-chip">8 Stages · Hidden Skill Orbs · Par Targets</span>
           </div>
@@ -242,13 +621,13 @@
         </div>
       </section>
 
-      <!-- 5. SHOP ROUTE (LIVE VIDEO CARD PREVIEWS FOR ACTUAL ITEMS) -->
+      <!-- 5. SHOP ROUTE -->
       <section id="view-shop" class="ex-view" aria-label="Exotic Shop">
         <div class="ex-container">
           <div class="page-header">
             <div class="page-header-text">
               <h2 class="page-title">Exotic Armory &amp; Shop</h2>
-              <p class="page-subtitle">Every card renders the actual live Aura, Character, Skin, Trail, Emote, or Upgrade in real time.</p>
+              <p class="page-subtitle">Every card previews the actual Aura, Character, Skin, Trail, Emote, or Upgrade in motion.</p>
             </div>
             <div id="shop-category-tabs" class="pill-tabs"></div>
           </div>
@@ -277,13 +656,13 @@
         </div>
       </section>
 
-      <!-- 7. LEADERBOARDS ROUTE (ZERO MOCK DATA / ZERO DEMO USERS) -->
+      <!-- 7. LEADERBOARDS ROUTE -->
       <section id="view-leaderboards" class="ex-view" aria-label="Leaderboards">
         <div class="ex-container">
           <div class="page-header">
             <div class="page-header-text">
               <h2 class="page-title">Verified Leaderboards</h2>
-              <p class="page-subtitle">100% real player runs recorded from completed stages — zero mock users or fabricated entries.</p>
+              <p class="page-subtitle">Verified player runs ranked across every stage.</p>
             </div>
             <div id="lb-sort-tabs" class="pill-tabs"></div>
           </div>
@@ -300,7 +679,7 @@
           <div class="page-header">
             <div class="page-header-text">
               <h2 class="page-title">Settings &amp; Controls</h2>
-              <p class="page-subtitle">Configure Monochrome Light/Dark theme, synthesized audio, input preferences, and Callsign.</p>
+              <p class="page-subtitle">Configure Monochrome Light and Dark mode, sound effects, controls, and your registered account.</p>
             </div>
           </div>
 
@@ -321,8 +700,8 @@
 
               <div class="settings-row">
                 <div class="settings-row-info">
-                  <span class="settings-row-title">WebAudio Synthesizer</span>
-                  <span class="settings-row-desc">Toggle real-time procedural sound effects.</span>
+                  <span class="settings-row-title">Sound Effects</span>
+                  <span class="settings-row-desc">Toggle procedural sound effects.</span>
                 </div>
                 <button type="button" id="set-audio-toggle" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">Audio Enabled</button>
               </div>
@@ -354,19 +733,52 @@
                 </div>
                 <button type="button" id="set-touch-toggle" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">Hidden</button>
               </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Stage Ghosts</span>
+                  <span class="settings-row-desc">Show co-runner ghosts and world-record replays on stage.</span>
+                </div>
+                <button type="button" id="set-ghosts-toggle" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">Enabled</button>
+              </div>
             </div>
 
             <div class="settings-card">
-              <h3 class="ex-card-title" style="font-size:17px;">Player Identity &amp; Controls</h3>
+              <h3 class="ex-card-title" style="font-size:17px;">Registered Account &amp; Controls</h3>
 
-              <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:10px;">
-                <div class="settings-row-info">
-                  <span class="settings-row-title">Player Callsign</span>
-                  <span class="settings-row-desc">Used only when you choose to publish a verified stage clear to the Leaderboard.</span>
+              <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:12px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                  <div class="settings-row-info">
+                    <span class="settings-row-title">Registered Account</span>
+                    <span class="settings-row-desc">You remain bound to this account across sign-outs until deleted below.</span>
+                  </div>
+                  <span id="set-account-username" class="ex-chip ex-chip--inverted mono">@runner</span>
                 </div>
-                <div style="display:flex; gap:8px;">
-                  <input type="text" id="set-callsign-input" class="ex-pill-input" maxlength="20" placeholder="Enter your Callsign..." />
-                  <button type="button" id="set-save-callsign-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--md">Save</button>
+
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" id="set-signout-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                    <span data-icon="logout"></span>
+                    <span>Sign Out</span>
+                  </button>
+                  <button type="button" id="set-delete-account-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                    <span data-icon="trash"></span>
+                    <span>Delete Account</span>
+                  </button>
+                </div>
+
+                <div id="set-delete-confirm-box" class="settings-delete-confirm">
+                  <span id="set-delete-confirm-text" class="settings-row-desc" style="color:var(--fg-primary); font-weight:600;">
+                    Permanently delete this user? This removes your username, Coins, Skill Points, Loadout, and Verified Runs, and unlocks registering a new account.
+                  </span>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" id="set-confirm-delete-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                      <span data-icon="trash"></span>
+                      <span>Confirm Delete Account</span>
+                    </button>
+                    <button type="button" id="set-cancel-delete-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                      <span>Cancel</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -380,20 +792,55 @@
 
               <div class="settings-row">
                 <div class="settings-row-info">
-                  <span class="settings-row-title">Phase Dash · Emote · Quick Retry</span>
-                  <span class="settings-row-desc">Shift / K to Dash · E to Taunt · R for Instant Retry</span>
+                  <span class="settings-row-title">Phase Dash · Emote · Quick Retry · Full Screen</span>
+                  <span class="settings-row-desc">Shift / K to Dash · E to Taunt · R for Instant Retry · F for Full Screen</span>
                 </div>
-                <span class="ex-chip ex-chip--subtle mono">SHIFT · E · R</span>
+                <span class="ex-chip ex-chip--subtle mono">SHIFT · E · R · F</span>
               </div>
 
               <div class="settings-row">
                 <div class="settings-row-info">
-                  <span class="settings-row-title">Reset All Save Data</span>
-                  <span class="settings-row-desc">Clears unlocked items, stage stats, and local run records.</span>
+                  <span class="settings-row-title">Reset Save Progress</span>
+                  <span class="settings-row-desc">Clears unlocked items, stage stats, and saved runner records.</span>
                 </div>
                 <button type="button" id="set-reset-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
                   <span data-icon="trash"></span>
                   <span>Reset</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3 class="ex-card-title" style="font-size:17px;">Account Sync &amp; Loadout Card</h3>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Account Sync Status</span>
+                  <span id="set-cloud-meta-desc" class="settings-row-desc">Synchronizing runner profile and global stats...</span>
+                </div>
+                <span id="set-cloud-status-chip" class="ex-chip ex-chip--subtle mono">SYNCING</span>
+              </div>
+
+              <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:10px;">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Runner Loadout Card</span>
+                  <span class="settings-row-desc">Render a monochrome portrait of your equipped runner and save it to your profile.</span>
+                </div>
+                <div id="set-card-preview-wrap" class="runner-card-preview is-empty"></div>
+                <button type="button" id="set-upload-card-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full">
+                  <span data-icon="card"></span>
+                  <span>Generate &amp; Save Loadout Card</span>
+                </button>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Profile Refresh</span>
+                  <span class="settings-row-desc">Refresh your saved inventory, stage progress, and leaderboards.</span>
+                </div>
+                <button type="button" id="set-sync-now-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                  <span data-icon="cloud"></span>
+                  <span>Sync Now</span>
                 </button>
               </div>
             </div>
@@ -407,7 +854,7 @@
           <div class="page-header">
             <div class="page-header-text">
               <h2 class="page-title">Credits &amp; Studio Craft</h2>
-              <p class="page-subtitle">EXOTIC — Custom-engineered 2D monochrome platformer built from scratch in HTML, CSS, JavaScript &amp; Canvas 2D API.</p>
+              <p class="page-subtitle">EXOTIC — Handcrafted monochrome rage-bait platformer engineered from the ground up.</p>
             </div>
             <span class="ex-chip">Exotic Development Team</span>
           </div>
@@ -423,25 +870,25 @@
 
             <article class="credit-card">
               <span class="credit-role">Core Physics &amp; Collision Engine</span>
-              <h3 class="credit-heading">Sub-Stepped 2D AABB Kinematics</h3>
+              <h3 class="credit-heading">Precision Sub-Stepped Kinematics</h3>
               <p class="credit-text">
-                Custom vanilla JavaScript physics featuring coyote grace frames, jump buffering, variable jump apex cuts, moving platform momentum carry, and zero external dependencies.
+                Responsive platformer physics featuring coyote grace frames, jump buffering, variable jump apex cuts, and moving platform momentum carry.
               </p>
             </article>
 
             <article class="credit-card">
-              <span class="credit-role">Visual Architecture &amp; Canvas Renderer</span>
+              <span class="credit-role">Visual Architecture</span>
               <h3 class="credit-heading">Pure Monochrome Solid Geometry</h3>
               <p class="credit-text">
-                Calibrated Light Mode and Dark Mode neutral luminance hierarchy with zero gradients, zero borders, zero outlines, 3D-projected orbital Auras, and real-time video card previews.
+                Calibrated Light Mode and Dark Mode neutral luminance hierarchy with crisp solid silhouettes, orbital Auras, and animated stage and armory previews.
               </p>
             </article>
 
             <article class="credit-card">
-              <span class="credit-role">Sound Engineering</span>
-              <h3 class="credit-heading">Procedural WebAudio Synthesis</h3>
+              <span class="credit-role">Sound Design &amp; Competition</span>
+              <h3 class="credit-heading">Procedural Audio &amp; Ghost Racing</h3>
               <p class="credit-text">
-                Low-latency oscillator and filtered-noise sound synthesis crafted directly on the Web Audio API for tactile jumps, mechanical trap clacks, and victory chords.
+                Punchy synthesized sound effects paired with verified stage leaderboards, world-record ghost replays, and co-runner stage ghosts.
               </p>
             </article>
           </div>
@@ -462,9 +909,13 @@
             <span data-icon="play"></span>
             <span>Resume Stage</span>
           </button>
+          <button type="button" id="pause-fullscreen-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full" aria-pressed="false">
+            <span data-icon="fullscreen"></span>
+            <span>Enter Full Screen (F)</span>
+          </button>
           <button type="button" id="pause-restart-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
             <span data-icon="retry"></span>
-            <span>Restart Stage From Zero</span>
+            <span>Restart Stage</span>
           </button>
           <button type="button" id="pause-levels-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
             <span data-icon="levels"></span>
@@ -496,13 +947,13 @@
           </div>
           <div class="menu-stat-pill">
             <span class="menu-stat-label">Rewards</span>
-            <span id="vic-rewards" class="menu-stat-value" style="font-size:13px;">+45 Coins</span>
+            <span id="vic-rewards" class="menu-stat-value" style="font-size:13px;">+15 Coins · +1 SP</span>
           </div>
         </div>
 
         <div style="display:flex; flex-direction:column; gap:8px; background:var(--bg-surface-2); padding:14px; border-radius:16px;">
           <span style="font-size:12px; font-weight:600; color:var(--fg-secondary);">Publish Verified Run to Leaderboard</span>
-          <input type="text" id="vic-callsign-input" class="ex-pill-input" maxlength="20" placeholder="Enter your Callsign..." />
+          <input type="text" id="vic-callsign-input" class="ex-pill-input mono" maxlength="20" readonly placeholder="Registered Username" />
           <button type="button" id="vic-publish-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full">
             <span data-icon="leaderboards"></span>
             <span>Publish Verified Run</span>
@@ -532,25 +983,28 @@
     <div id="toast-stack" class="ex-toast-stack" aria-live="polite"></div>
   </div>
 
-  <!-- Ordered Modular Vanilla JS Scripts (Zero Frameworks) -->
-  <script src="src/core/icons.js"></script>
-  <script src="src/core/theme.js"></script>
-  <script src="src/core/audio.js"></script>
-  <script src="src/core/storage.js"></script>
-  <script src="src/data/shopItems.js"></script>
-  <script src="src/data/achievements.js"></script>
-  <script src="src/data/levels.js"></script>
-  <script src="src/graphics/characters.js"></script>
-  <script src="src/graphics/auras.js"></script>
-  <script src="src/graphics/trails.js"></script>
-  <script src="src/graphics/worldDraw.js"></script>
-  <script src="src/graphics/backdrop.js"></script>
-  <script src="src/graphics/previewDirector.js"></script>
-  <script src="src/game/traps.js"></script>
-  <script src="src/game/physics.js"></script>
-  <script src="src/game/engine.js"></script>
-  <script src="src/ui/router.js"></script>
-  <script src="src/ui/views.js"></script>
-  <script src="src/ui/main.js"></script>
+  <!-- Ordered Modular Scripts -->
+  <script src="src/core/icons.js?v=20261025c8"></script>
+  <script src="src/core/theme.js?v=20261025c8"></script>
+  <script src="src/core/audio.js?v=20261025c8"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c8"></script>
+  <script src="src/core/storage.js?v=20261025c8"></script>
+  <script src="src/core/auth.js?v=20261025c8"></script>
+  <script src="src/data/shopItems.js?v=20261025c8"></script>
+  <script src="src/data/achievements.js?v=20261025c8"></script>
+  <script src="src/data/levels.js?v=20261025c8"></script>
+  <script src="src/core/realtime.js?v=20261025c8"></script>
+  <script src="src/graphics/characters.js?v=20261025c8"></script>
+  <script src="src/graphics/auras.js?v=20261025c8"></script>
+  <script src="src/graphics/trails.js?v=20261025c8"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c8"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c8"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c8"></script>
+  <script src="src/game/traps.js?v=20261025c8"></script>
+  <script src="src/game/physics.js?v=20261025c8"></script>
+  <script src="src/game/engine.js?v=20261025c8"></script>
+  <script src="src/ui/router.js?v=20261025c8"></script>
+  <script src="src/ui/views.js?v=20261025c8"></script>
+  <script src="src/ui/main.js?v=20261025c8"></script>
 </body>
 </html>

@@ -18,6 +18,10 @@
   let cameraX = 0;
   let shakeMag = 0;
   let quipIdx = 0;
+  let attemptTimeMs = 0;
+  let replaySampleAccumMs = 0;
+  let attemptFrames = [];
+  let completedRunFrames = [];
 
   const particles = [];
   const rings = [];
@@ -38,7 +42,8 @@
     onLevelWin: null,
     onToast: null,
     onRageQuip: null,
-    onPauseToggle: null
+    onPauseToggle: null,
+    onFullscreenToggle: null
   };
 
   function getActiveUpgradesMap() {
@@ -84,7 +89,9 @@
     if (!currentLevelBlueprint) return;
     if (incrementDeath) {
       runDeaths += 1;
-      window.ExoticStorage.incrementTelemetry('totalDeaths', 1);
+      window.ExoticStorage.incrementTelemetry('totalDeaths', 1, {
+        levelId: currentLevelBlueprint.id
+      });
       checkAchievementsAndNotify();
     }
     runtime = window.ExoticTraps.cloneRuntimeLevel(currentLevelBlueprint);
@@ -93,6 +100,9 @@
     if (!trailSystem) trailSystem = new window.ExoticTrailSystem();
     trailSystem.reset();
     respawnTimer = 0;
+    attemptTimeMs = 0;
+    replaySampleAccumMs = 0;
+    attemptFrames = [[Math.round(player.x), Math.round(player.y), 1, 1]];
     syncHud();
   }
 
@@ -127,7 +137,23 @@
     player.emoteTimer = 1.05;
     player.emoteDuration = 1.05;
     window.ExoticAudio.emote();
-    window.ExoticStorage.incrementTelemetry('emotesUsedInStage', 1);
+    window.ExoticStorage.incrementTelemetry('emotesUsedInStage', 1, {
+      levelId: runtime ? runtime.id : 1
+    });
+    if (window.ExoticRealtime && runtime) {
+      window.ExoticRealtime.broadcastStageFrame({
+        levelId: runtime.id,
+        x: Math.round(player.x),
+        y: Math.round(player.y),
+        vx: Math.round(player.vx),
+        vy: Math.round(player.vy),
+        facing: player.facing || 1,
+        gravitySign: player.gravitySign || 1,
+        emoteId: player.emoteId,
+        deaths: runDeaths,
+        timeMs: Math.round(runTimeMs)
+      });
+    }
     checkAchievementsAndNotify();
   }
 
@@ -198,9 +224,10 @@
     },
     onCoin(c) {
       window.ExoticAudio.coin();
-      stageCoins += 1;
-      window.ExoticStorage.addCoins(5);
-      window.ExoticStorage.incrementTelemetry('totalCoinsCollected', 1);
+      const earned = window.ExoticStorage.collectStageCoin(runtime.id, c.id);
+      if (earned) {
+        stageCoins += 1;
+      }
       spawnRing(c.x, c.y, 22, 0.24);
       checkAchievementsAndNotify();
       syncHud();
@@ -210,13 +237,8 @@
       spawnBurst(orb.x, orb.y, 18, 220);
       spawnRing(orb.x, orb.y, 44, 0.38);
       const firstTime = window.ExoticStorage.markOrbCollected(runtime.id);
-      if (hudCallbacks.onToast) {
-        hudCallbacks.onToast(
-          firstTime ? 'Hidden Skill Orb Claimed (+1 Skill Point!)' : 'Skill Orb Re-collected (+15 Coins)'
-        );
-      }
-      if (!firstTime) {
-        window.ExoticStorage.addCoins(15);
+      if (firstTime && hudCallbacks.onToast) {
+        hudCallbacks.onToast('Hidden Skill Orb Claimed (+1 Skill Point)');
       }
       syncHud();
     },
@@ -246,7 +268,7 @@
 
       runDeaths += 1;
       respawnTimer = 0.28;
-      window.ExoticStorage.incrementTelemetry('totalDeaths', 1);
+      window.ExoticStorage.incrementTelemetry('totalDeaths', 1, { levelId: runtime.id });
 
       // Heartbreak check: did the player die heartbreakingly close to the real Exit Door?
       let nearDoorMsg = null;
@@ -280,14 +302,22 @@
       const runStats = {
         deaths: runDeaths,
         timeMs: Math.max(500, Math.round(runTimeMs)),
-        stageCoins: stageCoins * 5
+        stageCoins
       };
 
       const rewardSummary = window.ExoticStorage.recordLevelClear(runtime, {
         deaths: runDeaths,
         timeMs: runStats.timeMs,
-        stageCoins: stageCoins * 3
+        stageCoins
       });
+
+      attemptFrames.push([
+        Math.round(player.x),
+        Math.round(player.y),
+        player.facing || 1,
+        player.gravitySign || 1
+      ]);
+      completedRunFrames = attemptFrames.slice(0, 750);
 
       checkAchievementsAndNotify();
       syncHud();
@@ -299,7 +329,9 @@
             deaths: runDeaths,
             timeMs: runStats.timeMs,
             coinsCollected: stageCoins,
-            rewardSummary
+            rewardSummary,
+            sampleIntervalMs: 80,
+            frames: completedRunFrames
           });
         }, 320);
       }
@@ -312,7 +344,10 @@
     input.moveDir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
 
     if (!player.dead && !player.won) {
-      runTimeMs += dt * 1000;
+      const dtMs = dt * 1000;
+      runTimeMs += dtMs;
+      attemptTimeMs += dtMs;
+      replaySampleAccumMs += dtMs;
       const upgs = getActiveUpgradesMap();
 
       // Sub-step physics into max 1/120s slices so fast drops/dashes never tunnel!
@@ -322,6 +357,31 @@
         window.ExoticTraps.updateWorld(runtime, player, subDt, time, worldCallbacks);
         window.ExoticPhysics.stepPlayer(player, input, runtime, upgs, subDt, physicsCallbacks);
         if (player.dead || player.won) break;
+      }
+
+      if (replaySampleAccumMs >= 80 && attemptFrames.length < 750) {
+        replaySampleAccumMs = 0;
+        attemptFrames.push([
+          Math.round(player.x),
+          Math.round(player.y),
+          player.facing || 1,
+          player.gravitySign || 1
+        ]);
+      }
+
+      if (window.ExoticRealtime) {
+        window.ExoticRealtime.broadcastStageFrame({
+          levelId: runtime.id,
+          x: Math.round(player.x),
+          y: Math.round(player.y),
+          vx: Math.round(player.vx),
+          vy: Math.round(player.vy),
+          facing: player.facing || 1,
+          gravitySign: player.gravitySign || 1,
+          emoteId: player.emoteTimer > 0 ? player.emoteId : null,
+          deaths: runDeaths,
+          timeMs: Math.round(runTimeMs)
+        });
       }
 
       const eq = window.ExoticStorage.getState().equipped;
@@ -368,9 +428,11 @@
   function render(time) {
     if (!canvas || !ctx || !runtime || !player) return;
 
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const targetW = VIEW_W * dpr;
-    const targetH = VIEW_H * dpr;
+    const dpr = Math.min(2.5, window.devicePixelRatio || 1);
+    const cssW = canvas.clientWidth || VIEW_W;
+    const scaleFactor = Math.max(dpr, Math.min(4, (cssW * dpr) / VIEW_W));
+    const targetW = Math.round(VIEW_W * scaleFactor);
+    const targetH = Math.round(VIEW_H * scaleFactor);
     if (canvas.width !== targetW || canvas.height !== targetH) {
       canvas.width = targetW;
       canvas.height = targetH;
@@ -383,7 +445,7 @@
     const { fillRing } = window.ExoticCharacterRenderer;
 
     ctx.save();
-    ctx.scale(dpr, dpr);
+    ctx.scale(canvas.width / VIEW_W, canvas.height / VIEW_H);
 
     // Stage background
     ctx.fillStyle = pal.stageBg;
@@ -468,6 +530,96 @@
     // Exit Doors
     for (const d of runtime.doors) {
       window.ExoticWorldDraw.drawDoor(ctx, d, pal, time);
+    }
+
+    // Live Supabase Stage World Record Replay Ghost & Co-Runner Multiplayer Ghosts (Pure Solid Fill)
+    if (state.settings.liveGhosts !== false && window.ExoticRealtime) {
+      const drawGhostTag = (gx, gy, labelText) => {
+        ctx.save();
+        ctx.font = '700 9px ui-monospace, SFMono-Regular, Menlo, monospace';
+        const tw = Math.min(132, Math.max(38, ctx.measureText(labelText).width + 12));
+        const px = gx - tw * 0.5;
+        const py = gy - 26;
+        const r = 8;
+        ctx.globalAlpha = 0.72;
+        ctx.fillStyle = pal.platformFill;
+        ctx.beginPath();
+        ctx.moveTo(px + r, py);
+        ctx.arcTo(px + tw, py, px + tw, py + 16, r);
+        ctx.arcTo(px + tw, py + 16, px, py + 16, r);
+        ctx.arcTo(px, py + 16, px, py, r);
+        ctx.arcTo(px, py, px + tw, py, r);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 0.92;
+        ctx.fillStyle = pal.stageBg;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labelText, gx, py + 8.5);
+        ctx.restore();
+      };
+
+      // 1. Stage World Record Ghost
+      const replay = window.ExoticRealtime.getStageReplay(runtime.id);
+      if (replay && Array.isArray(replay.frames) && replay.frames.length > 1) {
+        const interval = replay.sampleIntervalMs || 80;
+        const rawIdx = attemptTimeMs / interval;
+        const i0 = Math.min(replay.frames.length - 1, Math.max(0, Math.floor(rawIdx)));
+        const i1 = Math.min(replay.frames.length - 1, i0 + 1);
+        const frac = Math.min(1, Math.max(0, rawIdx - i0));
+        const f0 = replay.frames[i0];
+        const f1 = replay.frames[i1];
+        const gx = f0[0] + (f1[0] - f0[0]) * frac;
+        const gy = f0[1] + (f1[1] - f0[1]) * frac;
+
+        window.ExoticCharacterRenderer.draw(ctx, {
+          x: gx,
+          y: gy,
+          w: player.w,
+          h: player.h,
+          vx: ((f1[0] - f0[0]) / Math.max(16, interval)) * 1000,
+          vy: ((f1[1] - f0[1]) / Math.max(16, interval)) * 1000,
+          facing: f0[2] || 1,
+          gravitySign: f0[3] || 1,
+          onGround: Math.abs(f1[1] - f0[1]) < 1,
+          characterId: replay.characterId || 'char_classic',
+          skinId: replay.skinId || 'skin_solid',
+          palette: pal,
+          time,
+          alpha: 0.24
+        });
+        drawGhostTag(gx + player.w * 0.5, gy, `WR · ${(replay.callsign || 'GHOST').slice(0, 12)}`);
+      }
+
+      // 2. Live Co-Runner Multiplayer Ghosts
+      const livePeers = window.ExoticRealtime.getLivePeersForLevel(runtime.id);
+      for (const peer of livePeers) {
+        peer.renderX = peer.renderX + (peer.x - peer.renderX) * 0.28;
+        peer.renderY = peer.renderY + (peer.y - peer.renderY) * 0.28;
+        window.ExoticCharacterRenderer.draw(ctx, {
+          x: peer.renderX,
+          y: peer.renderY,
+          w: player.w,
+          h: player.h,
+          vx: peer.vx || 0,
+          vy: peer.vy || 0,
+          facing: peer.facing || 1,
+          gravitySign: peer.gravitySign || 1,
+          onGround: Math.abs(peer.vy || 0) < 10,
+          characterId: peer.characterId || 'char_classic',
+          skinId: peer.skinId || 'skin_solid',
+          emoteId: peer.emoteId || null,
+          emoteProgress: peer.emoteId ? (time * 1.2) % 1 : 0,
+          palette: pal,
+          time,
+          alpha: 0.42
+        });
+        drawGhostTag(
+          peer.renderX + player.w * 0.5,
+          peer.renderY,
+          `${(peer.callsign || 'RUNNER').slice(0, 12)}`
+        );
+      }
     }
 
     // Trail wake
@@ -572,6 +724,10 @@
           window.ExoticAudio.click();
           resetAttempt(!player.dead);
         }
+      } else if (code === 'KeyF') {
+        if (!e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          if (hudCallbacks.onFullscreenToggle) hudCallbacks.onFullscreenToggle();
+        }
       } else if (code === 'Escape' || code === 'KeyP') {
         if (!e.repeat && player && !player.won) {
           paused = !paused;
@@ -619,6 +775,10 @@
       paused = false;
       running = true;
       resetAttempt(false);
+      if (window.ExoticRealtime) {
+        window.ExoticRealtime.fetchStageReplay(levelId);
+        window.ExoticRealtime.sendPresenceHeartbeat({ route: 'play', levelId });
+      }
     },
     stop() {
       running = false;

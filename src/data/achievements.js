@@ -75,7 +75,7 @@
     {
       id: 'ach_deathless',
       title: 'Memory Of Steel',
-      desc: 'Clear any level from start to finish with 0 deaths.',
+      desc: 'Clear any level from start to finish without dying.',
       rewardCoins: 120,
       rewardSP: 2,
       progress(state) {
