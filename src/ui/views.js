@@ -17,7 +17,11 @@
   let signinExpectedMethod = null;
   let signinExpectedBioMode = null;
   let signinExpectedBioId = null;
+  let signinAllowedMethods = [];
+  let signinExpectedBioModes = {};
+  let signinExpectedBioIds = {};
   let signinManualMethodOverride = false;
+  let settingsAuthBusy = false;
 
   function getNativeFullscreenElement() {
     return document.fullscreenElement || document.webkitFullscreenElement || null;
@@ -974,11 +978,12 @@
     const accountBadge = document.getElementById('set-account-username');
     if (accountBadge && window.ExoticAuth) {
       const uname = window.ExoticAuth.getUsername() || state.callsign || 'runner';
-      const methodLabel = window.ExoticAuth.formatMethodLabel(
-        window.ExoticAuth.getAuthMethod()
-      );
+      const activeList = window.ExoticAuth.getAuthMethods();
+      const methodLabel = window.ExoticAuth.formatMethodListLabel(activeList);
       accountBadge.textContent = `@${uname} · ${methodLabel}`;
     }
+
+    renderSettingsAuthMethods();
 
     const delConfirmBox = document.getElementById('set-delete-confirm-box');
     if (delConfirmBox && !window.ExoticAuth?.isSignedIn?.()) {
@@ -1224,11 +1229,167 @@
     }
   }
 
+  function setSettingsAuthFeedback(status, message, badgeText, iconName) {
+    const pill = document.getElementById('set-auth-feedback');
+    const msgEl = document.getElementById('set-auth-feedback-msg');
+    const badgeEl = document.getElementById('set-auth-feedback-badge');
+    const iconEl = document.getElementById('set-auth-feedback-icon');
+    if (!pill) return;
+
+    pill.classList.remove('is-valid', 'is-invalid');
+    if (status === 'valid') pill.classList.add('is-valid');
+    if (status === 'invalid') pill.classList.add('is-invalid');
+
+    if (msgEl) msgEl.textContent = message;
+    if (badgeEl) badgeEl.textContent = badgeText;
+    if (iconEl && window.ExoticIcons) {
+      iconEl.innerHTML = window.ExoticIcons.get(iconName || 'lock');
+    }
+  }
+
+  function renderSettingsAuthMethods(preserveFeedback = false) {
+    if (!window.ExoticAuth) return;
+    const activeMethods = window.ExoticAuth.getAuthMethods();
+
+    if (!preserveFeedback && !settingsAuthBusy) {
+      const summary = window.ExoticAuth.formatMethodListLabel(activeMethods);
+      setSettingsAuthFeedback(
+        'neutral',
+        `Active on Sign In: ${summary}`,
+        `${activeMethods.length} ACTIVE`,
+        'check'
+      );
+    }
+
+    const methods = ['password', 'pin', 'fingerprint', 'faceid'];
+    for (const m of methods) {
+      const isActive = activeMethods.includes(m);
+      const statusChip = document.getElementById(`set-status-${m}`);
+      const connectBtn = document.getElementById(`set-connect-${m}-btn`);
+      const disconnectBtn = document.getElementById(`set-disconnect-${m}-btn`);
+
+      if (isActive) {
+        if (statusChip) {
+          statusChip.className = 'ex-chip ex-chip--inverted mono';
+          statusChip.textContent = 'ACTIVE';
+        }
+        if (connectBtn) {
+          connectBtn.classList.add('is-hidden');
+          connectBtn.hidden = true;
+        }
+        if (disconnectBtn) {
+          disconnectBtn.classList.remove('is-hidden');
+          disconnectBtn.hidden = false;
+          disconnectBtn.disabled = settingsAuthBusy;
+        }
+        if (m === 'password' || m === 'pin') {
+          document.getElementById(`set-drawer-${m}`)?.classList.remove('is-open');
+        }
+      } else {
+        const sup =
+          m === 'fingerprint' || m === 'faceid'
+            ? window.ExoticAuth.getMethodSupport(m)
+            : { supported: true };
+
+        if (statusChip) {
+          statusChip.className = 'ex-chip ex-chip--subtle mono';
+          statusChip.textContent = sup.supported ? 'OFF' : 'NO SENSOR';
+        }
+        if (connectBtn) {
+          connectBtn.classList.remove('is-hidden');
+          connectBtn.hidden = false;
+          connectBtn.disabled = settingsAuthBusy || !sup.supported;
+        }
+        if (disconnectBtn) {
+          disconnectBtn.classList.add('is-hidden');
+          disconnectBtn.hidden = true;
+        }
+
+        if (m === 'fingerprint') {
+          const descEl = document.getElementById('set-desc-fingerprint');
+          if (descEl) {
+            descEl.textContent = sup.supported
+              ? 'Hardware fingerprint sensor passkey'
+              : sup.reason || 'No Fingerprint hardware sensor detected on this device';
+          }
+        } else if (m === 'faceid') {
+          const descEl = document.getElementById('set-desc-faceid');
+          if (descEl) {
+            descEl.textContent = sup.supported
+              ? 'TrueDepth sensor or front-camera facial scan'
+              : sup.reason || 'No Face ID hardware detected on this device';
+          }
+        }
+      }
+    }
+  }
+
+  function applySigninAllowedMethods(methods, bioModes = {}, bioIds = {}) {
+    const cleanList = window.ExoticAuth
+      ? window.ExoticAuth.normalizeMethodList(methods)
+      : [];
+    signinAllowedMethods = cleanList;
+    signinExpectedBioModes =
+      bioModes && typeof bioModes === 'object' ? { ...bioModes } : {};
+    signinExpectedBioIds =
+      bioIds && typeof bioIds === 'object' ? { ...bioIds } : {};
+
+    const methodBlock = document.getElementById('signin-method-block');
+    const methodTabs = document.getElementById('signin-method-tabs');
+    const methodHintTag = document.getElementById('signin-method-hint-tag');
+
+    if (cleanList.length === 0) {
+      if (methodBlock) methodBlock.classList.add('is-hidden');
+      document.getElementById('signin-password-input')?.setCustomValidity('');
+      document.getElementById('signin-pin-input')?.setCustomValidity('');
+      signinExpectedMethod = null;
+      signinExpectedBioMode = null;
+      signinExpectedBioId = null;
+      return;
+    }
+
+    if (methodBlock) methodBlock.classList.remove('is-hidden');
+    if (methodTabs) {
+      methodTabs.classList.toggle('is-single', cleanList.length === 1);
+    }
+
+    if (methodHintTag && window.ExoticAuth) {
+      methodHintTag.textContent =
+        cleanList.length === 1
+          ? `REGISTERED: ${window.ExoticAuth.formatMethodLabel(cleanList[0]).toUpperCase()}`
+          : `${cleanList.length} REGISTERED`;
+    }
+
+    document.querySelectorAll('[data-signin-method]').forEach((btn) => {
+      const m = btn.getAttribute('data-signin-method');
+      const allowed = cleanList.includes(m);
+      btn.classList.toggle('is-hidden', !allowed);
+      btn.hidden = !allowed;
+    });
+
+    let nextMethod = signinAuthMethod;
+    if (!signinManualMethodOverride || !cleanList.includes(nextMethod)) {
+      nextMethod = cleanList[0];
+    }
+
+    signinExpectedMethod = nextMethod;
+    signinExpectedBioMode = signinExpectedBioModes[nextMethod] || null;
+    signinExpectedBioId = signinExpectedBioIds[nextMethod] || null;
+    applyAuthMethodUI('signin', nextMethod);
+  }
+
   function applyAuthMethodUI(prefix, nextMethod) {
-    window.ExoticAuth?.stopCameraScan?.();
     const clean = window.ExoticAuth
       ? window.ExoticAuth.normalizeMethod(nextMethod)
       : nextMethod || 'password';
+    const prevMethod = prefix === 'signup' ? signupAuthMethod : signinAuthMethod;
+    const bioCard = document.getElementById(`${prefix}-bio-card`);
+    const isActivelyScanning =
+      Boolean(bioCard?.classList.contains('is-scanning')) && prevMethod === clean;
+
+    if (!isActivelyScanning) {
+      window.ExoticAuth?.stopCameraScan?.();
+    }
 
     if (prefix === 'signup') {
       signupAuthMethod = clean;
@@ -1239,13 +1400,18 @@
     document.querySelectorAll(`[data-${prefix}-method]`).forEach((btn) => {
       const m = btn.getAttribute(`data-${prefix}-method`);
       const active = m === clean;
+      const hiddenInSignin =
+        prefix === 'signin' &&
+        signinAllowedMethods.length > 0 &&
+        !signinAllowedMethods.includes(m);
       const sup =
         m === 'fingerprint' || m === 'faceid'
           ? window.ExoticAuth?.getMethodSupport?.(m) || { supported: true }
           : { supported: true };
       btn.className = `ex-pill-btn ${
         active ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
-      } ex-pill-btn--sm`;
+      } ex-pill-btn--sm${hiddenInSignin ? ' is-hidden' : ''}`;
+      btn.hidden = hiddenInSignin;
       btn.setAttribute('aria-pressed', String(active));
       if (!sup.supported) {
         btn.title = sup.reason || 'Not supported on this device';
@@ -1261,7 +1427,9 @@
     const pinInput = document.getElementById(`${prefix}-pin-input`);
     const faceViewport = document.getElementById(`${prefix}-face-viewport`);
 
-    if (faceViewport) faceViewport.classList.remove('is-open');
+    if (faceViewport && !isActivelyScanning) {
+      faceViewport.classList.remove('is-open');
+    }
     if (pwPanel) pwPanel.classList.toggle('is-active', clean === 'password');
     if (pinPanel) pinPanel.classList.toggle('is-active', clean === 'pin');
     if (bioPanel) {
@@ -1276,11 +1444,13 @@
     if (pinInput && clean !== 'pin') pinInput.setCustomValidity('');
 
     if (clean === 'fingerprint' || clean === 'faceid') {
-      const unameVal = document
-        .getElementById(`${prefix}-username-input`)
-        ?.value?.trim();
-      window.ExoticAuth?.prefetchBiometricChallenge?.(unameVal || '');
-      syncBiometricCardUI(prefix);
+      if (!isActivelyScanning) {
+        const unameVal = document
+          .getElementById(`${prefix}-username-input`)
+          ?.value?.trim();
+        window.ExoticAuth?.prefetchBiometricChallenge?.(unameVal || '');
+        syncBiometricCardUI(prefix);
+      }
     } else {
       validateCredentialFieldLive(prefix);
     }
@@ -1573,19 +1743,16 @@
 
   async function validateSignInUsername(immediate = false) {
     const input = document.getElementById('signin-username-input');
-    const methodHintTag = document.getElementById('signin-method-hint-tag');
     if (!input || !window.ExoticAuth) return false;
 
     const raw = input.value.trim();
     if (!raw) {
-      signinExpectedMethod = null;
-      signinExpectedBioId = null;
-      if (methodHintTag) methodHintTag.textContent = 'YOUR CHOICE';
+      applySigninAllowedMethods([]);
       input.setCustomValidity('username is invalid');
       setAuthValidationUI(
         'signin',
         'neutral',
-        'Enter your registered username',
+        'Enter your registered username to load your sign-in method',
         'CHECK',
         'user'
       );
@@ -1593,6 +1760,7 @@
     }
 
     if (!window.ExoticAuth.isValidFormat(raw)) {
+      applySigninAllowedMethods([]);
       input.setCustomValidity('username is invalid');
       setAuthValidationUI('signin', 'invalid', 'username is invalid', 'INVALID', 'skull');
       return false;
@@ -1608,14 +1776,14 @@
     if (seq !== signinCheckSeq) return false;
 
     if (!res || !res.valid) {
+      applySigninAllowedMethods([]);
       input.setCustomValidity('username is invalid');
       setAuthValidationUI('signin', 'invalid', 'username is invalid', 'INVALID', 'skull');
       return false;
     }
 
     if (!res.exists) {
-      signinExpectedMethod = null;
-      signinExpectedBioId = null;
+      applySigninAllowedMethods([]);
       input.setCustomValidity('username is not registered');
       setAuthValidationUI(
         'signin',
@@ -1629,32 +1797,27 @@
 
     const bound = res.boundUsername || window.ExoticAuth.getBoundUsername();
     if (bound && raw.toLowerCase() !== bound.toLowerCase()) {
+      applySigninAllowedMethods([]);
       const lockMsg = `Account locked to @${bound} until deleted in Settings`;
       input.setCustomValidity(lockMsg);
       setAuthValidationUI('signin', 'invalid', lockMsg, 'LOCKED', 'lock');
       return false;
     }
 
-    signinExpectedBioId = res.biometricCredentialId || null;
-    signinExpectedBioMode = res.biometricMode || null;
-    if (res.authMethod && res.authMethod !== 'none') {
-      signinExpectedMethod = res.authMethod;
-      const mLabel = window.ExoticAuth.formatMethodLabel(res.authMethod);
-      if (methodHintTag) {
-        methodHintTag.textContent = `REGISTERED: ${mLabel.toUpperCase()}`;
-      }
-      if (!signinManualMethodOverride && signinAuthMethod !== res.authMethod) {
-        applyAuthMethodUI('signin', res.authMethod);
-      }
-    } else {
-      signinExpectedMethod = null;
-      if (methodHintTag) methodHintTag.textContent = 'YOUR CHOICE';
-    }
+    const registeredMethods = window.ExoticAuth.normalizeMethodList(
+      res.authMethods,
+      res.authMethod && res.authMethod !== 'none' ? res.authMethod : 'password'
+    );
+    applySigninAllowedMethods(
+      registeredMethods,
+      res.biometricModes || {},
+      res.biometricCredentialIds || {}
+    );
 
     input.setCustomValidity('');
     const methodSuffix =
-      signinExpectedMethod && window.ExoticAuth
-        ? ` · ${window.ExoticAuth.formatMethodLabel(signinExpectedMethod)}`
+      registeredMethods.length > 0 && window.ExoticAuth
+        ? ` · ${window.ExoticAuth.formatMethodListLabel(registeredMethods)}`
         : '';
     setAuthValidationUI(
       'signin',
@@ -1726,23 +1889,33 @@
 
     const hasBound = window.ExoticAuth ? window.ExoticAuth.hasBoundAccount() : false;
     const bound = window.ExoticAuth ? window.ExoticAuth.getBoundUsername() : null;
-    const boundMethod = window.ExoticAuth ? window.ExoticAuth.getBoundAuthMethod() : null;
+    const boundMethods = window.ExoticAuth ? window.ExoticAuth.getBoundAuthMethods() : [];
+    const authState = window.ExoticAuth ? window.ExoticAuth.getState() : {};
 
     if (hasBound && bound && input && !input.value.trim()) {
       input.value = bound;
     }
-    if (hasBound && boundMethod && !signinManualMethodOverride) {
-      signinAuthMethod = window.ExoticAuth.normalizeMethod(boundMethod);
+    if (hasBound && boundMethods.length > 0) {
+      if (!signinManualMethodOverride || !boundMethods.includes(signinAuthMethod)) {
+        signinAuthMethod = boundMethods[0];
+      }
+      applySigninAllowedMethods(
+        boundMethods,
+        authState.biometricModes || {},
+        authState.biometricCredentialIds || {}
+      );
+    } else if (!input?.value?.trim()) {
+      applySigninAllowedMethods([]);
     }
-    applyAuthMethodUI('signin', signinAuthMethod);
 
     if (lockBanner) {
       lockBanner.classList.toggle('is-visible', hasBound);
     }
     if (hasBound && bound) {
-      const mLabel = boundMethod
-        ? ` with ${window.ExoticAuth.formatMethodLabel(boundMethod)}`
-        : '';
+      const mLabel =
+        boundMethods.length > 0
+          ? ` with ${window.ExoticAuth.formatMethodListLabel(boundMethods)}`
+          : '';
       if (lockTitle) lockTitle.textContent = `Bound Account: @${bound}`;
       if (lockDesc) {
         lockDesc.textContent = `Signed out of @${bound}. Verify @${bound}${mLabel} below to sign back into the same account (re-registration stays locked until deleted from Settings).`;
@@ -1897,8 +2070,14 @@
       btn.addEventListener('click', () => {
         window.ExoticAudio.unlock();
         window.ExoticAudio.click();
-        signinManualMethodOverride = true;
         const method = btn.getAttribute('data-signin-method');
+        if (signinAllowedMethods.length > 0 && !signinAllowedMethods.includes(method)) {
+          return;
+        }
+        signinManualMethodOverride = true;
+        signinExpectedMethod = method;
+        signinExpectedBioMode = signinExpectedBioModes[method] || null;
+        signinExpectedBioId = signinExpectedBioIds[method] || null;
         applyAuthMethodUI('signin', method);
       });
     });
@@ -1919,6 +2098,8 @@
     bindSecretRevealToggle('signup-pin-reveal-btn', 'signup-pin-input');
     bindSecretRevealToggle('signin-pw-reveal-btn', 'signin-password-input');
     bindSecretRevealToggle('signin-pin-reveal-btn', 'signin-pin-input');
+    bindSecretRevealToggle('set-pw-reveal-btn', 'set-connect-password-input');
+    bindSecretRevealToggle('set-pin-reveal-btn', 'set-connect-pin-input');
 
     document.getElementById('signup-password-input')?.addEventListener('input', () => {
       validateCredentialFieldLive('signup');
@@ -1949,6 +2130,7 @@
       const cur = window.ExoticRouter?.getCurrent?.();
       if (cur === 'signup') applyAuthMethodUI('signup', signupAuthMethod);
       else if (cur === 'signin') applyAuthMethodUI('signin', signinAuthMethod);
+      else if (cur === 'settings') renderSettingsAuthMethods(true);
     });
 
     const signupInput = document.getElementById('signup-username-input');
@@ -2275,11 +2457,12 @@
       }
 
       if (res?.code === 'AUTH_METHOD_MISMATCH' && res.expectedMethod) {
-        signinExpectedMethod = res.expectedMethod;
-        signinExpectedBioMode = res.biometricMode || signinExpectedBioMode;
-        signinExpectedBioId = res.biometricCredentialId || signinExpectedBioId;
         signinManualMethodOverride = false;
-        applyAuthMethodUI('signin', res.expectedMethod);
+        applySigninAllowedMethods(
+          res.expectedMethods || [res.expectedMethod],
+          res.biometricModes || {},
+          res.biometricCredentialIds || {}
+        );
         setCredentialValidationUI(
           'signin',
           'invalid',
@@ -2604,11 +2787,331 @@
         const signinInput = document.getElementById('signin-username-input');
         if (signupInput) signupInput.value = '';
         if (signinInput) signinInput.value = '';
+        applySigninAllowedMethods([]);
         showToast(`Deleted @${res.deletedUsername}. You may register a new account.`);
         window.ExoticRouter.navigate('signup');
       } else {
         showToast('Could not delete account.');
       }
+    });
+
+    // Settings Authentication Methods: Connect / Disconnect (Password, PIN, Touch ID / Fingerprint, Face ID)
+    document.getElementById('set-connect-password-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      document.getElementById('set-drawer-pin')?.classList.remove('is-open');
+      const drawer = document.getElementById('set-drawer-password');
+      const open = drawer ? !drawer.classList.contains('is-open') : false;
+      drawer?.classList.toggle('is-open', open);
+      if (open) {
+        document.getElementById('set-connect-password-input')?.focus();
+      }
+    });
+
+    document.getElementById('set-cancel-password-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      document.getElementById('set-drawer-password')?.classList.remove('is-open');
+      const pwIn = document.getElementById('set-connect-password-input');
+      if (pwIn) pwIn.value = '';
+    });
+
+    document.getElementById('set-save-password-btn')?.addEventListener('click', async () => {
+      window.ExoticAudio.click();
+      if (!window.ExoticAuth || settingsAuthBusy) return;
+      const pwIn = document.getElementById('set-connect-password-input');
+      const val = pwIn ? pwIn.value : '';
+      if (!window.ExoticAuth.isValidPassword(val)) {
+        setSettingsAuthFeedback(
+          'invalid',
+          'Password must be 4 to 64 characters',
+          'SHORT',
+          'skull'
+        );
+        pwIn?.focus();
+        return;
+      }
+
+      settingsAuthBusy = true;
+      renderSettingsAuthMethods(true);
+      const res = await window.ExoticAuth.connectAuthMethod({
+        authMethod: 'password',
+        credential: val
+      });
+      settingsAuthBusy = false;
+
+      if (res && res.ok) {
+        if (pwIn) pwIn.value = '';
+        document.getElementById('set-drawer-password')?.classList.remove('is-open');
+        window.ExoticAudio.buy();
+        setSettingsAuthFeedback(
+          'valid',
+          `Password active · Sign In methods: ${window.ExoticAuth.formatMethodListLabel(
+            res.authMethods
+          )}`,
+          'ACTIVE',
+          'check'
+        );
+        renderSettingsView();
+        showToast('Password sign-in method enabled.');
+      } else {
+        setSettingsAuthFeedback(
+          'invalid',
+          res?.reason || 'Could not enable Password',
+          'ERROR',
+          'skull'
+        );
+        renderSettingsAuthMethods(true);
+      }
+    });
+
+    document.getElementById('set-connect-pin-input')?.addEventListener('input', (e) => {
+      const target = e.target;
+      if (target) {
+        const clean = target.value.replace(/\D+/g, '').slice(0, 8);
+        if (target.value !== clean) target.value = clean;
+      }
+    });
+
+    document.getElementById('set-connect-pin-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      document.getElementById('set-drawer-password')?.classList.remove('is-open');
+      const drawer = document.getElementById('set-drawer-pin');
+      const open = drawer ? !drawer.classList.contains('is-open') : false;
+      drawer?.classList.toggle('is-open', open);
+      if (open) {
+        document.getElementById('set-connect-pin-input')?.focus();
+      }
+    });
+
+    document.getElementById('set-cancel-pin-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      document.getElementById('set-drawer-pin')?.classList.remove('is-open');
+      const pinIn = document.getElementById('set-connect-pin-input');
+      if (pinIn) pinIn.value = '';
+    });
+
+    document.getElementById('set-save-pin-btn')?.addEventListener('click', async () => {
+      window.ExoticAudio.click();
+      if (!window.ExoticAuth || settingsAuthBusy) return;
+      const pinIn = document.getElementById('set-connect-pin-input');
+      const digits = pinIn ? pinIn.value.replace(/\D+/g, '').slice(0, 8) : '';
+      if (!window.ExoticAuth.isValidPin(digits)) {
+        setSettingsAuthFeedback(
+          'invalid',
+          'PIN must be 4 to 8 numeric digits',
+          'INVALID',
+          'skull'
+        );
+        pinIn?.focus();
+        return;
+      }
+
+      settingsAuthBusy = true;
+      renderSettingsAuthMethods(true);
+      const res = await window.ExoticAuth.connectAuthMethod({
+        authMethod: 'pin',
+        credential: digits
+      });
+      settingsAuthBusy = false;
+
+      if (res && res.ok) {
+        if (pinIn) pinIn.value = '';
+        document.getElementById('set-drawer-pin')?.classList.remove('is-open');
+        window.ExoticAudio.buy();
+        setSettingsAuthFeedback(
+          'valid',
+          `PIN active · Sign In methods: ${window.ExoticAuth.formatMethodListLabel(
+            res.authMethods
+          )}`,
+          'ACTIVE',
+          'check'
+        );
+        renderSettingsView();
+        showToast('PIN sign-in method enabled.');
+      } else {
+        setSettingsAuthFeedback(
+          'invalid',
+          res?.reason || 'Could not enable PIN',
+          'ERROR',
+          'skull'
+        );
+        renderSettingsAuthMethods(true);
+      }
+    });
+
+    function connectSettingsBiometricSync(method) {
+      window.ExoticAudio.unlock();
+      window.ExoticAudio.click();
+      if (!window.ExoticAuth || settingsAuthBusy) return;
+
+      const uname = window.ExoticAuth.getUsername();
+      if (!uname) return;
+
+      const label = method === 'faceid' ? 'Face ID' : 'Touch ID / Fingerprint';
+      const iconName = getMethodIconName(method);
+      const support = window.ExoticAuth.getMethodSupport(method);
+      if (!support.supported) {
+        setSettingsAuthFeedback(
+          'invalid',
+          support.reason || `${label} hardware is not available on this device`,
+          'NO SENSOR',
+          'skull'
+        );
+        renderSettingsAuthMethods(true);
+        return;
+      }
+
+      document.getElementById('set-drawer-password')?.classList.remove('is-open');
+      document.getElementById('set-drawer-pin')?.classList.remove('is-open');
+
+      const faceViewport = document.getElementById('set-face-viewport');
+      const faceCanvas = document.getElementById('set-face-canvas');
+      const caps = window.ExoticBiometrics?.getCapabilities?.() || {};
+      const willOpenInlineCamera =
+        method === 'faceid' &&
+        support.mode === 'camera_face' &&
+        (!caps.isEmbeddedFrame || caps.inlineCameraAllowed);
+
+      if (faceViewport) {
+        faceViewport.classList.toggle('is-open', Boolean(willOpenInlineCamera));
+      }
+
+      settingsAuthBusy = true;
+      renderSettingsAuthMethods(true);
+      setSettingsAuthFeedback(
+        'neutral',
+        `Complete ${label} scan on your device...`,
+        'SCAN',
+        iconName
+      );
+
+      // Must run synchronously inside click gesture to preserve hardware WebAuthn user activation!
+      const scanPromise = window.ExoticAuth.startHardwareBiometricScanSync({
+        flow: 'signup',
+        method,
+        username: uname,
+        expectedBiometricMode: support.mode,
+        canvasEl: faceCanvas,
+        onProgress(info) {
+          if (info && info.hint) {
+            setSettingsAuthFeedback(
+              'neutral',
+              info.hint,
+              info.pct != null ? `${info.pct}%` : 'SCAN',
+              iconName
+            );
+          }
+        }
+      });
+
+      scanPromise.then(async (bioRes) => {
+        if (faceViewport) faceViewport.classList.remove('is-open');
+
+        if (!bioRes || !bioRes.ok) {
+          settingsAuthBusy = false;
+          setSettingsAuthFeedback(
+            'invalid',
+            bioRes?.reason || `${label} scan did not complete`,
+            'FAILED',
+            'skull'
+          );
+          renderSettingsAuthMethods(true);
+          return;
+        }
+
+        const saveRes = await window.ExoticAuth.connectAuthMethod({
+          authMethod: method,
+          biometricMode: bioRes.biometricMode || 'webauthn',
+          biometricCredentialId: bioRes.biometricCredentialId || null,
+          webauthnAttestation: bioRes.webauthnAttestation || null,
+          faceDescriptor: bioRes.faceDescriptor || null,
+          challenge: bioRes.challenge || null
+        });
+
+        settingsAuthBusy = false;
+        if (saveRes && saveRes.ok) {
+          window.ExoticAudio.buy();
+          setSettingsAuthFeedback(
+            'valid',
+            `${label} active · Sign In methods: ${window.ExoticAuth.formatMethodListLabel(
+              saveRes.authMethods
+            )}`,
+            'ACTIVE',
+            'check'
+          );
+          renderSettingsView();
+          showToast(`${label} sign-in method enabled.`);
+        } else {
+          setSettingsAuthFeedback(
+            'invalid',
+            saveRes?.reason || `Could not enable ${label}`,
+            'ERROR',
+            'skull'
+          );
+          renderSettingsAuthMethods(true);
+        }
+      });
+    }
+
+    document
+      .getElementById('set-connect-fingerprint-btn')
+      ?.addEventListener('click', () => connectSettingsBiometricSync('fingerprint'));
+
+    document
+      .getElementById('set-connect-faceid-btn')
+      ?.addEventListener('click', () => connectSettingsBiometricSync('faceid'));
+
+    async function disconnectSettingsMethod(method) {
+      window.ExoticAudio.click();
+      if (!window.ExoticAuth || settingsAuthBusy) return;
+
+      const label =
+        method === 'fingerprint'
+          ? 'Touch ID / Fingerprint'
+          : window.ExoticAuth.formatMethodLabel(method);
+
+      const currentMethods = window.ExoticAuth.getAuthMethods();
+      if (currentMethods.length <= 1) {
+        setSettingsAuthFeedback(
+          'invalid',
+          'Keep at least one sign-in method active. Connect another method first.',
+          'LOCKED',
+          'lock'
+        );
+        showToast('Connect another sign-in method before disconnecting your last one.');
+        return;
+      }
+
+      settingsAuthBusy = true;
+      renderSettingsAuthMethods(true);
+      const res = await window.ExoticAuth.disconnectAuthMethod(method);
+      settingsAuthBusy = false;
+
+      if (res && res.ok) {
+        setSettingsAuthFeedback(
+          'neutral',
+          `${label} removed · Active on Sign In: ${window.ExoticAuth.formatMethodListLabel(
+            res.authMethods
+          )}`,
+          `${res.authMethods.length} ACTIVE`,
+          'check'
+        );
+        renderSettingsView();
+        showToast(`${label} sign-in method disconnected.`);
+      } else {
+        setSettingsAuthFeedback(
+          'invalid',
+          res?.reason || `Could not disconnect ${label}`,
+          'LOCKED',
+          'lock'
+        );
+        renderSettingsAuthMethods(true);
+      }
+    }
+
+    ['password', 'pin', 'fingerprint', 'faceid'].forEach((m) => {
+      document
+        .getElementById(`set-disconnect-${m}-btn`)
+        ?.addEventListener('click', () => disconnectSettingsMethod(m));
     });
 
     document.getElementById('set-save-anon-btn')?.addEventListener('click', async () => {
@@ -2676,8 +3179,11 @@
       });
 
       window.ExoticRouter.onNavigate((route) => {
-        if (route !== 'signup' && route !== 'signin') {
+        if (route !== 'signup' && route !== 'signin' && route !== 'settings') {
           window.ExoticAuth?.stopCameraScan?.();
+        }
+        if (route !== 'settings') {
+          document.getElementById('set-face-viewport')?.classList.remove('is-open');
         }
         if (route !== 'play' && canvasFullscreen) {
           setCanvasFullscreen(false);

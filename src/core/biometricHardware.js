@@ -211,6 +211,9 @@
           fetchedAt: Date.now(),
           username: cleanUser.toLowerCase(),
           authMethod: data.authMethod || null,
+          authMethods: Array.isArray(data.authMethods) ? data.authMethods : [],
+          biometricModes: data.biometricModes || {},
+          biometricCredentialIds: data.biometricCredentialIds || {},
           biometricMode: data.biometricMode || null,
           biometricCredentialId: data.biometricCredentialId || null
         };

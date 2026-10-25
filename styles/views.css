@@ -929,15 +929,28 @@
   padding-top: 4px;
 }
 
+.auth-method-block.is-hidden {
+  display: none;
+}
+
 .auth-method-tabs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
+.auth-method-tabs.is-single {
+  grid-template-columns: 1fr;
+}
+
 .auth-method-tabs .ex-pill-btn {
   width: 100%;
   justify-content: center;
+}
+
+.auth-method-tabs .ex-pill-btn.is-hidden,
+.settings-auth-actions .ex-pill-btn.is-hidden {
+  display: none;
 }
 
 .auth-cred-panel {
@@ -1112,6 +1125,73 @@
 }
 
 .settings-delete-confirm.is-open {
+  display: flex;
+}
+
+/* Settings Multi-Method Authentication Rows (Borderless Monochrome) */
+.settings-auth-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-auth-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-card);
+  background-color: var(--bg-surface-3);
+}
+
+.settings-auth-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-auth-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+  flex: 1;
+}
+
+.settings-auth-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-surface-2);
+  color: var(--fg-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.settings-auth-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-auth-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settings-auth-drawer {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.settings-auth-drawer.is-open {
   display: flex;
 }
 

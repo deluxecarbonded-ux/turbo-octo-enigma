@@ -12,6 +12,10 @@
     boundUsername: null,
     authMethod: 'password',
     boundAuthMethod: null,
+    authMethods: [],
+    boundAuthMethods: [],
+    biometricModes: {},
+    biometricCredentialIds: {},
     biometricMode: null,
     biometricCredentialId: null,
     profileId: null
@@ -22,6 +26,26 @@
   function normalizeMethod(method) {
     const m = String(method || '').trim().toLowerCase();
     return AUTH_METHODS.includes(m) ? m : 'password';
+  }
+
+  function normalizeMethodList(list, fallbackMethod = null) {
+    const out = [];
+    if (Array.isArray(list)) {
+      for (const raw of list) {
+        const m = String(raw || '').trim().toLowerCase();
+        if (AUTH_METHODS.includes(m) && !out.includes(m)) {
+          out.push(m);
+        }
+      }
+    }
+    if (
+      out.length === 0 &&
+      fallbackMethod &&
+      AUTH_METHODS.includes(String(fallbackMethod).trim().toLowerCase())
+    ) {
+      out.push(String(fallbackMethod).trim().toLowerCase());
+    }
+    return out;
   }
 
   function formatMethodLabel(method) {
@@ -39,6 +63,12 @@
     }
   }
 
+  function formatMethodListLabel(methods) {
+    const list = normalizeMethodList(methods);
+    if (list.length === 0) return 'None';
+    return list.map(formatMethodLabel).join(' · ');
+  }
+
   function loadCachedBinding() {
     try {
       const raw = localStorage.getItem(AUTH_BINDING_KEY);
@@ -51,6 +81,22 @@
         state.boundUsername = parsed.boundUsername || null;
         state.authMethod = parsed.authMethod || 'password';
         state.boundAuthMethod = parsed.boundAuthMethod || parsed.authMethod || null;
+        state.authMethods = normalizeMethodList(
+          parsed.authMethods,
+          state.signedIn ? state.authMethod : null
+        );
+        state.boundAuthMethods = normalizeMethodList(
+          parsed.boundAuthMethods || parsed.authMethods,
+          state.hasAccount ? state.boundAuthMethod : null
+        );
+        state.biometricModes =
+          parsed.biometricModes && typeof parsed.biometricModes === 'object'
+            ? { ...parsed.biometricModes }
+            : {};
+        state.biometricCredentialIds =
+          parsed.biometricCredentialIds && typeof parsed.biometricCredentialIds === 'object'
+            ? { ...parsed.biometricCredentialIds }
+            : {};
         state.biometricMode = parsed.biometricMode || null;
         state.biometricCredentialId = parsed.biometricCredentialId || null;
         state.profileId = parsed.profileId || null;
@@ -75,6 +121,10 @@
           boundUsername: state.boundUsername,
           authMethod: state.authMethod,
           boundAuthMethod: state.boundAuthMethod,
+          authMethods: state.authMethods,
+          boundAuthMethods: state.boundAuthMethods,
+          biometricModes: state.biometricModes,
+          biometricCredentialIds: state.biometricCredentialIds,
           biometricMode: state.biometricMode,
           biometricCredentialId: state.biometricCredentialId,
           profileId: state.profileId
@@ -86,7 +136,13 @@
   }
 
   function notify() {
-    const snap = { ...state };
+    const snap = {
+      ...state,
+      authMethods: [...state.authMethods],
+      boundAuthMethods: [...state.boundAuthMethods],
+      biometricModes: { ...state.biometricModes },
+      biometricCredentialIds: { ...state.biometricCredentialIds }
+    };
     subscribers.forEach((fn) => {
       try {
         fn(snap);
@@ -124,28 +180,57 @@
     }
   }
 
+  function applyMethodsUpdate(payload) {
+    if (!payload || typeof payload !== 'object') return;
+    const nextMethods = normalizeMethodList(
+      payload.authMethods,
+      payload.authMethod && payload.authMethod !== 'none'
+        ? payload.authMethod
+        : state.boundAuthMethod
+    );
+    const primary = nextMethods[0] || normalizeMethod(payload.authMethod || state.authMethod);
+    state.authMethod = primary;
+    state.boundAuthMethod = state.hasAccount ? primary : null;
+    state.authMethods = nextMethods;
+    state.boundAuthMethods = state.hasAccount ? [...nextMethods] : [];
+    if (payload.biometricModes && typeof payload.biometricModes === 'object') {
+      state.biometricModes = { ...payload.biometricModes };
+    }
+    if (payload.biometricCredentialIds && typeof payload.biometricCredentialIds === 'object') {
+      state.biometricCredentialIds = { ...payload.biometricCredentialIds };
+    }
+    state.biometricMode =
+      state.biometricModes[primary] || payload.biometricMode || null;
+    state.biometricCredentialId =
+      state.biometricCredentialIds[primary] || payload.biometricCredentialId || null;
+  }
+
   function applySessionPayload(payload, opts = {}) {
     if (!payload || typeof payload !== 'object') return state;
 
     const resolvedUsername = payload.username || payload.boundUsername || null;
     const hasAcc = Boolean(payload.hasAccount && resolvedUsername);
     const signedIn = Boolean(hasAcc && payload.signedIn);
-    const resolvedMethod =
-      payload.authMethod && payload.authMethod !== 'none'
-        ? normalizeMethod(payload.authMethod)
-        : state.boundAuthMethod || 'password';
 
     state.initialized = true;
     state.hasAccount = hasAcc;
     state.signedIn = signedIn;
     state.boundUsername = hasAcc ? resolvedUsername : null;
     state.username = signedIn ? resolvedUsername : null;
-    state.authMethod = resolvedMethod;
-    state.boundAuthMethod = hasAcc ? resolvedMethod : null;
-    if (payload.biometricMode) state.biometricMode = payload.biometricMode;
-    if (payload.biometricCredentialId) {
-      state.biometricCredentialId = payload.biometricCredentialId;
+
+    if (hasAcc) {
+      applyMethodsUpdate(payload);
+    } else {
+      state.authMethod = 'password';
+      state.boundAuthMethod = null;
+      state.authMethods = [];
+      state.boundAuthMethods = [];
+      state.biometricModes = {};
+      state.biometricCredentialIds = {};
+      state.biometricMode = null;
+      state.biometricCredentialId = null;
     }
+
     state.profileId = payload.profileId || null;
 
     persistBinding();
@@ -201,18 +286,27 @@
     const ready = bio.getReadyChallengeSync(username);
     const activeChallenge = ready ? ready.challenge : null;
     const resolvedCredId =
-      credentialId || ready?.biometricCredentialId || state.biometricCredentialId || null;
+      credentialId ||
+      ready?.biometricCredentialIds?.[cleanMethod] ||
+      state.biometricCredentialIds?.[cleanMethod] ||
+      ready?.biometricCredentialId ||
+      null;
 
     let targetBioMode = support.mode || 'webauthn';
     if (cleanMethod === 'fingerprint') {
       targetBioMode = 'webauthn';
     } else if (expectedBiometricMode === 'webauthn' || expectedBiometricMode === 'camera_face') {
       targetBioMode = expectedBiometricMode;
+    } else if (flow === 'signin') {
+      const rememberedMode =
+        ready?.biometricModes?.[cleanMethod] || state.biometricModes?.[cleanMethod];
+      if (rememberedMode === 'webauthn' || rememberedMode === 'camera_face') {
+        targetBioMode = rememberedMode;
+      }
     }
 
     // 1. Hardware WebAuthn Path (Touch ID, iOS Face ID, Windows Hello, Android BiometricPrompt)
     if (targetBioMode === 'webauthn') {
-      // If embedded in a cross-origin iframe that blocks inline WebAuthn, open top-level sensor window synchronously
       if (caps.isEmbeddedFrame && !caps.inlineWebAuthnAllowed) {
         return bio.openTopLevelSensorBridgeSync({
           mode: flow,
@@ -239,7 +333,10 @@
                 username,
                 method: cleanMethod,
                 challenge: fresh.challenge,
-                credentialId: resolvedCredId || fresh.biometricCredentialId
+                credentialId:
+                  resolvedCredId ||
+                  fresh.biometricCredentialIds?.[cleanMethod] ||
+                  fresh.biometricCredentialId
               });
         });
       }
@@ -284,7 +381,6 @@
         challenge: ch,
         onProgress
       });
-      // Refresh challenge in background after scan
       bio.prefetchChallenge(username);
       return res;
     })();
@@ -297,7 +393,9 @@
     PIN_REGEX,
     AUTH_METHODS,
     normalizeMethod,
+    normalizeMethodList,
     formatMethodLabel,
+    formatMethodListLabel,
 
     isValidFormat(username) {
       return USERNAME_REGEX.test(String(username || '').trim());
@@ -328,7 +426,13 @@
     startHardwareBiometricScanSync,
 
     getState() {
-      return { ...state };
+      return {
+        ...state,
+        authMethods: [...state.authMethods],
+        boundAuthMethods: [...state.boundAuthMethods],
+        biometricModes: { ...state.biometricModes },
+        biometricCredentialIds: { ...state.biometricCredentialIds }
+      };
     },
 
     isInitialized() {
@@ -359,11 +463,33 @@
       return state.boundAuthMethod || state.authMethod || null;
     },
 
-    getBiometricMode() {
+    getAuthMethods() {
+      if (state.authMethods.length > 0) return [...state.authMethods];
+      if (state.boundAuthMethods.length > 0) return [...state.boundAuthMethods];
+      return state.boundAuthMethod ? [state.boundAuthMethod] : [];
+    },
+
+    getBoundAuthMethods() {
+      if (state.boundAuthMethods.length > 0) return [...state.boundAuthMethods];
+      return state.boundAuthMethod ? [state.boundAuthMethod] : [];
+    },
+
+    isMethodActive(method) {
+      const clean = String(method || '').toLowerCase();
+      return this.getAuthMethods().includes(clean);
+    },
+
+    getBiometricMode(method = null) {
+      if (method && state.biometricModes[method]) {
+        return state.biometricModes[method];
+      }
       return state.biometricMode || null;
     },
 
-    getBiometricCredentialId() {
+    getBiometricCredentialId(method = null) {
+      if (method && state.biometricCredentialIds[method]) {
+        return state.biometricCredentialIds[method];
+      }
       return state.biometricCredentialId || null;
     },
 
@@ -413,7 +539,7 @@
         state.initialized = true;
         notify();
       }
-      return { ...state };
+      return this.getState();
     },
 
     async checkUsername(username) {
@@ -425,6 +551,7 @@
           exists: false,
           available: false,
           taken: false,
+          authMethods: [],
           reason: 'invalid_format'
         };
       }
@@ -435,6 +562,7 @@
       );
       if (res && typeof res === 'object') {
         res.taken = Boolean(res.valid && res.exists);
+        res.authMethods = normalizeMethodList(res.authMethods, res.authMethod);
       }
       window.ExoticBiometrics?.prefetchChallenge?.(trimmed);
       return res;
@@ -462,6 +590,9 @@
             signedIn: true,
             username: res.username,
             authMethod: res.authMethod || authMethod,
+            authMethods: res.authMethods || [authMethod],
+            biometricModes: res.biometricModes || {},
+            biometricCredentialIds: res.biometricCredentialIds || {},
             biometricMode: res.biometricMode || authOptions.biometricMode || null,
             biometricCredentialId:
               res.biometricCredentialId || authOptions.biometricCredentialId || null,
@@ -499,6 +630,9 @@
             signedIn: true,
             username: res.username,
             authMethod: res.authMethod || authMethod,
+            authMethods: res.authMethods || [authMethod],
+            biometricModes: res.biometricModes || {},
+            biometricCredentialIds: res.biometricCredentialIds || {},
             biometricMode: res.biometricMode || authOptions.biometricMode || null,
             biometricCredentialId:
               res.biometricCredentialId || authOptions.biometricCredentialId || null,
@@ -513,24 +647,60 @@
       return res;
     },
 
+    async connectAuthMethod(authOptions = {}) {
+      const authMethod = normalizeMethod(authOptions.authMethod);
+      const res = await requestAuth('/api/auth/methods/connect', 'POST', {
+        authMethod,
+        credential: authOptions.credential != null ? String(authOptions.credential) : '',
+        biometricMode: authOptions.biometricMode || null,
+        biometricCredentialId: authOptions.biometricCredentialId || null,
+        webauthnAttestation: authOptions.webauthnAttestation || null,
+        faceDescriptor: authOptions.faceDescriptor || null,
+        challenge: authOptions.challenge || null
+      });
+
+      if (res && res.ok) {
+        applyMethodsUpdate(res);
+        persistBinding();
+        window.ExoticBiometrics?.prefetchChallenge?.(state.username || '');
+        notify();
+      }
+      return res;
+    },
+
+    async disconnectAuthMethod(method) {
+      const authMethod = normalizeMethod(method);
+      const res = await requestAuth('/api/auth/methods/disconnect', 'POST', {
+        authMethod
+      });
+
+      if (res && res.ok) {
+        applyMethodsUpdate(res);
+        persistBinding();
+        window.ExoticBiometrics?.prefetchChallenge?.(state.username || '');
+        notify();
+      }
+      return res;
+    },
+
     async signOut() {
       window.ExoticBiometrics?.stopActiveCamera?.();
       const res = await requestAuth('/api/auth/signout', 'POST', {});
       const lockedUsername =
         res?.boundUsername || res?.username || state.boundUsername || state.username;
-      const lockedMethod =
-        res?.authMethod && res.authMethod !== 'none'
-          ? normalizeMethod(res.authMethod)
-          : state.boundAuthMethod || state.authMethod || 'password';
 
       state.hasAccount = Boolean(lockedUsername);
       state.signedIn = false;
       state.username = null;
       state.boundUsername = lockedUsername || null;
-      state.authMethod = lockedMethod;
-      state.boundAuthMethod = lockedUsername ? lockedMethod : null;
-      if (res?.biometricCredentialId) {
-        state.biometricCredentialId = res.biometricCredentialId;
+
+      if (lockedUsername) {
+        applyMethodsUpdate({
+          authMethod: res?.authMethod || state.boundAuthMethod || state.authMethod,
+          authMethods: res?.authMethods || state.boundAuthMethods || state.authMethods,
+          biometricModes: res?.biometricModes || state.biometricModes,
+          biometricCredentialIds: res?.biometricCredentialIds || state.biometricCredentialIds
+        });
       }
       persistBinding();
       window.ExoticBiometrics?.prefetchChallenge?.(lockedUsername || '');
@@ -548,6 +718,10 @@
         state.boundUsername = null;
         state.authMethod = 'password';
         state.boundAuthMethod = null;
+        state.authMethods = [];
+        state.boundAuthMethods = [];
+        state.biometricModes = {};
+        state.biometricCredentialIds = {};
         state.biometricMode = null;
         state.biometricCredentialId = null;
         state.profileId = null;

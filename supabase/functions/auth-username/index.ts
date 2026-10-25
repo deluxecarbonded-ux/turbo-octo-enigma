@@ -78,12 +78,17 @@ Deno.serve(async (req: Request) => {
         const username = url.searchParams.get('username') ?? '';
         let target = null;
         if (username) {
-          const { data } = await supabase.rpc('rpc_get_webauthn_target', { p_username: username });
+          const { data } = await supabase.rpc('rpc_get_webauthn_target', {
+            p_username: username,
+            p_client_key: headerClientKey || null,
+            p_auth_method: url.searchParams.get('authMethod') || null
+          });
           if (data?.exists) {
             target = {
               authMethod: data.authMethod,
+              authMethods: data.authMethods,
               biometricMode: data.biometricMode,
-              credentialId: data.credentialId
+              credentialId: data.biometricCredentialId
             };
           }
         }
@@ -210,7 +215,9 @@ Deno.serve(async (req: Request) => {
 
     if (action === 'signin') {
       const { data: target, error: tErr } = await supabase.rpc('rpc_get_webauthn_target', {
-        p_username: username
+        p_username: username,
+        p_client_key: clientKey || null,
+        p_auth_method: authMethod
       });
       if (tErr) throw tErr;
       if (!target?.exists) {
@@ -321,6 +328,97 @@ Deno.serve(async (req: Request) => {
         p_auth_method: authMethod,
         p_credential: credential,
         p_biometric_id: null
+      });
+      if (error) throw error;
+      return new Response(JSON.stringify(data), {
+        status: data?.ok === false ? 400 : 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (action === 'connect_method') {
+      const chosen = String(authMethod || '').toLowerCase();
+      if (chosen === 'fingerprint' || chosen === 'faceid') {
+        if (chosen === 'faceid' && body.biometricMode === 'camera_face') {
+          const norm = normalizeFaceDescriptor(body.faceDescriptor);
+          if (!norm) {
+            return new Response(
+              JSON.stringify({ ok: false, code: 'CREDENTIAL_INVALID', reason: 'Face ID scan required.' }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          const { data, error } = await supabase.rpc('rpc_auth_connect_method', {
+            p_client_key: clientKey,
+            p_auth_method: chosen,
+            p_credential: null,
+            p_biometric_id: biometricCredentialId,
+            p_public_key_spki: null,
+            p_public_key_alg: -7,
+            p_sign_count: 0,
+            p_biometric_mode: 'camera_face',
+            p_face_descriptor: norm
+          });
+          if (error) throw error;
+          return new Response(JSON.stringify(data), {
+            status: data?.ok === false ? 400 : 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        const att = body.webauthnAttestation;
+        if (!att?.credentialId || !att?.publicKeySpki || !att?.authenticatorData) {
+          return new Response(
+            JSON.stringify({ ok: false, code: 'CREDENTIAL_INVALID', reason: 'Hardware biometric scan required.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        const authData = fromBase64Url(String(att.authenticatorData));
+        if (authData.length < 37 || (authData[32] & 0x05) !== 0x05) {
+          return new Response(
+            JSON.stringify({ ok: false, code: 'CREDENTIAL_INVALID', reason: 'Hardware user verification required.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        const signCount =
+          ((authData[33] << 24) >>> 0) + (authData[34] << 16) + (authData[35] << 8) + authData[36];
+        const { data, error } = await supabase.rpc('rpc_auth_connect_method', {
+          p_client_key: clientKey,
+          p_auth_method: chosen,
+          p_credential: null,
+          p_biometric_id: String(att.credentialId),
+          p_public_key_spki: String(att.publicKeySpki),
+          p_public_key_alg: Number(att.publicKeyAlg || -7),
+          p_sign_count: signCount,
+          p_biometric_mode: 'webauthn',
+          p_face_descriptor: null
+        });
+        if (error) throw error;
+        return new Response(JSON.stringify(data), {
+          status: data?.ok === false ? 400 : 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const { data, error } = await supabase.rpc('rpc_auth_connect_method', {
+        p_client_key: clientKey,
+        p_auth_method: chosen,
+        p_credential: credential,
+        p_biometric_id: null,
+        p_public_key_spki: null,
+        p_public_key_alg: -7,
+        p_sign_count: 0,
+        p_biometric_mode: null,
+        p_face_descriptor: null
+      });
+      if (error) throw error;
+      return new Response(JSON.stringify(data), {
+        status: data?.ok === false ? 400 : 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (action === 'disconnect_method') {
+      const { data, error } = await supabase.rpc('rpc_auth_disconnect_method', {
+        p_client_key: clientKey,
+        p_auth_method: String(authMethod || '').toLowerCase()
       });
       if (error) throw error;
       return new Response(JSON.stringify(data), {

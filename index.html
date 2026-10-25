@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC — Monochrome Troll Platformer</title>
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c11" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c11" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c11" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c13" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c13" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c13" />
 </head>
 <body>
   <div id="app">
@@ -334,13 +334,13 @@
                 <span id="signin-validation-badge" class="mono">CHECK</span>
               </div>
 
-              <div class="auth-method-block">
+              <div id="signin-method-block" class="auth-method-block is-hidden">
                 <div class="auth-field-label">
-                  <span>Authentication Method</span>
-                  <span class="mono" id="signin-method-hint-tag">YOUR CHOICE</span>
+                  <span>Registered Sign-In Method</span>
+                  <span class="mono" id="signin-method-hint-tag">REGISTERED</span>
                 </div>
 
-                <div class="auth-method-tabs" role="radiogroup" aria-label="Sign In Authentication Method">
+                <div id="signin-method-tabs" class="auth-method-tabs" role="radiogroup" aria-label="Sign In Authentication Method">
                   <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" data-signin-method="password" aria-pressed="true">
                     <span data-icon="key"></span>
                     <span>Password</span>
@@ -788,6 +788,176 @@
                 </div>
               </div>
 
+              <!-- Authentication Methods Manager (Connect / Disconnect Password, PIN, Touch ID / Fingerprint, Face ID) -->
+              <div id="set-auth-methods-wrap" class="settings-row" style="flex-direction:column; align-items:stretch; gap:12px;">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Authentication Methods</span>
+                  <span class="settings-row-desc">
+                    Connect or disconnect Password, PIN, Touch ID / Fingerprint, or Face ID. Sign In displays only the methods active here.
+                  </span>
+                </div>
+
+                <div id="set-face-viewport" class="auth-face-viewport">
+                  <canvas id="set-face-canvas" width="220" height="220"></canvas>
+                </div>
+
+                <div id="set-auth-feedback" class="auth-validation-pill" aria-live="polite">
+                  <span class="auth-validation-main">
+                    <span id="set-auth-feedback-icon" data-icon="lock"></span>
+                    <span id="set-auth-feedback-msg">Manage active sign-in methods for your account</span>
+                  </span>
+                  <span id="set-auth-feedback-badge" class="mono">METHODS</span>
+                </div>
+
+                <div class="settings-auth-list">
+                  <!-- 1. Password -->
+                  <div class="settings-auth-item" data-set-method-row="password">
+                    <div class="settings-auth-head">
+                      <div class="settings-auth-meta">
+                        <span class="settings-auth-icon" data-icon="key"></span>
+                        <div class="settings-row-info">
+                          <span class="settings-row-title">Password</span>
+                          <span class="settings-row-desc">4–64 character account password</span>
+                        </div>
+                      </div>
+                      <div class="settings-auth-actions">
+                        <span id="set-status-password" class="ex-chip ex-chip--subtle mono">OFF</span>
+                        <button type="button" id="set-connect-password-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                          <span data-icon="key"></span>
+                          <span>Connect</span>
+                        </button>
+                        <button type="button" id="set-disconnect-password-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm is-hidden">
+                          <span>Disconnect</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div id="set-drawer-password" class="settings-auth-drawer">
+                      <div class="auth-input-wrap auth-input-wrap--cred">
+                        <span class="auth-input-icon" data-icon="key"></span>
+                        <input
+                          type="password"
+                          id="set-connect-password-input"
+                          class="ex-pill-input"
+                          minlength="4"
+                          maxlength="64"
+                          autocomplete="new-password"
+                          placeholder="Create 4–64 character password"
+                        />
+                        <button type="button" id="set-pw-reveal-btn" class="ex-pill-btn ex-pill-btn--ghost ex-pill-btn--xs auth-reveal-btn" aria-label="Toggle password visibility">
+                          <span data-icon="eye"></span>
+                        </button>
+                      </div>
+                      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button type="button" id="set-save-password-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                          <span data-icon="check"></span>
+                          <span>Connect Password</span>
+                        </button>
+                        <button type="button" id="set-cancel-password-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                          <span>Cancel</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 2. PIN -->
+                  <div class="settings-auth-item" data-set-method-row="pin">
+                    <div class="settings-auth-head">
+                      <div class="settings-auth-meta">
+                        <span class="settings-auth-icon" data-icon="pin"></span>
+                        <div class="settings-row-info">
+                          <span class="settings-row-title">PIN</span>
+                          <span class="settings-row-desc">4–8 digit numeric PIN code</span>
+                        </div>
+                      </div>
+                      <div class="settings-auth-actions">
+                        <span id="set-status-pin" class="ex-chip ex-chip--subtle mono">OFF</span>
+                        <button type="button" id="set-connect-pin-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                          <span data-icon="pin"></span>
+                          <span>Connect</span>
+                        </button>
+                        <button type="button" id="set-disconnect-pin-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm is-hidden">
+                          <span>Disconnect</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div id="set-drawer-pin" class="settings-auth-drawer">
+                      <div class="auth-input-wrap auth-input-wrap--cred">
+                        <span class="auth-input-icon" data-icon="pin"></span>
+                        <input
+                          type="password"
+                          id="set-connect-pin-input"
+                          class="ex-pill-input auth-pin-input"
+                          inputmode="numeric"
+                          maxlength="8"
+                          autocomplete="off"
+                          placeholder="Enter 4–8 digit PIN"
+                        />
+                        <button type="button" id="set-pin-reveal-btn" class="ex-pill-btn ex-pill-btn--ghost ex-pill-btn--xs auth-reveal-btn" aria-label="Toggle PIN visibility">
+                          <span data-icon="eye"></span>
+                        </button>
+                      </div>
+                      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button type="button" id="set-save-pin-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                          <span data-icon="check"></span>
+                          <span>Connect PIN</span>
+                        </button>
+                        <button type="button" id="set-cancel-pin-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                          <span>Cancel</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 3. Touch ID / Fingerprint -->
+                  <div class="settings-auth-item" data-set-method-row="fingerprint">
+                    <div class="settings-auth-head">
+                      <div class="settings-auth-meta">
+                        <span class="settings-auth-icon" data-icon="fingerprint"></span>
+                        <div class="settings-row-info">
+                          <span class="settings-row-title">Touch ID / Fingerprint</span>
+                          <span id="set-desc-fingerprint" class="settings-row-desc">Hardware fingerprint sensor passkey</span>
+                        </div>
+                      </div>
+                      <div class="settings-auth-actions">
+                        <span id="set-status-fingerprint" class="ex-chip ex-chip--subtle mono">OFF</span>
+                        <button type="button" id="set-connect-fingerprint-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                          <span data-icon="fingerprint"></span>
+                          <span>Connect</span>
+                        </button>
+                        <button type="button" id="set-disconnect-fingerprint-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm is-hidden">
+                          <span>Disconnect</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 4. Face ID -->
+                  <div class="settings-auth-item" data-set-method-row="faceid">
+                    <div class="settings-auth-head">
+                      <div class="settings-auth-meta">
+                        <span class="settings-auth-icon" data-icon="faceid"></span>
+                        <div class="settings-row-info">
+                          <span class="settings-row-title">Face ID</span>
+                          <span id="set-desc-faceid" class="settings-row-desc">TrueDepth sensor or front-camera facial scan</span>
+                        </div>
+                      </div>
+                      <div class="settings-auth-actions">
+                        <span id="set-status-faceid" class="ex-chip ex-chip--subtle mono">OFF</span>
+                        <button type="button" id="set-connect-faceid-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                          <span data-icon="faceid"></span>
+                          <span>Connect</span>
+                        </button>
+                        <button type="button" id="set-disconnect-faceid-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm is-hidden">
+                          <span>Disconnect</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div class="settings-row">
                 <div class="settings-row-info">
                   <span class="settings-row-title">Move &amp; Jump</span>
@@ -990,28 +1160,28 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c11"></script>
-  <script src="src/core/theme.js?v=20261025c11"></script>
-  <script src="src/core/audio.js?v=20261025c11"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c11"></script>
-  <script src="src/core/storage.js?v=20261025c11"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c11"></script>
-  <script src="src/core/auth.js?v=20261025c11"></script>
-  <script src="src/data/shopItems.js?v=20261025c11"></script>
-  <script src="src/data/achievements.js?v=20261025c11"></script>
-  <script src="src/data/levels.js?v=20261025c11"></script>
-  <script src="src/core/realtime.js?v=20261025c11"></script>
-  <script src="src/graphics/characters.js?v=20261025c11"></script>
-  <script src="src/graphics/auras.js?v=20261025c11"></script>
-  <script src="src/graphics/trails.js?v=20261025c11"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c11"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c11"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c11"></script>
-  <script src="src/game/traps.js?v=20261025c11"></script>
-  <script src="src/game/physics.js?v=20261025c11"></script>
-  <script src="src/game/engine.js?v=20261025c11"></script>
-  <script src="src/ui/router.js?v=20261025c11"></script>
-  <script src="src/ui/views.js?v=20261025c11"></script>
-  <script src="src/ui/main.js?v=20261025c11"></script>
+  <script src="src/core/icons.js?v=20261025c13"></script>
+  <script src="src/core/theme.js?v=20261025c13"></script>
+  <script src="src/core/audio.js?v=20261025c13"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c13"></script>
+  <script src="src/core/storage.js?v=20261025c13"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c13"></script>
+  <script src="src/core/auth.js?v=20261025c13"></script>
+  <script src="src/data/shopItems.js?v=20261025c13"></script>
+  <script src="src/data/achievements.js?v=20261025c13"></script>
+  <script src="src/data/levels.js?v=20261025c13"></script>
+  <script src="src/core/realtime.js?v=20261025c13"></script>
+  <script src="src/graphics/characters.js?v=20261025c13"></script>
+  <script src="src/graphics/auras.js?v=20261025c13"></script>
+  <script src="src/graphics/trails.js?v=20261025c13"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c13"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c13"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c13"></script>
+  <script src="src/game/traps.js?v=20261025c13"></script>
+  <script src="src/game/physics.js?v=20261025c13"></script>
+  <script src="src/game/engine.js?v=20261025c13"></script>
+  <script src="src/ui/router.js?v=20261025c13"></script>
+  <script src="src/ui/views.js?v=20261025c13"></script>
+  <script src="src/ui/main.js?v=20261025c13"></script>
 </body>
 </html>

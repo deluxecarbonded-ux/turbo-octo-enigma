@@ -456,6 +456,8 @@ const server = http.createServer(async (req, res) => {
       else if (pathname === '/api/auth/signin') action = 'signin';
       else if (pathname === '/api/auth/signout') action = 'signout';
       else if (pathname === '/api/auth/delete-account') action = 'delete';
+      else if (pathname === '/api/auth/methods/connect') action = 'connect_method';
+      else if (pathname === '/api/auth/methods/disconnect') action = 'disconnect_method';
       else if (pathname === '/functions/v1/auth-username') {
         action = String(
           body.action || parsedUrl.searchParams.get('action') || 'session'
@@ -489,13 +491,21 @@ const server = http.createServer(async (req, res) => {
           );
           userMeta = chkQ.rows[0]?.res || null;
         }
+        const pickedMethod = authMethod || userMeta?.authMethod || null;
+        const bioModes = userMeta?.biometricModes || {};
+        const bioIds = userMeta?.biometricCredentialIds || {};
         sendJson(res, 200, {
           ok: true,
           challenge,
           exists: Boolean(userMeta?.exists),
           authMethod: userMeta?.authMethod || null,
-          biometricMode: userMeta?.biometricMode || null,
-          biometricCredentialId: userMeta?.biometricCredentialId || null
+          authMethods: Array.isArray(userMeta?.authMethods) ? userMeta.authMethods : [],
+          biometricModes: bioModes,
+          biometricCredentialIds: bioIds,
+          biometricMode:
+            (pickedMethod && bioModes[pickedMethod]) || userMeta?.biometricMode || null,
+          biometricCredentialId:
+            (pickedMethod && bioIds[pickedMethod]) || userMeta?.biometricCredentialId || null
         });
         return;
       }
@@ -569,30 +579,24 @@ const server = http.createServer(async (req, res) => {
       } else if (action === 'signin') {
         if (authMethod === 'fingerprint' || authMethod === 'faceid') {
           const targetQ = await pgPool.query(
-            'SELECT public.rpc_get_webauthn_target($1, $2) AS res',
-            [username, clientKey || null]
+            'SELECT public.rpc_get_webauthn_target($1, $2, $3) AS res',
+            [username, clientKey || null, authMethod]
           );
           const target = targetQ.rows[0]?.res || { ok: false };
           if (!target.ok) {
             sendJson(res, 400, target);
             return;
           }
-          if (target.hasCredential && target.authMethod !== authMethod) {
+          const activeList = Array.isArray(target.authMethods) ? target.authMethods : [];
+          if (!target.hasCredential && activeList.length > 0) {
             sendJson(res, 400, {
               ok: false,
               code: 'AUTH_METHOD_MISMATCH',
               expectedMethod: target.authMethod,
-              biometricMode: target.biometricMode,
-              biometricCredentialId: target.biometricCredentialId,
-              reason: `This account uses ${
-                target.authMethod === 'faceid'
-                  ? 'Face ID'
-                  : target.authMethod === 'fingerprint'
-                  ? 'Fingerprint'
-                  : target.authMethod === 'pin'
-                  ? 'PIN'
-                  : 'Password'
-              } authentication`
+              expectedMethods: activeList,
+              biometricModes: target.biometricModes || {},
+              biometricCredentialIds: target.biometricCredentialIds || {},
+              reason: 'That authentication method is not active on this account'
             });
             return;
           }
@@ -720,6 +724,69 @@ const server = http.createServer(async (req, res) => {
             ]
           );
         }
+      } else if (action === 'connect_method') {
+        const chosen = String(authMethod || '').toLowerCase();
+        if (chosen === 'fingerprint' || chosen === 'faceid') {
+          if (chosen === 'faceid' && body.biometricMode === 'camera_face') {
+            const fv = verifyFaceDescriptorEnrollment({
+              faceDescriptor: body.faceDescriptor,
+              challenge: body.challenge
+            });
+            if (!fv.ok) {
+              sendJson(res, 400, {
+                ok: false,
+                code: 'CREDENTIAL_INVALID',
+                reason: fv.reason
+              });
+              return;
+            }
+            q = await pgPool.query(
+              'SELECT public.rpc_auth_connect_method($1, $2, NULL, $3, NULL, -7, 0, $4, $5::float8[]) AS res',
+              [
+                clientKey,
+                chosen,
+                biometricCredentialId || null,
+                'camera_face',
+                `{${fv.normalizedDescriptor.join(',')}}`
+              ]
+            );
+          } else {
+            const rv = verifyRegistration({
+              attestation: body.webauthnAttestation,
+              expectedHost
+            });
+            if (!rv.ok) {
+              sendJson(res, 400, {
+                ok: false,
+                code: 'CREDENTIAL_INVALID',
+                reason: rv.reason
+              });
+              return;
+            }
+            q = await pgPool.query(
+              'SELECT public.rpc_auth_connect_method($1, $2, NULL, $3, $4, $5, $6, $7, NULL) AS res',
+              [
+                clientKey,
+                chosen,
+                rv.credentialId,
+                rv.publicKeySpki,
+                rv.publicKeyAlg,
+                rv.signCount,
+                'webauthn'
+              ]
+            );
+          }
+        } else {
+          q = await pgPool.query(
+            'SELECT public.rpc_auth_connect_method($1, $2, $3, NULL, NULL, -7, 0, NULL, NULL) AS res',
+            [clientKey, chosen, credential]
+          );
+        }
+      } else if (action === 'disconnect_method') {
+        q = await pgPool.query(
+          'SELECT public.rpc_auth_disconnect_method($1, $2) AS res',
+          [clientKey, String(authMethod || '').toLowerCase()]
+        );
       } else if (action === 'signout') {
         q = await pgPool.query(
           'SELECT public.rpc_auth_signout($1) AS res',
