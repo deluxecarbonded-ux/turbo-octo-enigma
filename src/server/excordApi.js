@@ -2,6 +2,7 @@
 // The existing game's random client key is a bearer credential: never log or expose it.
 const crypto = require('crypto');
 const { verifySession } = require('./excordSession');
+const community = require('./excordCommunity');
 const OFFICIAL = '1420070400000000001';
 const id = () => crypto.randomUUID();
 const text = (s, max = 200) => String(s ?? '').trim().slice(0, max);
@@ -23,7 +24,7 @@ async function handleExcordRequest({ req, res, pgPool: db, readJsonBody, sendJso
     insist(!me.is_guest, 'Excord is unavailable for Guest accounts.');
     insist(await verifySession(db,req,me.id), 'For private Excord access, sign out of Exotic and sign back in once to verify this browser.',401);
     const action = text(b.action, 40);
-    const write = !['bootstrap','channel','search','discover','audit'].includes(action);
+    const write = !['bootstrap','channel','search','discover','audit','saved','events','bans','mark_read','typing'].includes(action);
     const rate = await one(`INSERT INTO public.excord_rate_limits(profile_id,bucket) VALUES($1,$2)
       ON CONFLICT(profile_id,bucket) DO UPDATE SET
       hits=CASE WHEN excord_rate_limits.window_at < now()-interval '1 minute' THEN 1 ELSE excord_rate_limits.hits+1 END,
@@ -68,23 +69,32 @@ async function handleExcordRequest({ req, res, pgPool: db, readJsonBody, sendJso
       return {m,c};
     };
     const audit = async (sid, type, target) => q(`INSERT INTO public.excord_audit_logs(id,server_id,actor_id,actor_username,action_type,target_label) VALUES($1,$2,$3,$4,$5,$6)`,[id(),sid,me.id,me.username,type,text(target,80)]);
-    const hydrate = async (cid,before) => q(`SELECT m.id,m.channel_id,m.author_id,m.content,m.reply_to_id,m.poll,m.pinned,m.created_at,m.edited_at,
-       p.username AS author_username, ep.display_name AS author_display_name,
+    const hydrate = async (cid,before,filters={}) => q(`SELECT m.id,m.channel_id,m.author_id,m.content,m.reply_to_id,m.poll,m.pinned,m.created_at,m.edited_at,
+       EXISTS(SELECT 1 FROM public.excord_bookmarks bm WHERE bm.message_id=m.id AND bm.profile_id=$3) AS saved,
+       p.username AS author_username, coalesce(nullif((SELECT sm.nickname FROM public.excord_server_members sm JOIN public.excord_channels nc ON nc.server_id=sm.server_id WHERE nc.id=m.channel_id AND sm.profile_id=m.author_id LIMIT 1),''),ep.display_name) AS author_display_name,
        (SELECT jsonb_agg(jsonb_build_object('emoji',r.emoji,'profile_id',r.profile_id)) FROM public.excord_reactions r WHERE r.message_id=m.id) AS reaction_rows,
        (SELECT jsonb_agg(jsonb_build_object('option_index',v.option_index,'profile_id',v.profile_id)) FROM public.excord_votes v WHERE v.message_id=m.id) AS votes
        FROM public.excord_messages m LEFT JOIN public.profiles p ON p.id=m.author_id
        LEFT JOIN public.excord_user_profiles ep ON ep.profile_id=m.author_id
        WHERE m.channel_id=$1 AND ($2::timestamptz IS NULL OR m.created_at<$2::timestamptz)
-       ORDER BY m.created_at DESC,m.id DESC LIMIT 50`,[cid,before||null]);
+       AND ($4::text='' OR m.content ILIKE '%'||$4||'%')
+       AND ($5::text='' OR lower(p.username)=lower($5))
+       AND (NOT $6::boolean OR m.pinned)
+       AND (NOT $7::boolean OR m.poll IS NOT NULL)
+       AND ($8::timestamptz IS NULL OR m.created_at >= $8::timestamptz)
+       ORDER BY m.created_at DESC,m.id DESC LIMIT 50`,[cid,before||null,me.id,filters.query||'',filters.author||'',!!filters.pins,!!filters.poll,filters.after||null]);
     let result = {};
-    if(action==='bootstrap') {
+    const extra=await community({action,b,me,q,one,server,channel,message,audit,insist,hydrate});
+    if(extra!==null) result=extra;
+    else if(action==='bootstrap') {
       const [ep,servers,channels,friends,dms] = await Promise.all([
         one('SELECT display_name,bio,pronouns,presence_status,custom_status_text FROM public.excord_user_profiles WHERE profile_id=$1',[me.id]),
-        q(`SELECT s.id,s.name,s.description,s.owner_id,s.is_official,s.invite_code,s.is_public,CASE WHEN s.owner_id=$1 THEN s.automod_config ELSE NULL END AS automod_config,
+        q(`SELECT s.id,s.name,s.description,s.owner_id,s.is_official,s.invite_code,s.is_public,sm.nickname,sm.muted_server,CASE WHEN s.owner_id=$1 THEN s.automod_config ELSE NULL END AS automod_config,
            (SELECT count(*)::int FROM public.excord_server_members sm WHERE sm.server_id=s.id) member_count
            FROM public.excord_servers s JOIN public.excord_server_members sm ON sm.server_id=s.id
            WHERE sm.profile_id=$1 ORDER BY s.is_official DESC,s.created_at`,[me.id]),
-        q(`SELECT c.id,c.server_id,c.name,c.channel_type,c.topic,c.parent_channel_id,c.is_private,c.slowmode_sec,c.archived FROM public.excord_channels c
+        q(`SELECT c.id,c.server_id,c.name,c.channel_type,c.topic,c.parent_channel_id,c.is_private,c.slowmode_sec,c.archived,c.category_name,c.position,
+           CASE WHEN sm.muted_server THEN 0 ELSE (SELECT count(*)::int FROM public.excord_messages um WHERE um.channel_id=c.id AND um.author_id<>$1 AND um.created_at>coalesce((SELECT read_at FROM public.excord_reads rd WHERE rd.profile_id=$1 AND rd.channel_id=c.id),sm.joined_at)) END AS unread_count FROM public.excord_channels c
            JOIN public.excord_servers s ON s.id=c.server_id JOIN public.excord_server_members sm ON sm.server_id=s.id
            WHERE sm.profile_id=$1 AND (NOT c.is_private OR s.owner_id=$1)
            AND c.channel_type NOT IN ('voice','stage','media') AND (c.parent_channel_id IS NULL OR NOT EXISTS(SELECT 1 FROM public.excord_channels pc WHERE pc.id=c.parent_channel_id AND pc.is_private AND s.owner_id<>$1)) ORDER BY c.position,c.created_at`,[me.id]),
@@ -92,6 +102,7 @@ async function handleExcordRequest({ req, res, pgPool: db, readJsonBody, sendJso
            FROM public.excord_friendships f JOIN public.profiles p ON p.id=CASE WHEN f.requester_id=$1 THEN f.addressee_id ELSE f.requester_id END
            WHERE f.requester_id=$1 OR f.addressee_id=$1`,[me.id]),
         q(`SELECT c.id,c.name,c.channel_type,
+           (SELECT count(*)::int FROM public.excord_messages um WHERE um.channel_id=c.id AND um.author_id<>$1 AND um.created_at>coalesce((SELECT read_at FROM public.excord_reads rd WHERE rd.profile_id=$1 AND rd.channel_id=c.id),c.created_at)) AS unread_count,
            (SELECT jsonb_agg(jsonb_build_object('id',p.id,'username',p.username)) FROM public.profiles p WHERE p.id=ANY(c.dm_member_ids) AND p.id<>$1) peers
            FROM public.excord_channels c WHERE c.channel_type IN ('dm','group_dm') AND $1::uuid=ANY(c.dm_member_ids) ORDER BY c.created_at DESC`,[me.id])
       ]);
@@ -99,12 +110,14 @@ async function handleExcordRequest({ req, res, pgPool: db, readJsonBody, sendJso
     } else if(action==='channel') {
       const c=await channel(text(b.channelId,80));
       const messages=await hydrate(c.id,b.before);
-      const members = c.server_id ? await q(`SELECT p.id,p.username,ep.display_name,ep.custom_status_text,
+      const members = c.server_id ? await q(`SELECT p.id,p.username,coalesce(nullif(sm.nickname,''),ep.display_name,p.username) AS display_name,ep.custom_status_text,
         CASE WHEN ep.last_seen_at>now()-interval '70 seconds' THEN ep.presence_status ELSE 'invisible' END AS presence_status,
         (s.owner_id=p.id) AS is_owner FROM public.excord_server_members sm JOIN public.profiles p ON p.id=sm.profile_id
         JOIN public.excord_servers s ON s.id=sm.server_id LEFT JOIN public.excord_user_profiles ep ON ep.profile_id=p.id
         WHERE sm.server_id=$1 ORDER BY p.username LIMIT 100`,[c.server_id]):[];
-      result={channel:c,messages:messages.reverse(),members};
+      const typing=await q(`SELECT p.username FROM public.excord_typing t JOIN public.profiles p ON p.id=t.profile_id
+       WHERE t.channel_id=$1 AND t.profile_id<>$2 AND t.updated_at>now()-interval '10 seconds'`,[c.id,me.id]);
+      result={channel:c,messages:messages.reverse(),members,typing};
     } else if(action==='send') {
       const c=await channel(text(b.channelId,80),'publish');
       insist(!['voice','stage','forum','media'].includes(c.channel_type),'Create a discussion or select a text channel.');
@@ -219,8 +232,18 @@ async function handleExcordRequest({ req, res, pgPool: db, readJsonBody, sendJso
       await q('UPDATE public.excord_user_profiles SET display_name=$1,bio=$2,pronouns=$3,presence_status=$4,custom_status_text=$5 WHERE profile_id=$6',[text(b.displayName,32)||me.username,text(b.bio,220),text(b.pronouns,28),b.presence,text(b.status,80),me.id]);
     } else if(action==='search') {
       const c=await channel(text(b.channelId,80));
-      const rows=await hydrate(c.id,null); // bounded first-release search, explicitly shown as recent messages
-      const term=text(b.query,100).toLowerCase(); result={messages:rows.filter(m=>m.content.toLowerCase().includes(term)&&(!b.pinsOnly||m.pinned)).reverse()};
+      const raw=text(b.query,300),terms=[];let author='',until=null,after=null,pins=!!b.pinsOnly,poll=false;
+      for(const t of raw.split(/\s+/)) {
+        if(t.startsWith('from:'))author=t.slice(5).replace(/^@/,'');
+        else if(t==='has:poll')poll=true;
+        else if(t==='pinned:true')pins=true;
+        else if(t.startsWith('before:')||t.startsWith('after:')) {
+          const d=t.slice(t.indexOf(':')+1);insist(/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d)),'Use dates like 2026-10-26.',400);
+          if(t.startsWith('before:'))until=new Date(d).toISOString();else after=new Date(d).toISOString();
+        } else terms.push(t);
+      }
+      const rows=await hydrate(c.id,until,{query:terms.join(' '),author,pins,poll,after});
+      result={messages:rows.reverse(),limit:50};
     } else if(action==='settings') {
       const s=await server(text(b.serverId,80),true);
       const blockedWords=text(b.blockedWords,500).split(',').map(w=>w.trim()).filter(Boolean).slice(0,30);

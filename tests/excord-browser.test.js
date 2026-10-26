@@ -20,6 +20,18 @@ const base=process.env.EXCORD_TEST_URL||'http://127.0.0.1:8080';
   assert.match(await page.locator('.ec-message-content').innerText(),/<img/);assert.equal(await page.locator('.ec-message-content img').count(),0);
   await page.locator('.ec-message-tools [data-emoji=fire]').click();await page.waitForSelector('[data-emoji=fire][aria-pressed=true]');
   await page.click('[data-ec="poll"]');await page.fill('.ec-dialog [name=question]','Favorite mode?');await page.fill('.ec-dialog [name=options]','Gauntlet\nBrawl');await page.click('.ec-dialog [type=submit]');await page.waitForSelector('.ec-poll');await page.locator('.ec-poll [data-option="1"]').click();await page.waitForSelector('.ec-poll [data-option="1"][class*=primary]');
+  // Exercise the second community release through real UI controls.
+  const generalId=await page.locator('.ec-channel-list [data-ec="channel"]').first().getAttribute('data-id');
+  await page.locator('.ec-message').first().locator('[data-ec="save"]').click();await page.fill('.ec-dialog [name=note]','Keep this strategy');await page.click('.ec-dialog [type=submit]');await page.waitForSelector('.ec-message [data-ec="save"][data-remove="yes"]');
+  await page.click('[data-ec="home"]');await page.click('[data-ec="saved"]');await page.waitForSelector('#ec-saved-list .ec-card');assert.match(await page.locator('#ec-saved-list').innerText(),/Keep this strategy/);
+  await page.locator('#ec-saved-list [data-ec="channel"]').click();await page.waitForSelector('#ec-input');
+  await page.click('[data-ec="events"]');await page.click('[data-ec="new-event"]');await page.fill('.ec-dialog [name=title]','Squad Brawl Night');await page.fill('.ec-dialog [name=location]','Brawl matchmaking');await page.click('.ec-dialog [type=submit]');await page.waitForSelector('.ec-dialog',{state:'detached'});
+  await page.click('[data-ec="events"]');await page.waitForSelector('.ec-dialog .ec-card');assert.match(await page.locator('.ec-dialog').innerText(),/Squad Brawl Night/);await page.click('[data-ec="rsvp"]');await page.waitForFunction(()=>document.querySelector('.ec-dialog')?.innerText.includes('1 interested'));
+  await page.screenshot({path:'artifacts/excord/events.png'});await page.click('.ec-dialog [type=submit]');
+  await page.click('[data-ec="thread"]');await page.fill('.ec-dialog [name=name]','Tactics');await page.fill('.ec-dialog [name=content]','**Important** opening message');await page.click('.ec-dialog [type=submit]');await page.waitForFunction(()=>document.querySelector('#ec-title')?.innerText==='Tactics');
+  await page.click('[data-ec="channel-settings"]');await page.click('[data-ec="archive"]');await page.waitForFunction(()=>document.querySelector('#ec-composer')?.innerText.includes('archived'));
+  await page.click('[data-ec="channel-settings"]');await page.click('[data-ec="archive"]');await page.waitForSelector('#ec-input');
+  await page.locator('.ec-channel-list [data-id="'+generalId+'"]').click();await page.waitForFunction(()=>document.querySelector('#ec-title')?.innerText==='general');await page.waitForSelector('#ec-input');
   await page.screenshot({path:'artifacts/excord/channel-dark.png'});
   await page.evaluate(()=>{ExoticTheme.setColorMode('colored');ExoticTheme.setDimensionMode('3d');});await page.screenshot({path:'artifacts/excord/channel-colored-3d.png'});
   await page.evaluate(()=>ExoticTheme.setMode('light'));await page.screenshot({path:'artifacts/excord/channel-light.png'});

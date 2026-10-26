@@ -12,7 +12,7 @@ Planning baseline: October 26, 2026. Selected approach: inventory first; existin
 
 ## Current implementation status — first working messaging release
 
-See `EXCORD_RELEASE.md` for the exact supported features, limitations and security tests. The shared-account Main Menu entry, registered-only access, separate verified cookie, community messaging interface and core server/friend/DM operations are implemented. This is not full Discord parity. Voice/video, uploads, advanced roles, payments and external integrations remain unimplemented.
+See `EXCORD_RELEASE.md` for the exact supported features, limitations and security tests. The shared-account Main Menu entry, registered-only access, separate verified cookie, community messaging interface and core server/friend/DM operations are implemented. This is not full Discord parity. The community expansion additionally implements saved messages, full-history search, channel categories/settings, thread archive, scheduled events and RSVPs, read markers, typing, server nicknames/muting, invite rotation, ownership transfer, kick/unban controls, and group rename/departure. Voice/video, uploads, advanced roles, payments and external integrations remain unimplemented.
 
 The original preliminary renderer helpers have been removed; no Discord library names are represented as installed dependencies. The backend was replaced with a smaller authenticated gateway, per-object checks and no global chat broadcasts. Migration 000019 hardens access to the initial 000018 schema and removes artificial boost counts.
 

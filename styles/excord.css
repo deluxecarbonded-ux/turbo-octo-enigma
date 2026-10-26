@@ -98,3 +98,9 @@ html[data-dimension="3d"] #view-excord.is-active .ec-card { transform:perspectiv
  .ec-composer{padding:8px;}
  .ec-message-tools .ex-pill-btn{padding:6px 9px;min-height:30px;}
 }
+.ec-unread { margin-left:auto;flex-shrink:0;min-width:20px;padding:3px 6px;border-radius:100px;background:var(--fg-primary);color:var(--bg-app);text-align:center;font-size:10px;font-weight:800; }
+.ec-code { padding:12px;border-radius:12px;background:var(--bg-surface-3);white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px; }
+#ec-typing { min-height:16px; }
+.ec-head-actions { flex-wrap:wrap; }
+.ec-side .ec-actions .ex-pill-btn { font-size:10px; }
+.ec-dialog .ec-card { background:var(--bg-surface-3); }
