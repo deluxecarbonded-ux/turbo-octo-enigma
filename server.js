@@ -57,6 +57,12 @@ const PG_CONFIG = process.env.SUPABASE_DB_URL
     }
   : null;
 
+// Serverless instances must not pin scarce session-pool database connections.
+// The local LISTEN client still uses the configured session port.
+if (IS_VERCEL && PG_CONFIG && PG_CONFIG.host.endsWith('.pooler.supabase.com') && PG_CONFIG.port === 5432) {
+  PG_CONFIG.port = 6543;
+}
+
 const REALTIME_TABLES = [
   'shop_items',
   'levels_catalog',

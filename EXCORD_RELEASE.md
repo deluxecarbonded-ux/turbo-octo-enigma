@@ -67,3 +67,6 @@ Applied to the existing project. There are no seeded people or messages. Exotic 
 - Syntax checks: all application JavaScript.
 
 These tests cover the implemented release; they do not certify absent roadmap features or constitute a third-party security audit.
+
+### Serverless connection reliability
+Vercel queries use the Supavisor transaction pool on port 6543 when the configured pooler URL uses session port 5432. Local LISTEN behavior is unchanged. Pending connections reserve pool slots before asynchronous connection setup, preventing simultaneous cold-start queries from exceeding configured pool capacity. `node tests/pg-pool.test.js` verifies 12 concurrent calls stay within two connections.

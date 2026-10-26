@@ -534,6 +534,7 @@ class PgConnectionPool {
     this.config = config;
     this.maxSize = maxSize;
     this.clients = [];
+    this.pendingConnections = [];
   }
 
   async _getClient() {
@@ -542,23 +543,32 @@ class PgConnectionPool {
         return c;
       }
     }
-    if (this.clients.length < this.maxSize) {
+    // Reserve capacity BEFORE connecting; parallel cold-start queries previously
+    // each saw an empty pool and could exceed maxSize.
+    if (this.clients.length + this.pendingConnections.length < this.maxSize) {
       const c = new PgWireClient(this.config);
       c.on('disconnect', () => {
         const idx = this.clients.indexOf(c);
         if (idx >= 0) this.clients.splice(idx, 1);
       });
-      await c.connect();
-      this.clients.push(c);
-      return c;
+      const pending = c.connect().then(() => {
+        this.clients.push(c);
+        return c;
+      }).finally(() => {
+        const idx = this.pendingConnections.indexOf(pending);
+        if (idx >= 0) this.pendingConnections.splice(idx, 1);
+      });
+      this.pendingConnections.push(pending);
+      return pending;
     }
-    const pick = this.clients[Math.floor(Math.random() * this.clients.length)];
-    if (!pick.connected) {
-      const idx = this.clients.indexOf(pick);
-      if (idx >= 0) this.clients.splice(idx, 1);
-      return this._getClient();
+    const available = this.clients.filter(c => c.connected);
+    if (available.length) {
+      // PgWireClient serializes its own query queue on a single socket.
+      return available.sort((a,b) => a.queue.length - b.queue.length)[0];
     }
-    return pick;
+    if (this.pendingConnections.length) return this.pendingConnections[0];
+    this.clients = [];
+    return this._getClient();
   }
 
   async query(sql, params = []) {
