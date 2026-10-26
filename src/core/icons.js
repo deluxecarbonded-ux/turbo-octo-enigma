@@ -47,7 +47,12 @@
     close: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.3 5.71L12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.3 6.29-6.3 1.42 1.42z"/></svg>`,
     returnKey: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5h2.4v9.4H9l3.3 3.3-1.7 1.7L4.4 13.2 10.6 7l1.7 1.7L9 12h9V5z"/></svg>`,
     upDown: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.2L17.2 8.4l-1.6 1.6L12 6.4 8.4 10 6.8 8.4 12 3.2zm0 17.6l-5.2-5.2 1.6-1.6 3.6 3.6 3.6-3.6 1.6 1.6-5.2 5.2z"/></svg>`,
-    cmdKey: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 3a4 4 0 00-4 4c0 2.2 1.8 4 4 4h2v2H7a4 4 0 104 4v-2h2v2a4 4 0 104-4h-2v-2h2a4 4 0 10-4-4v2h-2V7a4 4 0 00-4-4zm2 6V7a2 2 0 10-2 2h2zm6 0h2a2 2 0 10-2-2v2zm-4 2h2v2h-2v-2zm-2 4H7a2 2 0 102 2v-2zm6 2v-2h2a2 2 0 11-2 2z"/></svg>`
+    cmdKey: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 3a4 4 0 00-4 4c0 2.2 1.8 4 4 4h2v2H7a4 4 0 104 4v-2h2v2a4 4 0 104-4h-2v-2h2a4 4 0 10-4-4v2h-2V7a4 4 0 00-4-4zm2 6V7a2 2 0 10-2 2h2zm6 0h2a2 2 0 10-2-2v2zm-4 2h2v2h-2v-2zm-2 4H7a2 2 0 102 2v-2zm6 2v-2h2a2 2 0 11-2 2z"/></svg>`,
+    brawl: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 3h4.6l6.4 6.4 4.4-4.4H21v2.6l-4.4 4.4L19 14.4l-1.6 1.6-2.4-2.4L12 16.6l2.4 2.4-1.6 1.6L10.4 18l-4.2 4.2-2.4-2.4L8 15.6 5.6 13.2 7.2 11.6 9.6 14l2.4-2.4L3 3zm18 0l-4.2 4.2-2.2-2.2L16.4 3H21z"/></svg>`,
+    fist: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4a2 2 0 012 2v2h1V5.5a2 2 0 014 0V8h1V6.5a2 2 0 014 0v6.7c0 4.3-3.1 7.8-7.4 7.8H10a6 6 0 01-6-6v-3.5A2.5 2.5 0 016.5 9H7V6a2 2 0 010-2z"/></svg>`,
+    sword: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.4 3H21v3.6l-8.8 8.8 2.1 2.1-1.6 1.6-2.1-2.1-4.4 4.4-2.6-2.6 4.4-4.4-2.1-2.1 1.6-1.6 2.1 2.1L17.4 3z"/></svg>`,
+    map: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 7h7v2.6H2V7zm13 0h7v2.6h-7V7zM5 13h14v3.5l-2.5 3.5h-9L5 16.5V13zm3.5-9h7v2.4h-7V4z"/></svg>`,
+    copy: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 3h11a2 2 0 012 2v11h-2.5V5.5H8V3zM5 7h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2zm1.5 2.5v8h7v-8h-7z"/></svg>`
   };
 
   window.ExoticIcons = {

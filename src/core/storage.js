@@ -18,14 +18,19 @@
         'char_stickman',
         'skin_solid',
         'trail_none',
-        'emote_salute'
+        'emote_salute',
+        'brawl_map_haven',
+        'brawl_map_citadel',
+        'weapon_fists'
       ],
       equipped: {
         aura: 'aura_none',
         character: 'char_classic',
         skin: 'skin_solid',
         trail: 'trail_none',
-        emote: 'emote_salute'
+        emote: 'emote_salute',
+        brawlMap: 'brawl_map_haven',
+        brawlWeapon: 'weapon_fists'
       },
       unlockedUpgrades: [],
       activeUpgrades: [],
@@ -81,6 +86,17 @@
           collectedOrbs: parsed.collectedOrbs || {},
           collectedCoins: parsed.collectedCoins || {}
         };
+        for (const reqStarter of ['brawl_map_haven', 'brawl_map_citadel', 'weapon_fists']) {
+          if (!state.ownedItems.includes(reqStarter)) {
+            state.ownedItems.push(reqStarter);
+          }
+        }
+        if (!state.equipped.brawlMap || !state.ownedItems.includes(state.equipped.brawlMap)) {
+          state.equipped.brawlMap = 'brawl_map_haven';
+        }
+        if (!state.equipped.brawlWeapon || !state.ownedItems.includes(state.equipped.brawlWeapon)) {
+          state.equipped.brawlWeapon = 'weapon_fists';
+        }
         if (!parsed.skinPricingMigrated) {
           const formerlyFreeSkins = new Set(['skin_steamboat', 'skin_sketch', 'skin_inverted']);
           state.ownedItems = (state.ownedItems || []).filter((id) => !formerlyFreeSkins.has(id));
@@ -344,6 +360,8 @@
       if (load.aura_id) state.equipped.aura = load.aura_id;
       if (load.trail_id) state.equipped.trail = load.trail_id;
       if (load.emote_id) state.equipped.emote = load.emote_id;
+      if (load.brawl_map_id) state.equipped.brawlMap = load.brawl_map_id;
+      if (load.brawl_weapon_id) state.equipped.brawlWeapon = load.brawl_weapon_id;
       if (Array.isArray(load.active_upgrades)) {
         state.activeUpgrades = load.active_upgrades;
       }
@@ -495,7 +513,9 @@
           character: rec.character_id || state.equipped.character,
           skin: rec.skin_id || state.equipped.skin,
           trail: rec.trail_id || state.equipped.trail,
-          emote: rec.emote_id || state.equipped.emote
+          emote: rec.emote_id || state.equipped.emote,
+          brawlMap: rec.brawl_map_id || state.equipped.brawlMap || 'brawl_map_haven',
+          brawlWeapon: rec.brawl_weapon_id || state.equipped.brawlWeapon || 'weapon_fists'
         };
         if (Array.isArray(rec.active_upgrades)) {
           state.activeUpgrades = rec.active_upgrades;
@@ -637,7 +657,9 @@
           characters: 'character',
           skins: 'skin',
           trails: 'trail',
-          emotes: 'emote'
+          emotes: 'emote',
+          maps: 'brawlMap',
+          weapons: 'brawlWeapon'
         };
         const slot = slotMap[item.category];
         if (slot) state.equipped[slot] = item.id;
@@ -679,7 +701,9 @@
           characters: 'character',
           skins: 'skin',
           trails: 'trail',
-          emotes: 'emote'
+          emotes: 'emote',
+          maps: 'brawlMap',
+          weapons: 'brawlWeapon'
         };
         const slot = slotMap[item.category];
         if (slot && state.ownedItems.includes(item.id)) {

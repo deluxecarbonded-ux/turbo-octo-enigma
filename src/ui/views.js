@@ -196,7 +196,8 @@
       'signup-theme-btn',
       'signin-theme-btn',
       'splash-theme-btn',
-      'pause-theme-btn'
+      'pause-theme-btn',
+      'brawl-theme-btn'
     ];
     for (const id of fullPillIds) {
       const btn = document.getElementById(id);
@@ -253,8 +254,10 @@
 
     const hudCoins = document.getElementById('hud-coins-val');
     const hudSp = document.getElementById('hud-sp-val');
+    const brawlHudCoins = document.getElementById('brawl-hud-coins-val');
     if (hudCoins) hudCoins.textContent = String(state.coins);
     if (hudSp) hudSp.textContent = String(state.skillPoints);
+    if (brawlHudCoins) brawlHudCoins.textContent = String(state.coins);
 
     const headerUsername = document.getElementById('header-username');
     if (headerUsername && window.ExoticAuth) {
@@ -519,9 +522,11 @@
     if (!loadoutWrap) return;
     const state = window.ExoticStorage.getState();
     const slots = [
-      ['Aura', state.equipped.aura],
       ['Character', state.equipped.character],
       ['Skin', state.equipped.skin],
+      ['Brawl Weapon', state.equipped.brawlWeapon || 'weapon_fists'],
+      ['Brawl Map', state.equipped.brawlMap || 'brawl_map_haven'],
+      ['Aura', state.equipped.aura],
       ['Trail', state.equipped.trail],
       ['Emote', state.equipped.emote]
     ];
@@ -547,7 +552,9 @@
       characters: 'character',
       skins: 'skin',
       trails: 'trail',
-      emotes: 'emote'
+      emotes: 'emote',
+      maps: 'brawlMap',
+      weapons: 'brawlWeapon'
     };
     const isEquipped =
       !guestLocked &&
@@ -682,7 +689,9 @@
       characters: 'character',
       skins: 'skin',
       trails: 'trail',
-      emotes: 'emote'
+      emotes: 'emote',
+      maps: 'brawlMap',
+      weapons: 'brawlWeapon'
     };
     const isEquipped = isUpgrade
       ? state.activeUpgrades.includes(item.id)
@@ -696,7 +705,8 @@
     const cat = getShopCategoryMeta(item.category);
     const info = getShopItemStateInfo(item);
     const nameLower = item.name.toLowerCase();
-    const catLower = `${cat.label} ${item.category}`.toLowerCase();
+    const brawlTag = item.brawlOnly ? 'brawl brawl only arena fighter' : '';
+    const catLower = `${cat.label} ${item.category} ${brawlTag}`.toLowerCase();
     const tierLower = String(item.tier || '').toLowerCase();
     const descLower = String(item.desc || '').toLowerCase();
     const currLabel = item.currency === 'sp' ? 'sp skill point skill points' : 'coin coins';
@@ -937,9 +947,16 @@
         <div class="raycast-detail-stage">
           <canvas class="ex-video-canvas" id="shop-raycast-detail-canvas"></canvas>
           <div class="ex-video-overlay-top">
-            <span class="ex-video-badge${
-              selected.tier === 'Halloween Special' ? ' ex-video-badge--halloween' : ''
-            }">${escapeHtml(selected.tier)}</span>
+            <span style="display:inline-flex; align-items:center; gap:5px;">
+              <span class="ex-video-badge${
+                selected.tier === 'Halloween Special' ? ' ex-video-badge--halloween' : ''
+              }">${escapeHtml(selected.tier)}</span>
+              ${
+                selected.brawlOnly
+                  ? '<span class="ex-video-badge ex-video-badge--brawl">Brawl Only</span>'
+                  : ''
+              }
+            </span>
             <span style="display:inline-flex; align-items:center;">${parts.statusHtml}</span>
           </div>
           <div class="ex-video-scrubber"><div class="ex-video-scrubber-fill" id="shop-raycast-detail-scrubber"></div></div>
@@ -1238,9 +1255,16 @@
         <div class="ex-video-stage">
           <canvas class="ex-video-canvas"></canvas>
           <div class="ex-video-overlay-top">
-            <span class="ex-video-badge${
-              item.tier === 'Halloween Special' ? ' ex-video-badge--halloween' : ''
-            }" data-shop-tier>${escapeHtml(item.tier)}</span>
+            <span style="display:inline-flex; align-items:center; gap:5px;">
+              <span class="ex-video-badge${
+                item.tier === 'Halloween Special' ? ' ex-video-badge--halloween' : ''
+              }" data-shop-tier>${escapeHtml(item.tier)}</span>
+              ${
+                item.brawlOnly
+                  ? '<span class="ex-video-badge ex-video-badge--brawl">Brawl Only</span>'
+                  : ''
+              }
+            </span>
             <span data-shop-status style="display:inline-flex; align-items:center;">${parts.statusHtml}</span>
           </div>
           <div class="ex-video-scrubber"><div class="ex-video-scrubber-fill"></div></div>
@@ -3208,11 +3232,433 @@
     }
   }
 
+  let brawlLobbyMode = 'cpu_1v1';
+  let brawlLobbyDifficulty = 'veteran';
+  let brawlLobbyStocks = 3;
+  let brawlHostedRoomCode = null;
+  let brawlRoomPollTimer = null;
+
+  function stopBrawlRoomPolling() {
+    if (brawlRoomPollTimer) {
+      clearInterval(brawlRoomPollTimer);
+      brawlRoomPollTimer = null;
+    }
+  }
+
+  async function cancelHostedBrawlRoom() {
+    stopBrawlRoomPolling();
+    const code = brawlHostedRoomCode;
+    brawlHostedRoomCode = null;
+    if (code) {
+      const clientKey = (window.ExoticSupabase?.getClientKey?.() || localStorage.getItem('exotic_runner_client_key_v1')) || '';
+      try {
+        await fetch('/api/brawl/rooms', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-exotic-client-key': clientKey
+          },
+          body: JSON.stringify({ action: 'leave', clientKey, roomCode: code })
+        });
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+    syncBrawlLobbyControlsUI();
+  }
+
+  async function refreshBrawlOpenRooms() {
+    const listEl = document.getElementById('brawl-open-rooms-list');
+    if (!listEl) return;
+    try {
+      const res = await fetch(`/api/brawl/rooms?t=${Date.now()}`);
+      const data = await res.json();
+      const rooms = Array.isArray(data?.rooms) ? data.rooms : [];
+      if (rooms.length === 0) {
+        listEl.innerHTML = `<div class="ex-card-desc">No waiting rooms right now — create a room code on the left to host a match.</div>`;
+        return;
+      }
+      listEl.innerHTML = rooms
+        .map((rm) => {
+          const mapItem = window.ExoticShopData.getById(rm.map_id);
+          const mapName = mapItem ? mapItem.name : 'Brawlhaven Sanctum';
+          return `
+            <div class="brawl-open-room-row">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-size:13px; font-weight:700;">@${escapeHtml(rm.host_username || 'Host')} · <span class="mono">${escapeHtml(rm.room_code)}</span></span>
+                <span style="font-size:11.5px; color:var(--fg-secondary);">${escapeHtml(mapName)} · ${Number(rm.stocks || 3)} Stocks</span>
+              </div>
+              <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--xs" data-join-open-code="${escapeHtml(rm.room_code)}">
+                <span>Join</span>
+              </button>
+            </div>
+          `;
+        })
+        .join('');
+
+      listEl.querySelectorAll('[data-join-open-code]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const code = btn.getAttribute('data-join-open-code');
+          if (code) joinBrawlOnlineRoom(code);
+        });
+      });
+    } catch {
+      listEl.innerHTML = `<div class="ex-card-desc">Could not load open rooms right now.</div>`;
+    }
+  }
+
+  async function createBrawlOnlineRoom() {
+    if (window.ExoticAuth?.isGuest?.()) {
+      showToast('Full account required to host Online Brawl rooms.');
+      return;
+    }
+    const st = window.ExoticStorage.getState();
+    const clientKey = (window.ExoticSupabase?.getClientKey?.() || localStorage.getItem('exotic_runner_client_key_v1')) || '';
+    const username = window.ExoticAuth?.getUsername?.() || st.callsign || 'Fighter';
+
+    try {
+      const res = await fetch('/api/brawl/rooms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-exotic-client-key': clientKey
+        },
+        body: JSON.stringify({
+          action: 'create',
+          clientKey,
+          username,
+          mapId: st.equipped.brawlMap || 'brawl_map_haven',
+          stocks: brawlLobbyStocks,
+          loadout: st.equipped
+        })
+      });
+      const data = await res.json();
+      if (!data?.ok || !data.room) {
+        showToast(data?.reason || 'Could not create room.');
+        return;
+      }
+      brawlHostedRoomCode = data.room.room_code;
+      syncBrawlLobbyControlsUI();
+      refreshBrawlOpenRooms();
+      showToast(`Room ${brawlHostedRoomCode} ready! Share your code.`);
+
+      stopBrawlRoomPolling();
+      brawlRoomPollTimer = setInterval(async () => {
+        if (!brawlHostedRoomCode || window.ExoticRouter.getCurrent() !== 'brawl') {
+          stopBrawlRoomPolling();
+          return;
+        }
+        try {
+          const poll = await fetch(
+            `/api/brawl/rooms?code=${encodeURIComponent(brawlHostedRoomCode)}&t=${Date.now()}`
+          );
+          const pData = await poll.json();
+          const rm = pData?.room;
+          if (rm && rm.status === 'active' && rm.guest_client_key) {
+            const code = brawlHostedRoomCode;
+            brawlHostedRoomCode = null;
+            stopBrawlRoomPolling();
+            window.ExoticRouter.navigate('brawl-play');
+            window.ExoticBrawlEngine.startMatch({
+              mode: 'online',
+              stocks: Number(rm.stocks || brawlLobbyStocks),
+              mapId: rm.map_id || st.equipped.brawlMap || 'brawl_map_haven',
+              onlineRoomCode: code,
+              onlineSlot: 0,
+              onlineOpponent: {
+                username: rm.guest_username || 'Challenger',
+                loadout: rm.guest_loadout || {}
+              }
+            });
+          }
+        } catch {
+          // Keep polling quietly
+        }
+      }, 950);
+    } catch {
+      showToast('Could not create room right now.');
+    }
+  }
+
+  async function joinBrawlOnlineRoom(rawCode) {
+    if (window.ExoticAuth?.isGuest?.()) {
+      showToast('Full account required to join Online Brawl rooms.');
+      return;
+    }
+    const code = String(rawCode || '')
+      .trim()
+      .toUpperCase();
+    if (!code || code.length < 4) {
+      showToast('Enter a valid room code.');
+      return;
+    }
+    const st = window.ExoticStorage.getState();
+    const clientKey = (window.ExoticSupabase?.getClientKey?.() || localStorage.getItem('exotic_runner_client_key_v1')) || '';
+    const username = window.ExoticAuth?.getUsername?.() || st.callsign || 'Challenger';
+
+    try {
+      const res = await fetch('/api/brawl/rooms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-exotic-client-key': clientKey
+        },
+        body: JSON.stringify({
+          action: 'join',
+          clientKey,
+          username,
+          roomCode: code,
+          loadout: st.equipped
+        })
+      });
+      const data = await res.json();
+      if (!data?.ok || !data.room) {
+        showToast(data?.reason || 'Room code not found.');
+        return;
+      }
+      stopBrawlRoomPolling();
+      brawlHostedRoomCode = null;
+      const rm = data.room;
+      window.ExoticRouter.navigate('brawl-play');
+      window.ExoticBrawlEngine.startMatch({
+        mode: 'online',
+        stocks: Number(rm.stocks || 3),
+        mapId: rm.map_id || 'brawl_map_haven',
+        onlineRoomCode: rm.room_code,
+        onlineSlot: Number(data.slot ?? 1),
+        onlineOpponent:
+          Number(data.slot ?? 1) === 1
+            ? {
+                username: rm.host_username || 'Host',
+                loadout: rm.host_loadout || {}
+              }
+            : {
+                username: rm.guest_username || 'Challenger',
+                loadout: rm.guest_loadout || {}
+              }
+      });
+    } catch {
+      showToast('Could not join room.');
+    }
+  }
+
+  function syncBrawlLobbyControlsUI() {
+    const st = window.ExoticStorage.getState();
+    const charItem = window.ExoticShopData.getById(st.equipped.character);
+    const wepItem = window.ExoticShopData.getById(st.equipped.brawlWeapon || 'weapon_fists');
+    const mapItem = window.ExoticShopData.getById(st.equipped.brawlMap || 'brawl_map_haven');
+
+    const charChip = document.getElementById('brawl-equipped-fighter-chip');
+    const wepChip = document.getElementById('brawl-equipped-weapon-chip');
+    const mapChip = document.getElementById('brawl-equipped-map-chip');
+    if (charChip) charChip.textContent = `Fighter: ${charItem ? charItem.name : 'Exotic Cube'}`;
+    if (wepChip) {
+      wepChip.textContent = `Sky-Drop Weapon: ${wepItem ? wepItem.name : 'Bare Fists'}`;
+    }
+    if (mapChip) {
+      mapChip.textContent = `Selected Arena: ${mapItem ? mapItem.name : 'Brawlhaven Sanctum'}`;
+    }
+
+    document.querySelectorAll('#brawl-mode-tabs [data-brawl-mode]').forEach((btn) => {
+      const active = btn.getAttribute('data-brawl-mode') === brawlLobbyMode;
+      btn.className = `ex-pill-btn ${
+        active ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      btn.setAttribute('aria-pressed', String(active));
+    });
+
+    document.querySelectorAll('#brawl-diff-tabs [data-brawl-diff]').forEach((btn) => {
+      const active = btn.getAttribute('data-brawl-diff') === brawlLobbyDifficulty;
+      btn.className = `ex-pill-btn ${
+        active ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--xs`;
+      btn.setAttribute('aria-pressed', String(active));
+    });
+
+    document.querySelectorAll('#brawl-stocks-tabs [data-brawl-stocks]').forEach((btn) => {
+      const active = Number(btn.getAttribute('data-brawl-stocks')) === brawlLobbyStocks;
+      btn.className = `ex-pill-btn ${
+        active ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--xs`;
+      btn.setAttribute('aria-pressed', String(active));
+    });
+
+    const diffWrap = document.getElementById('brawl-difficulty-wrap');
+    if (diffWrap) {
+      diffWrap.style.display =
+        brawlLobbyMode === 'cpu_1v1' || brawlLobbyMode === 'cpu_ffa' ? 'flex' : 'none';
+    }
+
+    const onlinePanel = document.getElementById('brawl-online-panel');
+    if (onlinePanel) {
+      onlinePanel.classList.toggle('is-hidden', brawlLobbyMode !== 'online');
+    }
+
+    const launchBtn = document.getElementById('brawl-launch-label');
+    if (launchBtn) {
+      launchBtn.textContent =
+        brawlLobbyMode === 'online'
+          ? brawlHostedRoomCode
+            ? `Waiting for Opponent (${brawlHostedRoomCode})`
+            : 'Host Room Match'
+          : brawlLobbyMode === 'local_2p'
+            ? 'Start Local 2-Player Brawl'
+            : brawlLobbyMode === 'cpu_ffa'
+              ? 'Start 4-Fighter Brawl'
+              : 'Start 1v1 Brawl';
+    }
+
+    const hostedRow = document.getElementById('brawl-hosted-code-row');
+    const hostedVal = document.getElementById('brawl-hosted-code-val');
+    const createBtn = document.getElementById('brawl-create-room-btn');
+    const hostStatusChip = document.getElementById('brawl-host-status-chip');
+    if (hostedRow) hostedRow.classList.toggle('is-hidden', !brawlHostedRoomCode);
+    if (hostedVal && brawlHostedRoomCode) hostedVal.textContent = brawlHostedRoomCode;
+    if (createBtn) createBtn.style.display = brawlHostedRoomCode ? 'none' : 'inline-flex';
+    if (hostStatusChip) {
+      hostStatusChip.textContent = brawlHostedRoomCode ? 'WAITING' : 'READY';
+    }
+  }
+
+  function renderBrawlMapsGrid() {
+    const grid = document.getElementById('brawl-maps-grid');
+    if (!grid) return;
+    window.ExoticPreviewDirector.clearGroup('brawl-maps');
+    grid.innerHTML = '';
+
+    const state = window.ExoticStorage.getState();
+    const mapItems = window.ExoticShopData.getByCategory('maps');
+
+    mapItems.forEach((item, idx) => {
+      const guestLocked = Boolean(
+        window.ExoticAuth?.isGuest() && !window.ExoticAuth.isGuestAllowedShopItem(item.id)
+      );
+      const owned = !guestLocked && window.ExoticStorage.ownsItem(item.id);
+      const selected = owned && (state.equipped.brawlMap || 'brawl_map_haven') === item.id;
+
+      const card = document.createElement('article');
+      card.className = `ex-video-card${guestLocked ? ' is-guest-locked' : ''}`;
+      card.setAttribute('data-brawl-map-card', item.id);
+
+      let footerBtnHtml = '';
+      if (guestLocked) {
+        footerBtnHtml = `
+          <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full" disabled>
+            ${window.ExoticIcons.get('lock')}
+            <span>Locked · Not Available for Guest</span>
+          </button>
+        `;
+      } else if (selected) {
+        footerBtnHtml = `
+          <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full" data-launch-map-id="${item.id}">
+            ${window.ExoticIcons.get('check')}
+            <span>Selected Arena · Fight Now</span>
+          </button>
+        `;
+      } else if (owned) {
+        footerBtnHtml = `
+          <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm ex-pill-btn--full" data-select-map-id="${item.id}">
+            <span>Select Arena</span>
+          </button>
+        `;
+      } else {
+        footerBtnHtml = `
+          <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm ex-pill-btn--full" data-open-shop-map="${item.id}">
+            ${window.ExoticIcons.get('coin')}
+            <span>Unlock in Shop — ${item.cost} Coins</span>
+          </button>
+        `;
+      }
+
+      const statusBadge = guestLocked
+        ? `<span class="ex-chip ex-chip--subtle mono">Locked</span>`
+        : selected
+          ? `<span class="ex-chip ex-chip--inverted">Selected</span>`
+          : owned
+            ? `<span class="ex-video-badge">Owned</span>`
+            : `<span class="ex-video-badge">${item.cost} Coins</span>`;
+
+      card.innerHTML = `
+        <div class="ex-video-stage">
+          <canvas class="ex-video-canvas"></canvas>
+          <div class="ex-video-overlay-top">
+            <span style="display:inline-flex; align-items:center; gap:5px;">
+              <span class="ex-video-badge">${escapeHtml(item.tier)}</span>
+              <span class="ex-video-badge ex-video-badge--brawl">Brawl Only</span>
+            </span>
+            <span>${statusBadge}</span>
+          </div>
+          <div class="ex-video-scrubber"><div class="ex-video-scrubber-fill"></div></div>
+        </div>
+        <div class="ex-card-body">
+          <div class="ex-card-title-row">
+            <h3 class="ex-card-title">${escapeHtml(item.name)}</h3>
+          </div>
+          <p class="ex-card-desc">${escapeHtml(item.desc)}</p>
+        </div>
+        <div class="ex-card-footer">
+          ${footerBtnHtml}
+        </div>
+      `;
+
+      grid.appendChild(card);
+
+      const cv = card.querySelector('.ex-video-canvas');
+      const scrub = card.querySelector('.ex-video-scrubber-fill');
+      window.ExoticPreviewDirector.registerShopCard(cv, scrub, item, idx, 'brawl-maps');
+
+      card.querySelector('[data-select-map-id]')?.addEventListener('click', () => {
+        window.ExoticAudio.click();
+        window.ExoticStorage.equipItem(item);
+        renderBrawlView();
+      });
+      card.querySelector('[data-launch-map-id]')?.addEventListener('click', () => {
+        window.ExoticAudio.click();
+        launchSelectedBrawlMatch();
+      });
+      card.querySelector('[data-open-shop-map]')?.addEventListener('click', () => {
+        window.ExoticAudio.click();
+        activeShopCategory = 'maps';
+        shopSearchQuery = '';
+        shopRaycastOpen = false;
+        window.ExoticRouter.navigate('shop');
+      });
+    });
+  }
+
+  function launchSelectedBrawlMatch() {
+    if (brawlLobbyMode === 'online') {
+      if (!brawlHostedRoomCode) {
+        createBrawlOnlineRoom();
+      } else {
+        showToast(`Share code ${brawlHostedRoomCode} — match begins when opponent joins.`);
+      }
+      return;
+    }
+    const st = window.ExoticStorage.getState();
+    window.ExoticRouter.navigate('brawl-play');
+    window.ExoticBrawlEngine.startMatch({
+      mode: brawlLobbyMode,
+      difficulty: brawlLobbyDifficulty,
+      stocks: brawlLobbyStocks,
+      mapId: st.equipped.brawlMap || 'brawl_map_haven'
+    });
+  }
+
+  function renderBrawlView() {
+    syncBrawlLobbyControlsUI();
+    renderBrawlMapsGrid();
+    if (brawlLobbyMode === 'online') {
+      refreshBrawlOpenRooms();
+    }
+  }
+
   function refreshCurrentRouteInPlace() {
     const route = window.ExoticRouter.getCurrent();
     if (route === 'signup') renderSignUpView();
     else if (route === 'signin') renderSignInView();
     else if (route === 'menu') renderMenuSummary();
+    else if (route === 'brawl') syncBrawlLobbyControlsUI();
     else if (route === 'levels') patchLevelsViewInPlace();
     else if (route === 'shop') patchShopViewInPlace();
     else if (route === 'achievements') renderAchievementsView();
@@ -3298,6 +3744,7 @@
     document.getElementById('splash-theme-btn')?.addEventListener('click', handleThemeToggleClick);
     document.getElementById('header-theme-btn')?.addEventListener('click', handleThemeToggleClick);
     document.getElementById('play-theme-btn')?.addEventListener('click', handleThemeToggleClick);
+    document.getElementById('brawl-theme-btn')?.addEventListener('click', handleThemeToggleClick);
     document.getElementById('pause-theme-btn')?.addEventListener('click', handleThemeToggleClick);
 
     document.getElementById('signup-switch-signin-btn')?.addEventListener('click', () => {
@@ -4815,6 +5262,92 @@
         shopSearchInput?.select();
       }
     });
+
+    // Brawl Lobby Controls & Online Room Matchmaking
+    document.getElementById('brawl-goto-weapons-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      activeShopCategory = 'weapons';
+      shopSearchQuery = '';
+      shopRaycastOpen = false;
+      window.ExoticRouter.navigate('shop');
+    });
+
+    document.getElementById('brawl-goto-maps-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      activeShopCategory = 'maps';
+      shopSearchQuery = '';
+      shopRaycastOpen = false;
+      window.ExoticRouter.navigate('shop');
+    });
+
+    document.getElementById('brawl-launch-primary-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      launchSelectedBrawlMatch();
+    });
+
+    document.querySelectorAll('#brawl-mode-tabs [data-brawl-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        window.ExoticAudio.click();
+        brawlLobbyMode = btn.getAttribute('data-brawl-mode') || 'cpu_1v1';
+        syncBrawlLobbyControlsUI();
+        if (brawlLobbyMode === 'online') {
+          refreshBrawlOpenRooms();
+        }
+      });
+    });
+
+    document.querySelectorAll('#brawl-diff-tabs [data-brawl-diff]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        window.ExoticAudio.click();
+        brawlLobbyDifficulty = btn.getAttribute('data-brawl-diff') || 'veteran';
+        syncBrawlLobbyControlsUI();
+      });
+    });
+
+    document.querySelectorAll('#brawl-stocks-tabs [data-brawl-stocks]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        window.ExoticAudio.click();
+        brawlLobbyStocks = Number(btn.getAttribute('data-brawl-stocks')) || 3;
+        syncBrawlLobbyControlsUI();
+      });
+    });
+
+    document.getElementById('brawl-create-room-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      createBrawlOnlineRoom();
+    });
+
+    document.getElementById('brawl-cancel-room-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      cancelHostedBrawlRoom();
+    });
+
+    document.getElementById('brawl-copy-code-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      if (brawlHostedRoomCode) {
+        navigator.clipboard?.writeText(brawlHostedRoomCode).catch(() => {});
+        showToast(`Copied room code ${brawlHostedRoomCode}.`);
+      }
+    });
+
+    document.getElementById('brawl-refresh-rooms-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      refreshBrawlOpenRooms();
+    });
+
+    document.getElementById('brawl-join-room-btn')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      const inp = document.getElementById('brawl-join-code-input');
+      joinBrawlOnlineRoom(inp ? inp.value : '');
+    });
+
+    document.getElementById('brawl-join-code-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        window.ExoticAudio.click();
+        joinBrawlOnlineRoom(e.target.value);
+      }
+    });
   }
 
   window.ExoticViews = {
@@ -4846,6 +5379,9 @@
         if (route !== 'shop' && shopRaycastOpen) {
           shopRaycastOpen = false;
         }
+        if (route !== 'brawl' && brawlHostedRoomCode) {
+          cancelHostedBrawlRoom();
+        }
         if (route !== 'play' && canvasFullscreen) {
           setCanvasFullscreen(false);
         }
@@ -4853,7 +5389,20 @@
         if (route === 'signup') renderSignUpView();
         else if (route === 'signin') renderSignInView();
         else if (route === 'menu') renderMenuSummary();
-        else if (route === 'levels') renderLevelsView();
+        else if (route === 'brawl') renderBrawlView();
+        else if (route === 'brawl-play') {
+          setTimeout(() => {
+            if (!window.ExoticBrawlEngine?.getState?.().running) {
+              const st = window.ExoticStorage.getState();
+              window.ExoticBrawlEngine?.startMatch({
+                mode: brawlLobbyMode === 'online' ? 'cpu_1v1' : brawlLobbyMode,
+                difficulty: brawlLobbyDifficulty,
+                stocks: brawlLobbyStocks,
+                mapId: st.equipped.brawlMap || 'brawl_map_haven'
+              });
+            }
+          }, 0);
+        } else if (route === 'levels') renderLevelsView();
         else if (route === 'shop') renderShopView();
         else if (route === 'achievements') renderAchievementsView();
         else if (route === 'leaderboards') renderLeaderboardsView();

@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c27" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c27" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c27" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c27" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c27" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c29" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c29" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c29" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c29" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c29" />
 </head>
 <body>
   <div id="app">
@@ -534,6 +534,11 @@
                 <span id="menu-play-label">Play — Level 01: Trust Nothing</span>
               </button>
 
+              <button type="button" id="menu-btn-brawl" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="brawl">
+                <span data-icon="brawl"></span>
+                <span>Brawl</span>
+              </button>
+
               <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="levels">
                 <span data-icon="levels"></span>
                 <span>Levels</span>
@@ -671,6 +676,233 @@
         </div>
       </section>
 
+      <!-- 3b. BRAWL LOBBY ROUTE -->
+      <section id="view-brawl" class="ex-view" aria-label="Brawl Mode">
+        <div class="ex-container">
+          <div class="page-header">
+            <div class="page-header-text">
+              <div class="brawl-eyebrow-row">
+                <span class="ex-chip ex-chip--inverted"><span data-icon="brawl"></span><span>Brawl Arena Mode</span></span>
+                <span class="ex-chip ex-chip--subtle">Default Fists · Sky-Drop Weapons · Knockback Stocks</span>
+              </div>
+              <h2 class="page-title">Exotic Brawl</h2>
+              <p class="page-subtitle">
+                Knock opponents past the blast zones on suspended sky-islands. Every stock starts bare-handed with your Fists while sky-drop pickups summon your equipped Shop Weapon.
+              </p>
+            </div>
+            <div class="brawl-header-actions">
+              <button type="button" id="brawl-goto-weapons-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                <span data-icon="sword"></span>
+                <span>Shop Weapons</span>
+              </button>
+              <button type="button" id="brawl-goto-maps-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+                <span data-icon="map"></span>
+                <span>Shop Maps</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Brawl Loadout Strip -->
+          <div class="shop-loadout-bar brawl-loadout-strip">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:13px; font-weight:700;">Brawl Loadout</span>
+              <span class="ex-chip ex-chip--subtle">Spawn Default: Bare Fists</span>
+              <span id="brawl-equipped-fighter-chip" class="ex-chip ex-chip--subtle">Fighter: Exotic Cube</span>
+              <span id="brawl-equipped-weapon-chip" class="ex-chip ex-chip--subtle">Sky-Drop Weapon: Bare Fists</span>
+              <span id="brawl-equipped-map-chip" class="ex-chip ex-chip--subtle">Selected Arena: Brawlhaven Sanctum</span>
+            </div>
+            <button type="button" id="brawl-launch-primary-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg">
+              <span data-icon="brawl"></span>
+              <span id="brawl-launch-label">Start Brawl Match</span>
+            </button>
+          </div>
+
+          <!-- Match Mode + Rules Configuration Card -->
+          <div class="brawl-config-card">
+            <div class="brawl-config-group">
+              <span class="brawl-config-label">Match Mode</span>
+              <div id="brawl-mode-tabs" class="pill-tabs" role="radiogroup" aria-label="Brawl Match Mode">
+                <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" data-brawl-mode="cpu_1v1" aria-pressed="true">
+                  <span data-icon="brawl"></span>
+                  <span>1v1 vs CPU</span>
+                </button>
+                <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-brawl-mode="cpu_ffa" aria-pressed="false">
+                  <span data-icon="users"></span>
+                  <span>4-Fighter Brawl</span>
+                </button>
+                <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-brawl-mode="local_2p" aria-pressed="false">
+                  <span data-icon="fist"></span>
+                  <span>Local 2-Player</span>
+                </button>
+                <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" data-brawl-mode="online" aria-pressed="false">
+                  <span data-icon="cloud"></span>
+                  <span>Online Rooms</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="brawl-difficulty-wrap" class="brawl-config-group">
+              <span class="brawl-config-label">CPU Skill</span>
+              <div id="brawl-diff-tabs" class="pill-tabs" role="radiogroup" aria-label="CPU Difficulty">
+                <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs" data-brawl-diff="rookie" aria-pressed="false">
+                  <span>Rookie</span>
+                </button>
+                <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--xs" data-brawl-diff="veteran" aria-pressed="true">
+                  <span>Veteran</span>
+                </button>
+                <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs" data-brawl-diff="legend" aria-pressed="false">
+                  <span>Legend</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="brawl-config-group">
+              <span class="brawl-config-label">Stocks</span>
+              <div id="brawl-stocks-tabs" class="pill-tabs" role="radiogroup" aria-label="Match Stocks">
+                <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs" data-brawl-stocks="1" aria-pressed="false">
+                  <span>1 Stock</span>
+                </button>
+                <button type="button" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--xs" data-brawl-stocks="3" aria-pressed="true">
+                  <span>3 Stocks</span>
+                </button>
+                <button type="button" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs" data-brawl-stocks="5" aria-pressed="false">
+                  <span>5 Stocks</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Online Room Matchmaking Panel (Visible when Online Rooms mode is chosen) -->
+          <div id="brawl-online-panel" class="brawl-online-panel is-hidden">
+            <div class="brawl-online-grid">
+              <div class="brawl-online-box">
+                <div class="ex-card-title-row">
+                  <h3 class="ex-card-title">Host Room Code</h3>
+                  <span id="brawl-host-status-chip" class="ex-chip ex-chip--subtle mono">READY</span>
+                </div>
+                <p class="ex-card-desc">
+                  Create a 6-character room code for your selected Brawl arena and share it with an opponent.
+                </p>
+                <div id="brawl-hosted-code-row" class="brawl-hosted-code-row is-hidden">
+                  <span id="brawl-hosted-code-val" class="brawl-room-code-pill mono">------</span>
+                  <button type="button" id="brawl-copy-code-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs">
+                    <span data-icon="copy"></span>
+                    <span>Copy</span>
+                  </button>
+                  <button type="button" id="brawl-cancel-room-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs">
+                    <span data-icon="close"></span>
+                    <span>Cancel</span>
+                  </button>
+                </div>
+                <button type="button" id="brawl-create-room-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                  <span data-icon="brawl"></span>
+                  <span>Create Room Code</span>
+                </button>
+              </div>
+
+              <div class="brawl-online-box">
+                <div class="ex-card-title-row">
+                  <h3 class="ex-card-title">Join by Room Code</h3>
+                  <button type="button" id="brawl-refresh-rooms-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs">
+                    <span data-icon="retry"></span>
+                    <span>Refresh</span>
+                  </button>
+                </div>
+                <div class="brawl-join-input-row">
+                  <input
+                    type="text"
+                    id="brawl-join-code-input"
+                    class="ex-pill-input mono"
+                    maxlength="8"
+                    placeholder="ENTER CODE"
+                    autocomplete="off"
+                    spellcheck="false"
+                    aria-label="Room Code"
+                  />
+                  <button type="button" id="brawl-join-room-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+                    <span data-icon="play"></span>
+                    <span>Join Room</span>
+                  </button>
+                </div>
+                <div id="brawl-open-rooms-list" class="brawl-open-rooms-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls Quick Strip -->
+          <div class="brawl-controls-card">
+            <div class="brawl-controls-col">
+              <span class="brawl-config-label">Solo Combat Controls</span>
+              <p class="brawl-controls-text">
+                <strong>W A S D / Arrows</strong> Move, Multi-Jump &amp; Wall-Slide · <strong>J / F / Click</strong> Light Attack · <strong>K / G / Right-Click</strong> Heavy Signature &amp; Recovery · <strong>Shift / L</strong> Dash, Spot-Dodge &amp; Gravity Cancel · <strong>H / R / C</strong> Pick Up Sky-Drop or Throw Weapon
+              </p>
+            </div>
+            <div class="brawl-controls-col">
+              <span class="brawl-config-label">Local 2-Player Split</span>
+              <p class="brawl-controls-text">
+                <strong>P1:</strong> W A S D + F (Light) · G (Heavy) · H (Dodge) · R (Throw/Pickup) &nbsp;|&nbsp;
+                <strong>P2:</strong> Arrows + J (Light) · K (Heavy) · L (Dodge) · U (Throw/Pickup)
+              </p>
+            </div>
+          </div>
+
+          <!-- Brawl Maps Selector Grid -->
+          <div class="brawl-section-head">
+            <h3 class="brawl-section-title">Select Brawl Arena Map</h3>
+            <span class="ex-chip ex-chip--subtle">8 Brawl-Exclusive Floating Arenas</span>
+          </div>
+          <div id="brawl-maps-grid" class="cards-grid"></div>
+        </div>
+      </section>
+
+      <!-- 3c. BRAWL GAMEPLAY ARENA ROUTE -->
+      <section id="view-brawl-play" class="ex-view" aria-label="Brawl Match Stage">
+        <div class="play-hud-top">
+          <div class="play-hud-group">
+            <div class="ex-chip">
+              <span data-icon="brawl"></span>
+              <span id="brawl-hud-stage-label">Brawlhaven Sanctum · 1v1</span>
+            </div>
+            <div class="ex-chip" title="Match Clock">
+              <span data-icon="clock"></span>
+              <span id="brawl-hud-time-val" class="mono">00:00</span>
+            </div>
+            <div class="ex-chip">
+              <span data-icon="coin"></span>
+              <span id="brawl-hud-coins-val" class="mono">0</span>
+            </div>
+          </div>
+
+          <div class="play-hud-group">
+            <button type="button" id="brawl-hud-emote-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" title="Taunt (E / T)">
+              <span data-icon="emote"></span>
+              <span>Taunt</span>
+            </button>
+            <button type="button" id="brawl-hud-retry-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" title="Restart Brawl">
+              <span data-icon="retry"></span>
+              <span>Rematch</span>
+            </button>
+            <button type="button" id="brawl-fullscreen-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" title="Full Screen">
+              <span data-icon="fullscreen"></span>
+              <span>Full Screen</span>
+            </button>
+            <button type="button" id="brawl-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch Theme">
+              <span data-icon="sun"></span>
+              <span>Light Mode</span>
+            </button>
+            <button type="button" id="brawl-pause-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" title="Pause (Esc)">
+              <span data-icon="pause"></span>
+              <span>Pause</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="brawl-stage-frame" class="game-stage-wrapper brawl-stage-wrapper">
+          <canvas id="brawl-game-canvas" width="960" height="540"></canvas>
+          <div id="brawl-hud-fighters" class="brawl-hud-fighters" aria-label="Fighter Stocks and Damage"></div>
+        </div>
+      </section>
+
       <!-- 4. LEVELS ROUTE -->
       <section id="view-levels" class="ex-view" aria-label="Select Stage">
         <div class="ex-container">
@@ -692,7 +924,7 @@
           <div class="page-header">
             <div class="page-header-text">
               <h2 class="page-title">Exotic Armory &amp; Shop</h2>
-              <p class="page-subtitle">Every card previews the actual Aura, Character, Skin, Trail, Emote, or Upgrade in motion.</p>
+              <p class="page-subtitle">Every card previews the actual Character, Skin, Brawl Weapon, Brawl Map, Aura, Trail, Emote, or Upgrade in motion.</p>
             </div>
             <div id="shop-category-tabs" class="pill-tabs"></div>
           </div>
@@ -715,12 +947,12 @@
                 autocorrect="off"
                 autocapitalize="off"
                 spellcheck="false"
-                placeholder="Search items, characters, skins, auras, trails, emotes, upgrades..."
+                placeholder="Search items, characters, skins, weapons, maps, auras, trails, emotes, upgrades..."
                 aria-label="Search shop items"
                 aria-controls="shop-raycast-list"
               />
               <div class="shop-raycast-trailing">
-                <span id="shop-search-count" class="ex-chip ex-chip--subtle shop-raycast-count">75 Items</span>
+                <span id="shop-search-count" class="ex-chip ex-chip--subtle shop-raycast-count">92 Items</span>
                 <button
                   type="button"
                   id="shop-search-clear-btn"
@@ -1484,33 +1716,92 @@
       </div>
     </div>
 
+    <!-- Brawl Pause Modal -->
+    <div id="brawl-pause-modal" class="ex-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="brawl-pause-title">
+      <div class="ex-modal-card">
+        <span class="ex-chip ex-chip--subtle">Brawl Paused</span>
+        <h3 id="brawl-pause-title" class="ex-modal-title">Arena Paused</h3>
+        <p class="ex-modal-subtitle">Catch your breath or return to the Brawl Lobby to swap weapons and maps.</p>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+          <button type="button" id="brawl-resume-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+            <span data-icon="play"></span>
+            <span>Resume Brawl</span>
+          </button>
+          <button type="button" id="brawl-restart-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
+            <span data-icon="retry"></span>
+            <span>Restart Match</span>
+          </button>
+          <button type="button" id="brawl-pause-lobby-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
+            <span data-icon="back"></span>
+            <span>Back to Brawl Lobby</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brawl Victory / Results Modal -->
+    <div id="brawl-result-modal" class="ex-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="brawl-res-title">
+      <div class="ex-modal-card">
+        <span id="brawl-res-badge" class="ex-chip ex-chip--inverted">VICTORY</span>
+        <h3 id="brawl-res-title" class="ex-modal-title">Winner!</h3>
+        <p id="brawl-res-subtitle" class="ex-modal-subtitle">Brawlhaven Sanctum · 3-Stock Brawl</p>
+        <div class="menu-stats-row" style="margin:12px 0;">
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">KOs Scored</span>
+            <span id="brawl-res-kos" class="menu-stat-value mono">0</span>
+          </div>
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">Damage Dealt</span>
+            <span id="brawl-res-dmg" class="menu-stat-value mono">0</span>
+          </div>
+          <div class="menu-stat-pill">
+            <span class="menu-stat-label">Match Reward</span>
+            <span id="brawl-res-coins" class="menu-stat-value mono">+0 Coins</span>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button type="button" id="brawl-res-rematch-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--lg ex-pill-btn--full">
+            <span data-icon="retry"></span>
+            <span>Play Rematch</span>
+          </button>
+          <button type="button" id="brawl-res-lobby-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
+            <span data-icon="brawl"></span>
+            <span>Brawl Lobby</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Notifications -->
     <div id="toast-stack" class="ex-toast-stack" aria-live="polite"></div>
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c27"></script>
-  <script src="src/core/theme.js?v=20261025c27"></script>
-  <script src="src/core/audio.js?v=20261025c27"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c27"></script>
-  <script src="src/core/storage.js?v=20261025c27"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c27"></script>
-  <script src="src/core/auth.js?v=20261025c27"></script>
-  <script src="src/data/shopItems.js?v=20261025c27"></script>
-  <script src="src/data/achievements.js?v=20261025c27"></script>
-  <script src="src/data/levels.js?v=20261025c27"></script>
-  <script src="src/core/realtime.js?v=20261025c27"></script>
-  <script src="src/graphics/characters.js?v=20261025c27"></script>
-  <script src="src/graphics/auras.js?v=20261025c27"></script>
-  <script src="src/graphics/trails.js?v=20261025c27"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c27"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c27"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c27"></script>
-  <script src="src/game/traps.js?v=20261025c27"></script>
-  <script src="src/game/physics.js?v=20261025c27"></script>
-  <script src="src/game/engine.js?v=20261025c27"></script>
-  <script src="src/ui/router.js?v=20261025c27"></script>
-  <script src="src/ui/views.js?v=20261025c27"></script>
-  <script src="src/ui/main.js?v=20261025c27"></script>
+  <script src="src/core/icons.js?v=20261025c29"></script>
+  <script src="src/core/theme.js?v=20261025c29"></script>
+  <script src="src/core/audio.js?v=20261025c29"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c29"></script>
+  <script src="src/core/storage.js?v=20261025c29"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c29"></script>
+  <script src="src/core/auth.js?v=20261025c29"></script>
+  <script src="src/data/shopItems.js?v=20261025c29"></script>
+  <script src="src/data/brawlData.js?v=20261025c29"></script>
+  <script src="src/data/achievements.js?v=20261025c29"></script>
+  <script src="src/data/levels.js?v=20261025c29"></script>
+  <script src="src/core/realtime.js?v=20261025c29"></script>
+  <script src="src/graphics/characters.js?v=20261025c29"></script>
+  <script src="src/graphics/auras.js?v=20261025c29"></script>
+  <script src="src/graphics/trails.js?v=20261025c29"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c29"></script>
+  <script src="src/graphics/brawlRenderer.js?v=20261025c29"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c29"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c29"></script>
+  <script src="src/game/traps.js?v=20261025c29"></script>
+  <script src="src/game/physics.js?v=20261025c29"></script>
+  <script src="src/game/engine.js?v=20261025c29"></script>
+  <script src="src/game/brawlEngine.js?v=20261025c29"></script>
+  <script src="src/ui/router.js?v=20261025c29"></script>
+  <script src="src/ui/views.js?v=20261025c29"></script>
+  <script src="src/ui/main.js?v=20261025c29"></script>
 </body>
 </html>

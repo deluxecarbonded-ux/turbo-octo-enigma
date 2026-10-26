@@ -5,6 +5,8 @@
     'signin',
     'menu',
     'play',
+    'brawl',
+    'brawl-play',
     'levels',
     'shop',
     'achievements',
@@ -13,7 +15,7 @@
     'credits'
   ];
 
-  const TOPBAR_HIDDEN_ROUTES = new Set(['splash', 'signup', 'signin', 'play']);
+  const TOPBAR_HIDDEN_ROUTES = new Set(['splash', 'signup', 'signin', 'play', 'brawl-play']);
 
   let currentRoute = 'splash';
   const listeners = new Set();
@@ -44,14 +46,18 @@
     if (prev === 'play' && target !== 'play' && window.ExoticEngine) {
       window.ExoticEngine.stop();
     }
+    if (prev === 'brawl-play' && target !== 'brawl-play' && window.ExoticBrawlEngine) {
+      window.ExoticBrawlEngine.stop();
+    }
 
     if (window.ExoticBackdrop && typeof window.ExoticBackdrop.setActive === 'function') {
-      window.ExoticBackdrop.setActive(target !== 'play');
+      window.ExoticBackdrop.setActive(target !== 'play' && target !== 'brawl-play');
     }
 
     if (
       target !== 'levels' &&
       target !== 'shop' &&
+      target !== 'brawl' &&
       window.ExoticPreviewDirector &&
       typeof window.ExoticPreviewDirector.clear === 'function'
     ) {

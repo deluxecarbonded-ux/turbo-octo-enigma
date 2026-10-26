@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const nodeCrypto = require('crypto');
 const { PgWireClient, PgConnectionPool, parsePostgresUrl } = require('./src/server/pgClient');
 const {
   createChallenge,
@@ -1191,6 +1192,228 @@ async function handleRequest(req, res) {
       sendJson(res, 200, { runs: [] });
       return;
     }
+  }
+
+  // --------------------------------------------------------------------------
+  // 8b. BRAWL MODE ONLINE ROOMS & MATCH RESULTS (/api/brawl/*)
+  // --------------------------------------------------------------------------
+  if (pathname === '/api/brawl/result' && req.method === 'POST') {
+    try {
+      const body = await readJsonBody(req);
+      const clientKey = getClientKey(req, body);
+      if (!pgPool || !clientKey) {
+        sendJson(res, 200, { ok: false, reason: 'Missing clientKey.' });
+        return;
+      }
+      const won = Boolean(body.won);
+      const kos = Math.max(0, Math.min(20, Math.round(Number(body.kos) || 0)));
+      const coinsReward = Math.max(0, Math.min(30, Math.round(Number(body.coinsReward) || 0)));
+      const q = await pgPool.query(
+        'SELECT public.rpc_record_brawl_result($1, $2, $3, $4) AS res',
+        [clientKey, won, kos, coinsReward]
+      );
+      sendJson(res, 200, q.rows[0]?.res || { ok: true });
+    } catch (err) {
+      sendJson(res, 500, { ok: false, reason: err.message });
+    }
+    return;
+  }
+
+  if (pathname === '/api/brawl/rooms' && (req.method === 'GET' || req.method === 'POST')) {
+    if (!pgPool) {
+      sendJson(res, 200, { ok: false, rooms: [], reason: 'Backend unavailable.' });
+      return;
+    }
+    try {
+      // Purge stale abandoned rooms older than 12 minutes
+      await pgPool.query(
+        `DELETE FROM public.brawl_rooms WHERE updated_at < now() - interval '12 minutes'`
+      );
+
+      if (req.method === 'GET') {
+        const code = String(parsedUrl.searchParams.get('code') || '')
+          .trim()
+          .toUpperCase();
+        if (code) {
+          const r = await pgPool.query(
+            `SELECT * FROM public.brawl_rooms WHERE room_code = $1 LIMIT 1`,
+            [code]
+          );
+          sendJson(res, 200, { ok: true, room: r.rows[0] || null });
+          return;
+        }
+        const list = await pgPool.query(
+          `SELECT room_code, status, map_id, stocks, host_username, host_loadout, guest_username, created_at, updated_at
+           FROM public.brawl_rooms
+           WHERE status = 'waiting'
+             AND updated_at > now() - interval '90 seconds'
+           ORDER BY updated_at DESC
+           LIMIT 12`
+        );
+        sendJson(res, 200, { ok: true, rooms: list.rows || [] });
+        return;
+      }
+
+      const body = await readJsonBody(req);
+      const action = String(body.action || '').trim();
+      const clientKey = getClientKey(req, body);
+      const username = String(body.username || 'Fighter')
+        .replace(/[^A-Za-z0-9_]/g, '')
+        .slice(0, 20) || 'Fighter';
+
+      if (action === 'create') {
+        if (!clientKey) {
+          sendJson(res, 400, { ok: false, reason: 'Missing session.' });
+          return;
+        }
+        const mapId = String(body.mapId || 'brawl_map_haven').slice(0, 48);
+        const stocks = Math.max(1, Math.min(5, Math.round(Number(body.stocks) || 3)));
+        const loadout = body.loadout && typeof body.loadout === 'object' ? body.loadout : {};
+
+        await pgPool.query(
+          `DELETE FROM public.brawl_rooms WHERE host_client_key = $1 AND status = 'waiting'`,
+          [clientKey]
+        );
+
+        const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let roomCode = '';
+        for (let attempt = 0; attempt < 6; attempt++) {
+          let cand = '';
+          const bytes = nodeCrypto.randomBytes(6);
+          for (let i = 0; i < 6; i++) cand += alphabet[bytes[i] % alphabet.length];
+          const exists = await pgPool.query(
+            `SELECT 1 FROM public.brawl_rooms WHERE room_code = $1`,
+            [cand]
+          );
+          if (exists.rows.length === 0) {
+            roomCode = cand;
+            break;
+          }
+        }
+        if (!roomCode) roomCode = 'BR' + Date.now().toString(36).slice(-4).toUpperCase();
+
+        const ins = await pgPool.query(
+          `INSERT INTO public.brawl_rooms (
+             room_code, status, map_id, stocks, host_client_key, host_username, host_loadout, host_seen_at, updated_at
+           ) VALUES ($1, 'waiting', $2, $3, $4, $5, $6::jsonb, now(), now())
+           RETURNING *`,
+          [roomCode, mapId, stocks, clientKey, username, JSON.stringify(loadout)]
+        );
+        sendJson(res, 200, { ok: true, slot: 0, room: ins.rows[0] });
+        return;
+      }
+
+      if (action === 'join') {
+        const roomCode = String(body.roomCode || '')
+          .trim()
+          .toUpperCase();
+        if (!clientKey || !roomCode) {
+          sendJson(res, 400, { ok: false, reason: 'Enter a valid 6-character room code.' });
+          return;
+        }
+        const loadout = body.loadout && typeof body.loadout === 'object' ? body.loadout : {};
+        const cur = await pgPool.query(
+          `SELECT * FROM public.brawl_rooms WHERE room_code = $1 LIMIT 1`,
+          [roomCode]
+        );
+        const room = cur.rows[0];
+        if (!room) {
+          sendJson(res, 200, { ok: false, reason: 'Room code not found or expired.' });
+          return;
+        }
+        if (room.host_client_key === clientKey) {
+          sendJson(res, 200, { ok: true, slot: 0, room });
+          return;
+        }
+        if (room.guest_client_key && room.guest_client_key !== clientKey && room.status !== 'waiting') {
+          sendJson(res, 200, { ok: false, reason: 'This room is already full.' });
+          return;
+        }
+        const upd = await pgPool.query(
+          `UPDATE public.brawl_rooms
+           SET status = 'active',
+               guest_client_key = $2,
+               guest_username = $3,
+               guest_loadout = $4::jsonb,
+               guest_seen_at = now(),
+               updated_at = now()
+           WHERE room_code = $1
+           RETURNING *`,
+          [roomCode, clientKey, username, JSON.stringify(loadout)]
+        );
+        sendJson(res, 200, { ok: true, slot: 1, room: upd.rows[0] });
+        return;
+      }
+
+      if (action === 'sync') {
+        const roomCode = String(body.roomCode || '')
+          .trim()
+          .toUpperCase();
+        const slot = Number(body.slot) === 1 ? 1 : 0;
+        const fighterState =
+          body.fighterState && typeof body.fighterState === 'object' ? body.fighterState : {};
+        const worldState =
+          body.worldState && typeof body.worldState === 'object' ? body.worldState : null;
+        const winnerSlot =
+          typeof body.winnerSlot === 'number' ? Math.round(body.winnerSlot) : null;
+
+        let upd;
+        if (slot === 0) {
+          upd = await pgPool.query(
+            `UPDATE public.brawl_rooms
+             SET host_state = $2::jsonb,
+                 host_seen_at = now(),
+                 world_state = COALESCE($3::jsonb, world_state),
+                 winner_slot = COALESCE($4, winner_slot),
+                 status = CASE WHEN $4 IS NOT NULL THEN 'finished' ELSE status END,
+                 updated_at = now()
+             WHERE room_code = $1 AND host_client_key = $5
+             RETURNING *`,
+            [
+              roomCode,
+              JSON.stringify(fighterState),
+              worldState ? JSON.stringify(worldState) : null,
+              winnerSlot,
+              clientKey
+            ]
+          );
+        } else {
+          upd = await pgPool.query(
+            `UPDATE public.brawl_rooms
+             SET guest_state = $2::jsonb,
+                 guest_seen_at = now(),
+                 winner_slot = COALESCE($3, winner_slot),
+                 status = CASE WHEN $3 IS NOT NULL THEN 'finished' ELSE status END,
+                 updated_at = now()
+             WHERE room_code = $1 AND guest_client_key = $4
+             RETURNING *`,
+            [roomCode, JSON.stringify(fighterState), winnerSlot, clientKey]
+          );
+        }
+        sendJson(res, 200, { ok: true, room: upd.rows[0] || null });
+        return;
+      }
+
+      if (action === 'leave') {
+        const roomCode = String(body.roomCode || '')
+          .trim()
+          .toUpperCase();
+        if (roomCode && clientKey) {
+          await pgPool.query(
+            `DELETE FROM public.brawl_rooms
+             WHERE room_code = $1 AND (host_client_key = $2 OR guest_client_key = $2)`,
+            [roomCode, clientKey]
+          );
+        }
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      sendJson(res, 400, { ok: false, reason: 'Unknown room action.' });
+    } catch (err) {
+      sendJson(res, 500, { ok: false, reason: err.message });
+    }
+    return;
   }
 
   // --------------------------------------------------------------------------

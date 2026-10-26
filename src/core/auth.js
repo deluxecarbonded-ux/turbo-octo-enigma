@@ -20,7 +20,10 @@
     'trail_dust',
     'emote_clap',
     'upg_coyote',
-    'upg_magnet'
+    'upg_magnet',
+    'brawl_map_haven',
+    'brawl_map_citadel',
+    'weapon_fists'
   ]);
 
   let state = {

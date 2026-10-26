@@ -60,6 +60,25 @@
 
     const floorY = dim.h * 0.77;
 
+    if (item.category === 'maps' && window.ExoticBrawlRenderer) {
+      window.ExoticBrawlRenderer.renderMapCardPreview(ctx, dim, item.id, time + rec.seed, pal);
+      ctx.restore();
+      return;
+    }
+
+    if (item.category === 'weapons' && window.ExoticBrawlRenderer) {
+      window.ExoticBrawlRenderer.renderWeaponCardPreview(
+        ctx,
+        dim,
+        item.id,
+        time + rec.seed,
+        pal,
+        norm
+      );
+      ctx.restore();
+      return;
+    }
+
     if (item.category === 'upgrades') {
       // Bespoke live mechanic simulation per Upgrade
       if (item.id === 'upg_coyote') {
@@ -612,6 +631,43 @@
     const auraId = item.category === 'auras' ? item.id : 'aura_none';
     const emoteId = item.category === 'emotes' ? item.id : null;
     const emoteProgress = emoteId ? ((time * 0.72 + rec.seed) % 1) : 0;
+
+    if (item.category === 'maps' && window.ExoticBrawlRenderer) {
+      window.ExoticBrawlRenderer.renderMapCardPreview(ctx, dim, item.id, time + rec.seed, pal);
+      ctx.restore();
+      return;
+    }
+
+    if (item.category === 'weapons' && window.ExoticBrawlRenderer) {
+      window.ExoticCharacterRenderer.draw(ctx, {
+        x: rx - 4,
+        y: ry,
+        w: rw,
+        h: rh,
+        vx: 95,
+        vy: 0,
+        facing: 1,
+        characterId: charId,
+        skinId,
+        palette: pal,
+        time: time + rec.seed
+      });
+      ctx.save();
+      ctx.translate(rx - 4 + rw * 0.5, ry + rh * 0.5);
+      ctx.scale(0.76, 0.76);
+      window.ExoticBrawlRenderer.drawWeaponInHand(ctx, item.id, {
+        cx: 0,
+        cy: 0,
+        facing: 1,
+        attack: { moveKey: 'slight', sig: false },
+        attackProgress: (time * 1.8 + rec.seed) % 1,
+        pal,
+        time: time + rec.seed
+      });
+      ctx.restore();
+      ctx.restore();
+      return;
+    }
 
     if (item.category === 'trails' && trailSys) {
       const sweep = ((time * 0.9 + rec.seed) % 1);

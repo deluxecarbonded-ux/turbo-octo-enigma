@@ -468,3 +468,30 @@
   color: #ffffff;
 }
 
+.ex-video-badge--brawl {
+  background-color: var(--pill-primary-bg);
+  color: var(--pill-primary-fg);
+}
+
+[data-color-mode="colored"] .ex-video-badge--brawl {
+  background-color: #e11d48;
+  color: #ffffff;
+}
+
+[data-color-mode="colored"] [data-icon="brawl"],
+[data-color-mode="colored"] [data-icon="sword"],
+[data-color-mode="colored"] [data-icon="fist"] {
+  color: #fb7185;
+}
+
+[data-color-mode="colored"] [data-icon="map"] {
+  color: #34d399;
+}
+
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon="brawl"],
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon="sword"],
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon="fist"],
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon="map"] {
+  color: #ffffff;
+}
+

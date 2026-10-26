@@ -2,6 +2,8 @@
   const CATEGORIES = [
     { id: 'characters', label: 'Characters', currency: 'coins' },
     { id: 'skins', label: 'Skins', currency: 'coins' },
+    { id: 'weapons', label: 'Weapons', currency: 'coins', brawlOnly: true },
+    { id: 'maps', label: 'Maps', currency: 'coins', brawlOnly: true },
     { id: 'auras', label: 'Auras', currency: 'coins' },
     { id: 'trails', label: 'Trails', currency: 'coins' },
     { id: 'emotes', label: 'Emotes & Taunts', currency: 'coins' },
@@ -694,6 +696,180 @@
       cost: 3,
       currency: 'sp',
       desc: 'Once per attempt, deflects one fatal spike or saw hit with an upward parry bounce.'
+    },
+
+    // BRAWL WEAPONS (Coins — Brawl Game Mode Only — 9 Weapons)
+    {
+      id: 'weapon_fists',
+      category: 'weapons',
+      name: 'Bare Fists',
+      tier: 'Starter',
+      cost: 0,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Default unarmed brawler gauntlets — blistering jab-uppercut strings, dash hooks, aerial haymakers, and meteor slams.'
+    },
+    {
+      id: 'weapon_sword',
+      category: 'weapons',
+      name: 'Vanguard Blade',
+      tier: 'Uncommon',
+      cost: 60,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Balanced broadsword picked up from stage sky-drops — crisp horizontal cleaves, lunging thrusts, and cyclone recovery.'
+    },
+    {
+      id: 'weapon_spear',
+      category: 'weapons',
+      name: 'Skyreach Spear',
+      tier: 'Uncommon',
+      cost: 75,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Long-reach polearm from stage sky-drops — precision pokes, pole-vault launchers, and helicopter aerial spins.'
+    },
+    {
+      id: 'weapon_katars',
+      category: 'weapons',
+      name: 'Twin Katars',
+      tier: 'Rare',
+      cost: 90,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Dual wrist-blades from stage sky-drops — diagonal dive-strikes, relentless rushdown flurries, and twin rising slashes.'
+    },
+    {
+      id: 'weapon_blasters',
+      category: 'weapons',
+      name: 'Dual Blasters',
+      tier: 'Rare',
+      cost: 110,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Twin kinetic pistols from stage sky-drops — spaced mid-range blast bursts, backstep shots, and rising twin volleys.'
+    },
+    {
+      id: 'weapon_hammer',
+      category: 'weapons',
+      name: 'Grapple Hammer',
+      tier: 'Epic',
+      cost: 130,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Colossal warhammer from stage sky-drops — earth-shaking stomps, overhead scoops, and crushing knockout swings.'
+    },
+    {
+      id: 'weapon_axe',
+      category: 'weapons',
+      name: 'Rift Cleaver',
+      tier: 'Epic',
+      cost: 145,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Heavy battle greataxe from stage sky-drops — sweeping 180-degree arcs, lunging cleaves, and spinning wheel recovery.'
+    },
+    {
+      id: 'weapon_lance',
+      category: 'weapons',
+      name: 'Rocket Lance',
+      tier: 'Mythic',
+      cost: 170,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Thruster-powered heavy lance from stage sky-drops — jet-boosted charges, multi-hit drills, and diagonal ignition boosts.'
+    },
+    {
+      id: 'weapon_scythe',
+      category: 'weapons',
+      name: 'Phantom Scythe',
+      tier: 'Exotic',
+      cost: 195,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Curved crescent reaper scythe from stage sky-drops — directional hook throws, diagonal air-reaps, and soul-sweep finishers.'
+    },
+
+    // BRAWL MAPS (Coins — Brawl Game Mode Only — 8 Maps)
+    {
+      id: 'brawl_map_haven',
+      category: 'maps',
+      name: 'Brawlhaven Sanctum',
+      tier: 'Starter',
+      cost: 0,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Suspended tournament sanctum island flanked by twin soft tri-platforms and deep recovery walls.'
+    },
+    {
+      id: 'brawl_map_citadel',
+      category: 'maps',
+      name: 'Monolith Citadel',
+      tier: 'Starter',
+      cost: 0,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Twin obsidian fortress bastions joined by an elevated pass-through skybridge over a central drop.'
+    },
+    {
+      id: 'brawl_map_skyforge',
+      category: 'maps',
+      name: 'Skyforge Anvil',
+      tier: 'Uncommon',
+      cost: 65,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Wide anvil battleground with oscillating wing lifts for high-altitude knockouts. Full account required.'
+    },
+    {
+      id: 'brawl_map_voidspire',
+      category: 'maps',
+      name: 'Twilight Voidspire',
+      tier: 'Rare',
+      cost: 85,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Asymmetric spire deck featuring a towering pinnacle perch and off-stage side island. Full account required.'
+    },
+    {
+      id: 'brawl_map_reactor',
+      category: 'maps',
+      name: 'Aether Reactor',
+      tier: 'Rare',
+      cost: 105,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Split core chambers bridged by a sweeping shuttle deck for ruthless edge-guarding. Full account required.'
+    },
+    {
+      id: 'brawl_map_galleon',
+      category: 'maps',
+      name: 'Tempest Deck',
+      tier: 'Epic',
+      cost: 130,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Broad skyship hull crowned with twin mast perches and steep side recovery cliffs. Full account required.'
+    },
+    {
+      id: 'brawl_map_colosseum',
+      category: 'maps',
+      name: 'Thundergard Ring',
+      tier: 'Epic',
+      cost: 155,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Championship dual-plate stadium with a center pit chasm and three upper pass-through decks. Full account required.'
+    },
+    {
+      id: 'brawl_map_valhalla',
+      category: 'maps',
+      name: 'Apex Valhalla',
+      tier: 'Exotic',
+      cost: 195,
+      currency: 'coins',
+      brawlOnly: true,
+      desc: 'Sovereign celestial hall with synchronized rising wing terraces and royal center dais. Full account required.'
     }
   ];
 

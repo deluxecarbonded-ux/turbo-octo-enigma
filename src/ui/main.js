@@ -75,6 +75,8 @@
       onRageQuip: (quip) => window.ExoticViews.showRageQuip(quip)
     });
 
+    window.ExoticBrawlEngine?.init();
+
     window.ExoticViews.init();
 
     const authReadyPromise = (async () => {
