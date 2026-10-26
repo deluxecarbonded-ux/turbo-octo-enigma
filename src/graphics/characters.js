@@ -449,6 +449,28 @@
       return;
     }
 
+    if (charId === 'char_scream') {
+      const sc = h / 26;
+      const hoodDrag = Math.max(-3.6, Math.min(3.6, -vx * 0.015)) * sc;
+      const cloakWave = Math.sin(time * 11) * 1.7 * sc;
+      const peakX = -facing * 3.8 * sc + hoodDrag;
+      // Strictly clockwise peaked Halloween reaper hood + draped sleeves + tattered cloak hem
+      ctx.moveTo(-6.6 * sc, -12.6 * sc);
+      ctx.quadraticCurveTo(peakX, -17.6 * sc, 6.6 * sc, -12.6 * sc);
+      ctx.quadraticCurveTo(7.8 * sc, -5.0 * sc, 9.8 * sc, 6.2 * sc);
+      ctx.lineTo(8.8 * sc, 13.4 * sc + cloakWave * 0.5);
+      ctx.lineTo(4.6 * sc, 10.2 * sc - cloakWave * 0.4);
+      ctx.lineTo(1.5 * sc, 13.6 * sc - cloakWave * 0.6);
+      ctx.lineTo(-1.6 * sc, 10.4 * sc + cloakWave * 0.4);
+      ctx.lineTo(-4.8 * sc, 13.6 * sc + cloakWave * 0.6);
+      ctx.lineTo(-7.2 * sc, 10.2 * sc - cloakWave * 0.4);
+      ctx.lineTo(-9.4 * sc, 13.2 * sc - cloakWave * 0.5);
+      ctx.lineTo(-9.8 * sc, 6.2 * sc);
+      ctx.quadraticCurveTo(-7.8 * sc, -5.0 * sc, -6.6 * sc, -12.6 * sc);
+      ctx.closePath();
+      return;
+    }
+
     if (charId === 'char_phantom') {
       ctx.moveTo(-hw, -hh + 8);
       ctx.quadraticCurveTo(-hw, -hh - 2, 0, -hh - 2);
@@ -522,6 +544,16 @@
           accent: '#fbbf24',
           eyeWhite: '#ffffff',
           pupil: '#0f172a'
+        };
+      case 'char_scream':
+        return {
+          colored: true,
+          primary: isLight ? '#18181b' : '#312e47',
+          secondary: '#f8fafc',
+          mid: '#f97316',
+          accent: '#e2e8f0',
+          eyeWhite: '#f8fafc',
+          pupil: '#09090b'
         };
       case 'char_tom':
         return {
@@ -1133,6 +1165,10 @@
           ctx.fillRect(bx, 10.2 * sc, bw, bh);
           ctx.fillRect(bx, 2.0 * sc, -bx - 6.8 * sc, 7.6 * sc);
           ctx.fillRect(6.8 * sc, 2.0 * sc, bw, 7.6 * sc);
+        } else if (charId === 'char_scream') {
+          // Festive Halloween pumpkin-orange trim along tattered reaper cloak tips
+          ctx.fillStyle = cc.mid;
+          ctx.fillRect(bx, 11.1 * sc, bw, bh);
         }
       }
     }
@@ -1156,6 +1192,128 @@
     const crestFill = cc.colored ? sk.primary : pal.playerPrimary;
     const lookX = facing * 2.3 + Math.max(-2, Math.min(2, vx * 0.005));
     const lookY = Math.max(-2, Math.min(2.2, vy * 0.003));
+
+    if (charId === 'char_scream') {
+      const isLightMono = !cc.colored && pal.mode === 'light';
+      const cowlDark = cc.colored
+        ? '#09090b'
+        : isLightMono
+          ? pal.playerPrimary
+          : pal.playerSecondary;
+      const maskWhite = cc.colored
+        ? '#f8fafc'
+        : isLightMono
+          ? pal.playerSecondary
+          : pal.playerPrimary;
+      const bladeTone = cc.colored ? cc.accent : pal.playerMid;
+      const claspTone = cc.colored ? cc.mid : pal.playerMid;
+
+      // Billowing tattered shroud streamers trailing behind the hood
+      const whip1 = Math.sin(time * 13) * 2.8 * sc;
+      const whip2 = Math.cos(time * 11) * 2.4 * sc;
+      ctx.fillStyle = crestFill;
+      fillCapsule(
+        ctx,
+        -facing * 5.8 * sc,
+        -6.2 * sc,
+        -facing * 12.6 * sc,
+        (-3.6 + whip1) * sc,
+        1.35 * sc
+      );
+      fillCapsule(
+        ctx,
+        -facing * 6.4 * sc,
+        -1.8 * sc,
+        -facing * 12.0 * sc,
+        (1.6 + whip2) * sc,
+        1.15 * sc
+      );
+
+      const mx = facing * 1.15 * sc;
+      const mouthStretch = Math.min(1.8, Math.abs(vy) * 0.0045);
+
+      // Deep dark reaper hood cowl recess framing the white Ghostface mask
+      ctx.fillStyle = cowlDark;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, mx, -3.5 * sc, 6.1 * sc, 8.2 * sc);
+      ctx.fill();
+
+      // Elongated peanut-shaped Ghostface Scream mask (wide temples -> pinched hollow cheeks -> long narrow screaming jaw)
+      ctx.fillStyle = maskWhite;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, mx, -6.5 * sc, 4.65 * sc, 3.65 * sc);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(mx - 4.45 * sc, -6.0 * sc);
+      ctx.quadraticCurveTo(mx - 2.85 * sc, -2.2 * sc, mx - 2.35 * sc, 0.8 * sc);
+      ctx.quadraticCurveTo(
+        mx - 1.75 * sc,
+        (4.3 + mouthStretch * 0.65) * sc,
+        mx,
+        (4.7 + mouthStretch * 0.75) * sc
+      );
+      ctx.quadraticCurveTo(
+        mx + 1.75 * sc,
+        (4.3 + mouthStretch * 0.65) * sc,
+        mx + 2.35 * sc,
+        0.8 * sc
+      );
+      ctx.quadraticCurveTo(mx + 2.85 * sc, -2.2 * sc, mx + 4.45 * sc, -6.0 * sc);
+      ctx.closePath();
+      ctx.fill();
+
+      // Iconic mournful drooping hollow Ghostface eye sockets (tilted downward toward outer cheeks)
+      ctx.fillStyle = cowlDark;
+      ctx.beginPath();
+      addEllipseSubpath(ctx, mx - 1.95 * sc, -5.85 * sc, 1.35 * sc, 2.2 * sc, 0.36);
+      addEllipseSubpath(ctx, mx + 1.95 * sc, -5.85 * sc, 1.35 * sc, 2.2 * sc, -0.36);
+      ctx.fill();
+
+      // Furrowed haunted inner brow notch
+      ctx.beginPath();
+      ctx.moveTo(mx - 1.6 * sc, -8.2 * sc);
+      ctx.lineTo(mx, -7.1 * sc);
+      ctx.lineTo(mx + 1.6 * sc, -8.2 * sc);
+      ctx.lineTo(mx, -7.7 * sc);
+      ctx.closePath();
+      ctx.fill();
+
+      // Twin narrow nasal slits
+      ctx.beginPath();
+      addEllipseSubpath(ctx, mx - 0.52 * sc, -3.15 * sc, 0.38 * sc, 0.72 * sc, 0.15);
+      addEllipseSubpath(ctx, mx + 0.52 * sc, -3.15 * sc, 0.38 * sc, 0.72 * sc, -0.15);
+      ctx.fill();
+
+      // Long stretched gaping hollow "O" Scream mouth
+      ctx.beginPath();
+      addEllipseSubpath(
+        ctx,
+        mx,
+        (0.75 + mouthStretch * 0.35) * sc,
+        1.32 * sc,
+        (2.85 + mouthStretch * 0.38) * sc
+      );
+      ctx.fill();
+
+      // Halloween throat clasp diamond
+      ctx.fillStyle = claspTone;
+      fillDiamond(ctx, mx, 6.2 * sc, 1.8 * sc, 1.8 * sc);
+
+      // Gleaming slasher prop blade held forward at cloak side
+      const bx = facing * 7.6 * sc;
+      const by = (4.6 + Math.sin(time * 9) * 0.8) * sc;
+      ctx.fillStyle = cowlDark;
+      fillCapsule(ctx, bx - facing * 1.4 * sc, by + 1.2 * sc, bx + facing * 0.5 * sc, by - 0.3 * sc, 0.95 * sc);
+      ctx.fillStyle = bladeTone;
+      ctx.beginPath();
+      ctx.moveTo(bx + facing * 0.3 * sc, by - 1.3 * sc);
+      ctx.lineTo(bx + facing * 5.2 * sc, by - 4.4 * sc);
+      ctx.lineTo(bx + facing * 1.3 * sc, by + 0.4 * sc);
+      ctx.closePath();
+      ctx.fill();
+      return;
+    }
 
     if (charId === 'char_mickey') {
       const mFace = cc.colored ? cc.secondary : pal.playerSecondary;

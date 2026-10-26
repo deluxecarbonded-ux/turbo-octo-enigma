@@ -462,3 +462,9 @@
   color: #67e8f9;
 }
 
+[data-color-mode="colored"] [data-shop-card-id="char_scream"] [data-shop-tier],
+[data-color-mode="colored"] .ex-video-badge--halloween {
+  background-color: #ea580c;
+  color: #ffffff;
+}
+

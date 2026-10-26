@@ -9,7 +9,7 @@
   ];
 
   const ITEMS = [
-    // CHARACTERS (Coins — 20 Playable Characters)
+    // CHARACTERS (Coins — 21 Playable Characters)
     {
       id: 'char_classic',
       category: 'characters',
@@ -36,6 +36,15 @@
       cost: 0,
       currency: 'coins',
       desc: 'Classic stick figure runner with full procedural multi-jointed running and aerial limbs.'
+    },
+    {
+      id: 'char_scream',
+      category: 'characters',
+      name: 'Scream',
+      tier: 'Halloween Special',
+      cost: 95,
+      currency: 'coins',
+      desc: 'Shrouded Halloween phantom wearing the elongated Ghostface scream mask, billowing tattered reaper cloak, and gleaming prop blade. Full account required.'
     },
     {
       id: 'char_tom',

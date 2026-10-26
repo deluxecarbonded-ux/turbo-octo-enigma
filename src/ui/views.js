@@ -732,7 +732,9 @@
       }
 
       if (catLower.includes(tok)) tokScore = Math.max(tokScore, 165);
-      if (tierLower.startsWith(tok)) tokScore = Math.max(tokScore, 155);
+      if (tierLower.startsWith(tok) || tierLower.includes(` ${tok}`)) {
+        tokScore = Math.max(tokScore, 155);
+      }
       if (statusBlob.includes(tok) || costBlob.includes(tok)) {
         tokScore = Math.max(tokScore, 135);
       }
@@ -935,7 +937,9 @@
         <div class="raycast-detail-stage">
           <canvas class="ex-video-canvas" id="shop-raycast-detail-canvas"></canvas>
           <div class="ex-video-overlay-top">
-            <span class="ex-video-badge">${escapeHtml(selected.tier)}</span>
+            <span class="ex-video-badge${
+              selected.tier === 'Halloween Special' ? ' ex-video-badge--halloween' : ''
+            }">${escapeHtml(selected.tier)}</span>
             <span style="display:inline-flex; align-items:center;">${parts.statusHtml}</span>
           </div>
           <div class="ex-video-scrubber"><div class="ex-video-scrubber-fill" id="shop-raycast-detail-scrubber"></div></div>
@@ -1234,7 +1238,9 @@
         <div class="ex-video-stage">
           <canvas class="ex-video-canvas"></canvas>
           <div class="ex-video-overlay-top">
-            <span class="ex-video-badge" data-shop-tier>${escapeHtml(item.tier)}</span>
+            <span class="ex-video-badge${
+              item.tier === 'Halloween Special' ? ' ex-video-badge--halloween' : ''
+            }" data-shop-tier>${escapeHtml(item.tier)}</span>
             <span data-shop-status style="display:inline-flex; align-items:center;">${parts.statusHtml}</span>
           </div>
           <div class="ex-video-scrubber"><div class="ex-video-scrubber-fill"></div></div>
