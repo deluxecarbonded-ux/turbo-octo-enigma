@@ -1,5 +1,10 @@
 (function () {
   let activeShopCategory = 'characters';
+  let shopSearchQuery = '';
+  let shopRaycastOpen = false;
+  let shopRaycastScope = 'all';
+  let shopRaycastSelectedIdx = 0;
+  let shopRaycastMatches = [];
   let activeLbLevel = 'all';
   let activeLbSort = 'time';
   let lastWinPayload = null;
@@ -618,49 +623,559 @@
     };
   }
 
+  function getShopCategoryMeta(catId) {
+    return (
+      window.ExoticShopData.CATEGORIES.find((c) => c.id === catId) || {
+        id: catId,
+        label: catId,
+        currency: 'coins'
+      }
+    );
+  }
+
+  function fuzzySubsequenceScore(needle, haystack) {
+    if (!needle || !haystack || needle.length < 2) return 0;
+    let ni = 0;
+    let consecutive = 0;
+    let bonus = 0;
+    let firstMatch = -1;
+    let lastMatch = -1;
+    let firstOnBoundary = false;
+    for (let hi = 0; hi < haystack.length && ni < needle.length; hi++) {
+      if (haystack[hi] === needle[ni]) {
+        const atBoundary = hi === 0 || haystack[hi - 1] === ' ' || haystack[hi - 1] === '-';
+        if (firstMatch === -1) {
+          firstMatch = hi;
+          firstOnBoundary = atBoundary;
+        }
+        if (lastMatch === hi - 1) {
+          consecutive += 1;
+          bonus += 14 + consecutive * 4;
+        } else {
+          consecutive = 0;
+          bonus += 6;
+        }
+        if (atBoundary) {
+          bonus += 18;
+        }
+        lastMatch = hi;
+        ni += 1;
+      }
+    }
+    if (ni < needle.length) return 0;
+    const span = lastMatch - firstMatch;
+    if (!firstOnBoundary && span > needle.length + 2) return 0;
+    if (span > needle.length * 2 + 2) return 0;
+    const spanPenalty = Math.max(0, span - needle.length);
+    return Math.max(12, 48 + bonus - spanPenalty * 3);
+  }
+
+  function getShopItemStateInfo(item) {
+    const state = window.ExoticStorage.getState();
+    const guestLocked = Boolean(
+      window.ExoticAuth?.isGuest() && !window.ExoticAuth.isGuestAllowedShopItem(item.id)
+    );
+    const owned = !guestLocked && window.ExoticStorage.ownsItem(item.id);
+    const isUpgrade = item.category === 'upgrades';
+    const slotMap = {
+      auras: 'aura',
+      characters: 'character',
+      skins: 'skin',
+      trails: 'trail',
+      emotes: 'emote'
+    };
+    const isEquipped = isUpgrade
+      ? state.activeUpgrades.includes(item.id)
+      : state.equipped[slotMap[item.category]] === item.id;
+    return { guestLocked, owned, isUpgrade, isEquipped };
+  }
+
+  function scoreShopItemForQuery(item, rawQuery) {
+    const q = String(rawQuery || '').trim().toLowerCase();
+    if (!q) return 1;
+    const cat = getShopCategoryMeta(item.category);
+    const info = getShopItemStateInfo(item);
+    const nameLower = item.name.toLowerCase();
+    const catLower = `${cat.label} ${item.category}`.toLowerCase();
+    const tierLower = String(item.tier || '').toLowerCase();
+    const descLower = String(item.desc || '').toLowerCase();
+    const currLabel = item.currency === 'sp' ? 'sp skill point skill points' : 'coin coins';
+    const costBlob = item.cost === 0 ? 'free starter' : `${item.cost} ${currLabel}`;
+    const statusBlob = [
+      info.isEquipped ? (info.isUpgrade ? 'active equipped' : 'equipped active') : '',
+      info.owned ? 'owned unlocked' : 'unowned',
+      info.guestLocked ? 'locked account required' : ''
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    const fullBlob = `${nameLower} ${catLower} ${tierLower} ${descLower} ${costBlob} ${statusBlob}`;
+    const tokens = q.split(/\s+/).filter(Boolean);
+
+    let score = 0;
+    if (nameLower === q) score += 1100;
+    else if (nameLower.startsWith(q)) score += 700;
+    else if (nameLower.includes(q)) score += 360;
+
+    for (const tok of tokens) {
+      let tokScore = 0;
+      const nameWords = nameLower.split(/[\s-]+/);
+      if (nameWords.some((w) => w === tok)) {
+        tokScore = Math.max(tokScore, 420);
+      } else if (nameWords.some((w) => w.startsWith(tok))) {
+        tokScore = Math.max(tokScore, 310);
+      } else if (nameLower.includes(tok)) {
+        tokScore = Math.max(tokScore, 220);
+      } else {
+        const fz = fuzzySubsequenceScore(tok, nameLower);
+        if (fz > 0) tokScore = Math.max(tokScore, fz);
+      }
+
+      if (catLower.includes(tok)) tokScore = Math.max(tokScore, 165);
+      if (tierLower.startsWith(tok)) tokScore = Math.max(tokScore, 155);
+      if (statusBlob.includes(tok) || costBlob.includes(tok)) {
+        tokScore = Math.max(tokScore, 135);
+      }
+      if (descLower.includes(tok)) tokScore = Math.max(tokScore, 75);
+
+      if (tokScore === 0 && !fullBlob.includes(tok)) {
+        return 0;
+      }
+      score += tokScore || 40;
+    }
+
+    if (info.isEquipped) score += 8;
+    else if (info.owned) score += 4;
+    return score;
+  }
+
+  function computeRaycastFilteredItems(rawQuery, scope) {
+    const allItems = window.ExoticShopData.ITEMS || [];
+    const pool =
+      scope && scope !== 'all'
+        ? allItems.filter((it) => it.category === scope)
+        : allItems.slice();
+
+    const q = String(rawQuery || '').trim();
+    if (!q) {
+      if (!scope || scope === 'all') {
+        // Prioritize active category first so initial open feels contextual, followed by the rest
+        return pool.sort((a, b) => {
+          const aCat = a.category === activeShopCategory ? 0 : 1;
+          const bCat = b.category === activeShopCategory ? 0 : 1;
+          return aCat - bCat;
+        });
+      }
+      return pool;
+    }
+
+    const scored = [];
+    for (const item of pool) {
+      const s = scoreShopItemForQuery(item, q);
+      if (s > 0) scored.push({ item, score: s });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map((entry) => entry.item);
+  }
+
+  function getDisplayedShopGridItems() {
+    const q = shopSearchQuery.trim();
+    if (q.length > 0) {
+      return computeRaycastFilteredItems(q, shopRaycastScope);
+    }
+    return window.ExoticShopData.getByCategory(activeShopCategory);
+  }
+
+  function highlightSearchText(text, rawQuery) {
+    const str = String(text || '');
+    const q = String(rawQuery || '').trim();
+    if (!q) return escapeHtml(str);
+
+    const tokens = Array.from(
+      new Set(
+        q
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((t) => t.length > 0)
+      )
+    ).sort((a, b) => b.length - a.length);
+
+    if (!tokens.length) return escapeHtml(str);
+
+    const lower = str.toLowerCase();
+    const ranges = [];
+    for (const tok of tokens) {
+      let startIdx = 0;
+      while (startIdx < lower.length) {
+        const found = lower.indexOf(tok, startIdx);
+        if (found === -1) break;
+        ranges.push([found, found + tok.length]);
+        startIdx = found + tok.length;
+      }
+    }
+
+    if (!ranges.length) return escapeHtml(str);
+    ranges.sort((a, b) => a[0] - b[0] || b[1] - a[1]);
+    const merged = [ranges[0].slice()];
+    for (let i = 1; i < ranges.length; i++) {
+      const prev = merged[merged.length - 1];
+      const cur = ranges[i];
+      if (cur[0] <= prev[1]) {
+        prev[1] = Math.max(prev[1], cur[1]);
+      } else {
+        merged.push(cur.slice());
+      }
+    }
+
+    let out = '';
+    let cursor = 0;
+    for (const [s, e] of merged) {
+      if (s > cursor) out += escapeHtml(str.slice(cursor, s));
+      out += `<mark class="raycast-match">${escapeHtml(str.slice(s, e))}</mark>`;
+      cursor = e;
+    }
+    if (cursor < str.length) out += escapeHtml(str.slice(cursor));
+    return out;
+  }
+
+  function buildRaycastRowBadgeHtml(item) {
+    const info = getShopItemStateInfo(item);
+    if (info.guestLocked) {
+      return `<span class="raycast-row-badge">${window.ExoticIcons.get('lock')}<span>Locked</span></span>`;
+    }
+    if (info.isEquipped) {
+      return `<span class="raycast-row-badge">${window.ExoticIcons.get('check')}<span>${
+        info.isUpgrade ? 'Active' : 'Equipped'
+      }</span></span>`;
+    }
+    if (info.owned) {
+      return `<span class="raycast-row-badge">Owned</span>`;
+    }
+    if (item.cost === 0) {
+      return `<span class="raycast-row-badge">Free</span>`;
+    }
+    const currIcon = window.ExoticIcons.get(item.currency === 'sp' ? 'skill' : 'coin');
+    const unit = item.currency === 'sp' ? 'SP' : '';
+    return `<span class="raycast-row-badge">${currIcon}<span>${item.cost}${
+      unit ? ` ${unit}` : ''
+    }</span></span>`;
+  }
+
+  function executeShopItemPrimaryAction(item) {
+    if (!item) return;
+    const info = getShopItemStateInfo(item);
+    if (info.guestLocked) {
+      showToast('Full account required for this item.');
+      return;
+    }
+    if (info.owned) {
+      if (info.isEquipped && !info.isUpgrade) {
+        showToast(`${item.name} is already equipped.`);
+        return;
+      }
+      window.ExoticAudio.click();
+      window.ExoticStorage.equipItem(item);
+      window.ExoticBackdrop.resetMenuTrail();
+      patchShopViewInPlace();
+      return;
+    }
+    const res = window.ExoticStorage.buyShopItem(item);
+    if (res.ok) {
+      window.ExoticAudio.buy();
+      showToast(`Unlocked ${item.name}!`);
+      const newlyUnlocked = window.ExoticAchievements.evaluateAll();
+      for (const ach of newlyUnlocked) {
+        showToast(
+          `Achievement: ${ach.title} (+${ach.rewardCoins} Coins, +${ach.rewardSP} SP)`
+        );
+      }
+      window.ExoticBackdrop.resetMenuTrail();
+      patchShopViewInPlace();
+    } else {
+      showToast(res.reason);
+    }
+  }
+
   function bindShopCardAction(card, item) {
     const buyBtn = card.querySelector('[data-buy-id]');
     if (buyBtn) {
       buyBtn.addEventListener('click', () => {
-        const res = window.ExoticStorage.buyShopItem(item);
-        if (res.ok) {
-          window.ExoticAudio.buy();
-          showToast(`Unlocked ${item.name}!`);
-          const newlyUnlocked = window.ExoticAchievements.evaluateAll();
-          for (const ach of newlyUnlocked) {
-            showToast(
-              `Achievement: ${ach.title} (+${ach.rewardCoins} Coins, +${ach.rewardSP} SP)`
-            );
-          }
-          window.ExoticBackdrop.resetMenuTrail();
-          patchShopViewInPlace();
-        } else {
-          showToast(res.reason);
-        }
+        executeShopItemPrimaryAction(item);
       });
     }
 
     const equipBtn = card.querySelector('[data-equip-id]');
     if (equipBtn) {
       equipBtn.addEventListener('click', () => {
-        window.ExoticAudio.click();
-        window.ExoticStorage.equipItem(item);
-        window.ExoticBackdrop.resetMenuTrail();
-        patchShopViewInPlace();
+        executeShopItemPrimaryAction(item);
       });
     }
   }
 
-  function renderShopView() {
+  function renderRaycastDetailPane() {
+    const detailEl = document.getElementById('shop-raycast-detail');
+    if (!detailEl) return;
+    window.ExoticPreviewDirector.clearGroup('raycast-detail');
+
+    const selected = shopRaycastMatches[shopRaycastSelectedIdx] || null;
+    if (!selected) {
+      detailEl.innerHTML = `
+        <div class="raycast-empty">
+          <span class="raycast-empty-title">No items match</span>
+          <p class="raycast-empty-desc">Try another keyword such as character name, skin style, aura, trail, emote, or tier.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const parts = buildShopCardParts(selected);
+    const cat = getShopCategoryMeta(selected.category);
+    detailEl.innerHTML = `
+      <div class="raycast-detail-top">
+        <div class="raycast-detail-stage">
+          <canvas class="ex-video-canvas" id="shop-raycast-detail-canvas"></canvas>
+          <div class="ex-video-overlay-top">
+            <span class="ex-video-badge">${escapeHtml(selected.tier)}</span>
+            <span style="display:inline-flex; align-items:center;">${parts.statusHtml}</span>
+          </div>
+          <div class="ex-video-scrubber"><div class="ex-video-scrubber-fill" id="shop-raycast-detail-scrubber"></div></div>
+        </div>
+        <div class="raycast-detail-header">
+          <div>
+            <div class="raycast-detail-sub">${escapeHtml(cat.label)} · ${escapeHtml(selected.tier)}</div>
+            <h4 class="raycast-detail-title">${highlightSearchText(selected.name, shopSearchQuery)}</h4>
+          </div>
+          <span>${parts.globalUnlocksPill}</span>
+        </div>
+        <p class="raycast-detail-desc">${highlightSearchText(selected.desc, shopSearchQuery)}</p>
+      </div>
+      <div class="raycast-detail-actions" id="shop-raycast-detail-actions">
+        ${parts.actionHtml}
+      </div>
+    `;
+
+    const detailCanvas = detailEl.querySelector('#shop-raycast-detail-canvas');
+    const detailScrubber = detailEl.querySelector('#shop-raycast-detail-scrubber');
+    if (detailCanvas) {
+      window.ExoticPreviewDirector.registerShopCard(
+        detailCanvas,
+        detailScrubber,
+        selected,
+        0,
+        'raycast-detail'
+      );
+    }
+    const actionsWrap = detailEl.querySelector('#shop-raycast-detail-actions');
+    if (actionsWrap) {
+      bindShopCardAction(actionsWrap, selected);
+    }
+  }
+
+  function updateRaycastSelection(nextIdx, scrollIntoView = false) {
+    if (!shopRaycastMatches.length) {
+      shopRaycastSelectedIdx = 0;
+      renderRaycastDetailPane();
+      return;
+    }
+    const clamped = Math.max(0, Math.min(shopRaycastMatches.length - 1, nextIdx));
+    shopRaycastSelectedIdx = clamped;
+
+    const listEl = document.getElementById('shop-raycast-list');
+    if (listEl) {
+      const rows = listEl.querySelectorAll('.raycast-item-row');
+      rows.forEach((row, idx) => {
+        const active = idx === clamped;
+        row.classList.toggle('is-selected', active);
+        row.setAttribute('aria-selected', String(active));
+        if (active && scrollIntoView) {
+          row.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
+    renderRaycastDetailPane();
+  }
+
+  function syncRaycastHeaderBarUI() {
+    const wrap = document.getElementById('shop-raycast-wrap');
+    const bar = document.getElementById('shop-raycast-bar');
+    const panel = document.getElementById('shop-raycast-panel');
+    const countEl = document.getElementById('shop-search-count');
+    const clearBtn = document.getElementById('shop-search-clear-btn');
+    const input = document.getElementById('shop-search-input');
+
+    const totalCatalog = (window.ExoticShopData.ITEMS || []).length;
+    const hasQuery = shopSearchQuery.trim().length > 0;
+    const hasScope = shopRaycastScope !== 'all';
+
+    if (input && input.value !== shopSearchQuery) {
+      input.value = shopSearchQuery;
+    }
+    if (clearBtn) {
+      clearBtn.hidden = !hasQuery && !hasScope;
+    }
+    if (countEl) {
+      if (hasQuery || (shopRaycastOpen && hasScope)) {
+        const n = shopRaycastMatches.length;
+        countEl.textContent = `${n} ${n === 1 ? 'Match' : 'Matches'}`;
+      } else {
+        countEl.textContent = `${totalCatalog} Items`;
+      }
+    }
+    if (wrap) wrap.classList.toggle('is-open', shopRaycastOpen);
+    if (bar) bar.setAttribute('aria-expanded', String(shopRaycastOpen));
+    if (panel) panel.hidden = !shopRaycastOpen;
+  }
+
+  function renderRaycastScopesBar() {
+    const scopesEl = document.getElementById('shop-raycast-scopes');
+    if (!scopesEl) return;
+    scopesEl.innerHTML = '';
+
+    const entries = [
+      { id: 'all', label: 'All Categories' },
+      ...window.ExoticShopData.CATEGORIES.map((c) => ({ id: c.id, label: c.label }))
+    ];
+
+    for (const entry of entries) {
+      const isAct = shopRaycastScope === entry.id;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('data-raycast-scope', entry.id);
+      btn.setAttribute('aria-pressed', String(isAct));
+      btn.className = `ex-pill-btn ${
+        isAct ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--xs`;
+      btn.textContent = entry.label;
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        window.ExoticAudio.click();
+        shopRaycastScope = entry.id;
+        shopRaycastSelectedIdx = 0;
+        renderRaycastPanel();
+        if (shopSearchQuery.trim().length > 0) {
+          renderShopGridItems();
+        }
+        document.getElementById('shop-search-input')?.focus();
+      });
+      scopesEl.appendChild(btn);
+    }
+  }
+
+  function renderRaycastPanel() {
+    shopRaycastMatches = computeRaycastFilteredItems(shopSearchQuery, shopRaycastScope);
+    if (shopRaycastSelectedIdx >= shopRaycastMatches.length) {
+      shopRaycastSelectedIdx = 0;
+    }
+
+    syncRaycastHeaderBarUI();
+
+    if (!shopRaycastOpen) {
+      window.ExoticPreviewDirector.clearGroup('raycast-list');
+      window.ExoticPreviewDirector.clearGroup('raycast-detail');
+      return;
+    }
+
+    renderRaycastScopesBar();
+
+    const listEl = document.getElementById('shop-raycast-list');
+    if (!listEl) return;
+
+    window.ExoticPreviewDirector.clearGroup('raycast-list');
+    listEl.innerHTML = '';
+
+    if (shopRaycastMatches.length === 0) {
+      listEl.innerHTML = `
+        <div class="raycast-empty">
+          <span class="raycast-empty-title">No matching shop items</span>
+          <p class="raycast-empty-desc">No items matched "${escapeHtml(shopSearchQuery.trim())}".</p>
+          <button type="button" id="raycast-empty-reset-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
+            <span>Reset Search</span>
+          </button>
+        </div>
+      `;
+      listEl.querySelector('#raycast-empty-reset-btn')?.addEventListener('click', () => {
+        window.ExoticAudio.click();
+        shopSearchQuery = '';
+        shopRaycastScope = 'all';
+        shopRaycastSelectedIdx = 0;
+        renderRaycastPanel();
+        renderShopCategoryTabs();
+        renderShopGridItems();
+        document.getElementById('shop-search-input')?.focus();
+      });
+      renderRaycastDetailPane();
+      return;
+    }
+
+    const headerLabel = document.createElement('div');
+    headerLabel.className = 'raycast-section-label';
+    headerLabel.textContent = shopSearchQuery.trim()
+      ? `Instant Results (${shopRaycastMatches.length})`
+      : shopRaycastScope === 'all'
+        ? `All Armory Items (${shopRaycastMatches.length})`
+        : `${getShopCategoryMeta(shopRaycastScope).label} (${shopRaycastMatches.length})`;
+    listEl.appendChild(headerLabel);
+
+    shopRaycastMatches.forEach((item, idx) => {
+      const cat = getShopCategoryMeta(item.category);
+      const isSel = idx === shopRaycastSelectedIdx;
+      const row = document.createElement('div');
+      row.className = `raycast-item-row${isSel ? ' is-selected' : ''}`;
+      row.setAttribute('role', 'option');
+      row.setAttribute('aria-selected', String(isSel));
+      row.setAttribute('data-raycast-idx', String(idx));
+      row.setAttribute('data-raycast-item-id', item.id);
+      row.innerHTML = `
+        <div class="raycast-item-main">
+          <div class="raycast-item-thumb-wrap">
+            <canvas class="raycast-item-thumb"></canvas>
+          </div>
+          <div class="raycast-item-copy">
+            <div class="raycast-item-name">${highlightSearchText(item.name, shopSearchQuery)}</div>
+            <div class="raycast-item-meta">${escapeHtml(cat.label)} · ${escapeHtml(item.tier)}</div>
+          </div>
+        </div>
+        <div class="raycast-item-right" data-raycast-row-badge>
+          ${buildRaycastRowBadgeHtml(item)}
+        </div>
+      `;
+
+      row.addEventListener('pointerenter', () => {
+        if (shopRaycastSelectedIdx !== idx) {
+          updateRaycastSelection(idx, false);
+        }
+      });
+
+      row.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (shopRaycastSelectedIdx !== idx) {
+          window.ExoticAudio.click();
+          updateRaycastSelection(idx, false);
+        } else {
+          executeShopItemPrimaryAction(item);
+        }
+      });
+
+      listEl.appendChild(row);
+
+      const thumbCanvas = row.querySelector('.raycast-item-thumb');
+      if (thumbCanvas) {
+        window.ExoticPreviewDirector.registerShopThumb(thumbCanvas, item, idx, 'raycast-list');
+      }
+    });
+
+    renderRaycastDetailPane();
+  }
+
+  function renderShopCategoryTabs() {
     const tabsWrap = document.getElementById('shop-category-tabs');
-    const grid = document.getElementById('shop-items-grid');
-    if (!tabsWrap || !grid) return;
-
-    window.ExoticPreviewDirector.clear();
-
+    if (!tabsWrap) return;
+    const isSearching = shopSearchQuery.trim().length > 0;
     tabsWrap.innerHTML = '';
     for (const cat of window.ExoticShopData.CATEGORIES) {
-      const isAct = cat.id === activeShopCategory;
+      const isAct = isSearching
+        ? shopRaycastScope === cat.id
+        : cat.id === activeShopCategory;
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.setAttribute('data-shop-cat', cat.id);
@@ -672,15 +1187,42 @@
       btn.addEventListener('click', () => {
         window.ExoticAudio.click();
         activeShopCategory = cat.id;
+        shopSearchQuery = '';
+        shopRaycastScope = 'all';
+        shopRaycastOpen = false;
         renderShopView();
       });
       tabsWrap.appendChild(btn);
     }
+  }
 
-    renderShopLoadoutBar();
+  function renderShopGridItems() {
+    const grid = document.getElementById('shop-items-grid');
+    if (!grid) return;
 
+    window.ExoticPreviewDirector.clearGroup('grid');
     grid.innerHTML = '';
-    const items = window.ExoticShopData.getByCategory(activeShopCategory);
+
+    const items = getDisplayedShopGridItems();
+    if (items.length === 0) {
+      grid.innerHTML = `
+        <div class="shop-empty-state">
+          <span class="shop-empty-title">No items match "${escapeHtml(shopSearchQuery.trim())}"</span>
+          <p class="shop-empty-desc">Try searching by character, skin, aura, trail, emote, upgrade, or rarity tier.</p>
+          <button type="button" id="shop-grid-clear-search-btn" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm">
+            <span>Show All ${escapeHtml(getShopCategoryMeta(activeShopCategory).label)}</span>
+          </button>
+        </div>
+      `;
+      grid.querySelector('#shop-grid-clear-search-btn')?.addEventListener('click', () => {
+        window.ExoticAudio.click();
+        shopSearchQuery = '';
+        shopRaycastScope = 'all';
+        shopRaycastOpen = false;
+        renderShopView();
+      });
+      return;
+    }
 
     items.forEach((item, idx) => {
       const parts = buildShopCardParts(item);
@@ -699,10 +1241,16 @@
         </div>
         <div class="ex-card-body">
           <div class="ex-card-title-row">
-            <h3 class="ex-card-title" data-shop-title>${escapeHtml(item.name)}</h3>
+            <h3 class="ex-card-title" data-shop-title>${highlightSearchText(
+              item.name,
+              shopSearchQuery
+            )}</h3>
             <span data-shop-unlocks>${parts.globalUnlocksPill}</span>
           </div>
-          <p class="ex-card-desc" data-shop-desc>${escapeHtml(item.desc)}</p>
+          <p class="ex-card-desc" data-shop-desc>${highlightSearchText(
+            item.desc,
+            shopSearchQuery
+          )}</p>
         </div>
         <div class="ex-card-footer" data-shop-footer>
           ${parts.actionHtml}
@@ -713,10 +1261,22 @@
 
       const canvas = card.querySelector('.ex-video-canvas');
       const scrubber = card.querySelector('.ex-video-scrubber-fill');
-      window.ExoticPreviewDirector.registerShopCard(canvas, scrubber, item, idx);
+      window.ExoticPreviewDirector.registerShopCard(canvas, scrubber, item, idx, 'grid');
 
       bindShopCardAction(card, item);
     });
+  }
+
+  function renderShopView() {
+    const tabsWrap = document.getElementById('shop-category-tabs');
+    const grid = document.getElementById('shop-items-grid');
+    if (!tabsWrap || !grid) return;
+
+    window.ExoticPreviewDirector.clear();
+    renderShopCategoryTabs();
+    renderShopLoadoutBar();
+    renderRaycastPanel();
+    renderShopGridItems();
   }
 
   function patchShopViewInPlace() {
@@ -728,7 +1288,7 @@
       return;
     }
 
-    const items = window.ExoticShopData.getByCategory(activeShopCategory);
+    const items = getDisplayedShopGridItems();
     for (const item of items) {
       const card = grid.querySelector(`[data-shop-card-id="${item.id}"]`);
       if (!card) continue;
@@ -745,16 +1305,29 @@
       if (unlocksEl) unlocksEl.innerHTML = parts.globalUnlocksPill;
 
       const titleEl = card.querySelector('[data-shop-title]');
-      if (titleEl) titleEl.textContent = item.name;
+      if (titleEl) titleEl.innerHTML = highlightSearchText(item.name, shopSearchQuery);
 
       const descEl = card.querySelector('[data-shop-desc]');
-      if (descEl) descEl.textContent = item.desc;
+      if (descEl) descEl.innerHTML = highlightSearchText(item.desc, shopSearchQuery);
 
       const footerEl = card.querySelector('[data-shop-footer]');
       if (footerEl) {
         footerEl.innerHTML = parts.actionHtml;
         bindShopCardAction(card, item);
       }
+    }
+
+    if (shopRaycastOpen) {
+      const listEl = document.getElementById('shop-raycast-list');
+      if (listEl) {
+        shopRaycastMatches.forEach((item) => {
+          const badgeWrap = listEl.querySelector(
+            `[data-raycast-item-id="${item.id}"] [data-raycast-row-badge]`
+          );
+          if (badgeWrap) badgeWrap.innerHTML = buildRaycastRowBadgeHtml(item);
+        });
+      }
+      renderRaycastDetailPane();
     }
   }
 
@@ -4113,6 +4686,129 @@
       updateGlobalHeader();
       renderSettingsView();
     });
+
+    // Raycast-Style Instant Shop Command Bar & Keyboard Navigation
+    const shopSearchInput = document.getElementById('shop-search-input');
+    const shopSearchClearBtn = document.getElementById('shop-search-clear-btn');
+    const shopSearchShortcutBtn = document.getElementById('shop-search-shortcut-btn');
+    const shopRaycastWrap = document.getElementById('shop-raycast-wrap');
+
+    shopSearchInput?.addEventListener('focus', () => {
+      if (!shopRaycastOpen) {
+        shopRaycastOpen = true;
+        renderRaycastPanel();
+      }
+    });
+
+    shopSearchInput?.addEventListener('input', () => {
+      shopSearchQuery = shopSearchInput.value;
+      shopRaycastOpen = true;
+      shopRaycastSelectedIdx = 0;
+      renderShopCategoryTabs();
+      renderRaycastPanel();
+      renderShopGridItems();
+    });
+
+    shopSearchInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!shopRaycastOpen) {
+          shopRaycastOpen = true;
+          renderRaycastPanel();
+          return;
+        }
+        if (shopRaycastMatches.length > 0) {
+          const next = (shopRaycastSelectedIdx + 1) % shopRaycastMatches.length;
+          updateRaycastSelection(next, true);
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!shopRaycastOpen) {
+          shopRaycastOpen = true;
+          renderRaycastPanel();
+          return;
+        }
+        if (shopRaycastMatches.length > 0) {
+          const prev =
+            (shopRaycastSelectedIdx - 1 + shopRaycastMatches.length) % shopRaycastMatches.length;
+          updateRaycastSelection(prev, true);
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!shopRaycastOpen) {
+          shopRaycastOpen = true;
+          renderRaycastPanel();
+          return;
+        }
+        const selected = shopRaycastMatches[shopRaycastSelectedIdx];
+        if (selected) {
+          executeShopItemPrimaryAction(selected);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        if (shopSearchQuery.trim().length > 0 || shopRaycastScope !== 'all') {
+          shopSearchQuery = '';
+          shopRaycastScope = 'all';
+          shopRaycastSelectedIdx = 0;
+          shopSearchInput.value = '';
+          renderShopCategoryTabs();
+          renderRaycastPanel();
+          renderShopGridItems();
+        } else {
+          shopRaycastOpen = false;
+          renderRaycastPanel();
+          shopSearchInput.blur();
+        }
+      }
+    });
+
+    shopSearchClearBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.ExoticAudio.click();
+      shopSearchQuery = '';
+      shopRaycastScope = 'all';
+      shopRaycastSelectedIdx = 0;
+      if (shopSearchInput) {
+        shopSearchInput.value = '';
+        shopSearchInput.focus();
+      }
+      renderShopCategoryTabs();
+      renderRaycastPanel();
+      renderShopGridItems();
+    });
+
+    shopSearchShortcutBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.ExoticAudio.click();
+      shopRaycastOpen = true;
+      renderRaycastPanel();
+      shopSearchInput?.focus();
+      shopSearchInput?.select();
+    });
+
+    document.addEventListener('pointerdown', (e) => {
+      if (!shopRaycastOpen) return;
+      if (shopRaycastWrap && !shopRaycastWrap.contains(e.target)) {
+        shopRaycastOpen = false;
+        renderRaycastPanel();
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (window.ExoticRouter?.getCurrent?.() !== 'shop') return;
+      const isCmdK = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k';
+      const targetTag = e.target?.tagName || '';
+      const inEditable =
+        targetTag === 'INPUT' || targetTag === 'TEXTAREA' || e.target?.isContentEditable;
+      const isSlash = !inEditable && !e.metaKey && !e.ctrlKey && !e.altKey && e.key === '/';
+      if (isCmdK || isSlash) {
+        e.preventDefault();
+        shopRaycastOpen = true;
+        renderRaycastPanel();
+        shopSearchInput?.focus();
+        shopSearchInput?.select();
+      }
+    });
   }
 
   window.ExoticViews = {
@@ -4140,6 +4836,9 @@
         }
         if (route !== 'settings') {
           document.getElementById('set-face-viewport')?.classList.remove('is-open');
+        }
+        if (route !== 'shop' && shopRaycastOpen) {
+          shopRaycastOpen = false;
         }
         if (route !== 'play' && canvasFullscreen) {
           setCanvasFullscreen(false);

@@ -578,6 +578,126 @@
     ctx.restore();
   }
 
+  function renderShopThumb(rec, time, dt, pal) {
+    const { ctx, canvas, item, trailSys } = rec;
+    const dim = fitCanvas(canvas);
+    if (!dim) return;
+
+    const state = window.ExoticStorage.getState();
+    const eq = state.equipped;
+    const { fillRing, fillDiamond } = window.ExoticCharacterRenderer;
+
+    ctx.save();
+    ctx.scale(dim.dpr, dim.dpr);
+    ctx.fillStyle = pal.stageBg;
+    ctx.fillRect(0, 0, dim.w, dim.h);
+
+    const floorY = Math.round(dim.h * 0.82);
+    ctx.fillStyle = pal.platform;
+    ctx.fillRect(4, floorY, dim.w - 8, dim.h - floorY);
+    if (pal.colored) {
+      ctx.fillStyle = pal.platformCap;
+      ctx.fillRect(4, floorY, dim.w - 8, 2);
+    }
+
+    const sc = Math.min(0.68, (floorY - 6) / 28);
+    const rw = 24 * sc;
+    const rh = 26 * sc;
+    const rx = (dim.w - rw) * 0.5;
+    const bob = Math.abs(Math.sin((time + rec.seed) * 4.5)) * 2.2;
+    const ry = floorY - rh - bob;
+
+    const charId = item.category === 'characters' ? item.id : eq.character;
+    const skinId = item.category === 'skins' ? item.id : eq.skin;
+    const auraId = item.category === 'auras' ? item.id : 'aura_none';
+    const emoteId = item.category === 'emotes' ? item.id : null;
+    const emoteProgress = emoteId ? ((time * 0.72 + rec.seed) % 1) : 0;
+
+    if (item.category === 'trails' && trailSys) {
+      const sweep = ((time * 0.9 + rec.seed) % 1);
+      const tx = 8 + sweep * (dim.w - rw - 14);
+      ctx.save();
+      ctx.translate(dim.w * 0.5, floorY);
+      ctx.scale(sc, sc);
+      ctx.translate(-dim.w * 0.5, -floorY);
+      trailSys.update(dt, item.id, {
+        x: tx,
+        y: floorY - 26,
+        w: 24,
+        h: 26,
+        vx: 165,
+        vy: 0,
+        facing: 1,
+        grounded: true,
+        dashing: true
+      });
+      trailSys.draw(ctx, item.id, pal, time, charId, skinId);
+      window.ExoticCharacterRenderer.draw(ctx, {
+        x: tx,
+        y: floorY - 26,
+        w: 24,
+        h: 26,
+        vx: 165,
+        facing: 1,
+        characterId: charId,
+        skinId,
+        palette: pal,
+        time
+      });
+      ctx.restore();
+      ctx.restore();
+      return;
+    }
+
+    if (auraId && auraId !== 'aura_none') {
+      ctx.save();
+      ctx.translate(rx + rw * 0.5, ry + rh * 0.5);
+      ctx.scale(sc, sc);
+      window.ExoticAuraRenderer.drawBack(ctx, auraId, 0, 0, time + rec.seed, pal);
+      ctx.restore();
+    }
+
+    if (item.category === 'upgrades') {
+      ctx.save();
+      ctx.fillStyle = pal.colored ? pal.skillOuter : pal.auraBright;
+      ctx.globalAlpha = 0.72;
+      const cx = rx + rw * 0.5;
+      const cy = ry + rh * 0.5;
+      if (item.id === 'upg_shield' || item.id === 'upg_magnet') {
+        fillRing(ctx, cx, cy, 13, 10.8);
+      } else {
+        fillDiamond(ctx, cx + 11, cy - 5, 4.2, 4.2);
+      }
+      ctx.restore();
+    }
+
+    window.ExoticCharacterRenderer.draw(ctx, {
+      x: rx,
+      y: ry,
+      w: rw,
+      h: rh,
+      vx: item.category === 'characters' || item.category === 'skins' ? 95 : 0,
+      vy: 0,
+      facing: 1,
+      characterId: charId,
+      skinId,
+      emoteId,
+      emoteProgress,
+      palette: pal,
+      time: time + rec.seed
+    });
+
+    if (auraId && auraId !== 'aura_none') {
+      ctx.save();
+      ctx.translate(rx + rw * 0.5, ry + rh * 0.5);
+      ctx.scale(sc, sc);
+      window.ExoticAuraRenderer.drawFront(ctx, auraId, 0, 0, time + rec.seed, pal);
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
   function tick(now) {
     const dt = Math.min(0.05, (now - lastNow) / 1000);
     lastNow = now;
@@ -588,6 +708,8 @@
       if (!rec.visible) return;
       if (rec.kind === 'shop') {
         renderShopPreview(rec, time, dt, pal);
+      } else if (rec.kind === 'shop-thumb') {
+        renderShopThumb(rec, time, dt, pal);
       } else if (rec.kind === 'level') {
         renderLevelPreview(rec, time, pal);
       }
@@ -603,11 +725,21 @@
       }
       cards.clear();
     },
-    registerShopCard(canvas, scrubber, item, index = 0) {
+    clearGroup(group) {
+      if (!group) return;
+      cards.forEach((rec, canvas) => {
+        if (rec.group === group) {
+          if (observer) observer.unobserve(canvas);
+          cards.delete(canvas);
+        }
+      });
+    },
+    registerShopCard(canvas, scrubber, item, index = 0, group = 'grid') {
       if (!canvas || !item) return;
       ensureObserver();
       const rec = {
         kind: 'shop',
+        group,
         canvas,
         ctx: canvas.getContext('2d'),
         scrubber,
@@ -623,11 +755,32 @@
         rafId = requestAnimationFrame(tick);
       }
     },
-    registerLevelCard(canvas, scrubber, level, index = 0) {
+    registerShopThumb(canvas, item, index = 0, group = 'raycast-list') {
+      if (!canvas || !item) return;
+      ensureObserver();
+      const rec = {
+        kind: 'shop-thumb',
+        group,
+        canvas,
+        ctx: canvas.getContext('2d'),
+        item,
+        trailSys: item.category === 'trails' ? new window.ExoticTrailSystem() : null,
+        visible: true,
+        seed: index * 0.29
+      };
+      cards.set(canvas, rec);
+      if (observer) observer.observe(canvas);
+      if (!rafId) {
+        lastNow = performance.now();
+        rafId = requestAnimationFrame(tick);
+      }
+    },
+    registerLevelCard(canvas, scrubber, level, index = 0, group = 'grid') {
       if (!canvas || !level) return;
       ensureObserver();
       const rec = {
         kind: 'level',
+        group,
         canvas,
         ctx: canvas.getContext('2d'),
         scrubber,

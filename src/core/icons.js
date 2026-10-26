@@ -42,7 +42,12 @@
     eye: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 5C6.5 5 2.1 8.4 1 12c1.1 3.6 5.5 7 11 7s9.9-3.4 11-7c-1.1-3.6-5.5-7-11-7zm0 11a4 4 0 100-8 4 4 0 000 8zm0-2a2 2 0 100-4 2 2 0 000 4z"/></svg>`,
     eyeOff: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.3 2L2 3.3l3.1 3.1C3.2 7.8 1.7 9.8 1 12c1.1 3.6 5.5 7 11 7 2.1 0 4.1-.6 5.8-1.5l2.9 2.9 1.3-1.3L3.3 2zm8.7 14a4 4 0 01-4-4c0-.6.1-1.1.4-1.6l5.2 5.2c-.5.3-1 .4-1.6.4zm0-11c-1.6 0-3.1.4-4.5 1l2.2 2.2A4 4 0 0116 12c0 .5-.1 1-.3 1.4l3 3c1.8-1.2 3.6-2.7 4.3-4.4-1.1-3.6-5.5-7-11-7z"/></svg>`,
     palette: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2a10 10 0 00-10 10c0 5.5 4.5 10 10 10 1.4 0 2.5-1.1 2.5-2.5 0-.6-.2-1.2-.6-1.6-.4-.4-.6-.9-.6-1.4 0-1.4 1.1-2.5 2.5-2.5H17c2.8 0 5-2.2 5-5 0-3.9-4.5-7-10-7zM6.5 11.5a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zm3-4a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zm5 0a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2zm3 4a1.6 1.6 0 100-3.2 1.6 1.6 0 000 3.2z"/></svg>`,
-    contrast: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3v14a7 7 0 000-14z"/></svg>`
+    contrast: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 3v14a7 7 0 000-14z"/></svg>`,
+    search: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 3a7.5 7.5 0 104.55 13.47l4.24 4.24 1.42-1.42-4.24-4.24A7.5 7.5 0 0010.5 3zm-5 7.5a5 5 0 1110 0 5 5 0 01-10 0z"/></svg>`,
+    close: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.3 5.71L12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.29 19.71 2.88 18.29 9.17 12 2.88 5.71 4.29 4.29l6.3 6.3 6.29-6.3 1.42 1.42z"/></svg>`,
+    returnKey: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18 5h2.4v9.4H9l3.3 3.3-1.7 1.7L4.4 13.2 10.6 7l1.7 1.7L9 12h9V5z"/></svg>`,
+    upDown: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3.2L17.2 8.4l-1.6 1.6L12 6.4 8.4 10 6.8 8.4 12 3.2zm0 17.6l-5.2-5.2 1.6-1.6 3.6 3.6 3.6-3.6 1.6 1.6-5.2 5.2z"/></svg>`,
+    cmdKey: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 3a4 4 0 00-4 4c0 2.2 1.8 4 4 4h2v2H7a4 4 0 104 4v-2h2v2a4 4 0 104-4h-2v-2h2a4 4 0 10-4-4v2h-2V7a4 4 0 00-4-4zm2 6V7a2 2 0 10-2 2h2zm6 0h2a2 2 0 10-2-2v2zm-4 2h2v2h-2v-2zm-2 4H7a2 2 0 102 2v-2zm6 2v-2h2a2 2 0 11-2 2z"/></svg>`
   };
 
   window.ExoticIcons = {

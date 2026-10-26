@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c22" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c22" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c22" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c22" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c22" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c24" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c24" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c24" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c24" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c24" />
 </head>
 <body>
   <div id="app">
@@ -695,6 +695,78 @@
               <p class="page-subtitle">Every card previews the actual Aura, Character, Skin, Trail, Emote, or Upgrade in motion.</p>
             </div>
             <div id="shop-category-tabs" class="pill-tabs"></div>
+          </div>
+
+          <div id="shop-raycast-wrap" class="shop-raycast-wrap">
+            <div
+              id="shop-raycast-bar"
+              class="shop-raycast-bar"
+              role="combobox"
+              aria-expanded="false"
+              aria-haspopup="listbox"
+              aria-owns="shop-raycast-list"
+            >
+              <span class="shop-raycast-search-icon" data-icon="search" aria-hidden="true"></span>
+              <input
+                type="text"
+                id="shop-search-input"
+                class="shop-raycast-input"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                placeholder="Search items, characters, skins, auras, trails, emotes, upgrades..."
+                aria-label="Search shop items"
+                aria-controls="shop-raycast-list"
+              />
+              <div class="shop-raycast-trailing">
+                <span id="shop-search-count" class="ex-chip ex-chip--subtle shop-raycast-count">74 Items</span>
+                <button
+                  type="button"
+                  id="shop-search-clear-btn"
+                  class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--xs shop-raycast-clear"
+                  hidden
+                  title="Clear search (Esc)"
+                  aria-label="Clear search"
+                >
+                  <span data-icon="close"></span>
+                  <span>Clear</span>
+                </button>
+                <button
+                  type="button"
+                  id="shop-search-shortcut-btn"
+                  class="ex-pill-btn ex-pill-btn--ghost ex-pill-btn--xs shop-raycast-kbd-btn"
+                  title="Quick Search (Cmd+K / Ctrl+K or /)"
+                  aria-label="Focus shop search"
+                >
+                  <span class="raycast-kbd-cap"><span data-icon="cmdKey"></span><span>K</span></span>
+                </button>
+              </div>
+            </div>
+
+            <div id="shop-raycast-panel" class="shop-raycast-panel" hidden>
+              <div id="shop-raycast-scopes" class="shop-raycast-scopes" role="toolbar" aria-label="Search category filter"></div>
+              <div class="shop-raycast-split">
+                <div
+                  id="shop-raycast-list"
+                  class="shop-raycast-list"
+                  role="listbox"
+                  aria-label="Matching shop items"
+                ></div>
+                <aside id="shop-raycast-detail" class="shop-raycast-detail" aria-label="Selected shop item"></aside>
+              </div>
+              <div class="shop-raycast-footer">
+                <div class="shop-raycast-footer-brand">
+                  <span data-icon="logo"></span>
+                  <span>Armory Command Bar</span>
+                </div>
+                <div class="shop-raycast-footer-hints">
+                  <span class="raycast-hint"><span class="raycast-kbd-cap"><span data-icon="upDown"></span></span> Navigate</span>
+                  <span class="raycast-hint"><span class="raycast-kbd-cap"><span data-icon="returnKey"></span></span> Equip / Unlock</span>
+                  <span class="raycast-hint"><span class="raycast-kbd-cap">Esc</span> Dismiss</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="shop-loadout-bar">
@@ -1417,28 +1489,28 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c22"></script>
-  <script src="src/core/theme.js?v=20261025c22"></script>
-  <script src="src/core/audio.js?v=20261025c22"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c22"></script>
-  <script src="src/core/storage.js?v=20261025c22"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c22"></script>
-  <script src="src/core/auth.js?v=20261025c22"></script>
-  <script src="src/data/shopItems.js?v=20261025c22"></script>
-  <script src="src/data/achievements.js?v=20261025c22"></script>
-  <script src="src/data/levels.js?v=20261025c22"></script>
-  <script src="src/core/realtime.js?v=20261025c22"></script>
-  <script src="src/graphics/characters.js?v=20261025c22"></script>
-  <script src="src/graphics/auras.js?v=20261025c22"></script>
-  <script src="src/graphics/trails.js?v=20261025c22"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c22"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c22"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c22"></script>
-  <script src="src/game/traps.js?v=20261025c22"></script>
-  <script src="src/game/physics.js?v=20261025c22"></script>
-  <script src="src/game/engine.js?v=20261025c22"></script>
-  <script src="src/ui/router.js?v=20261025c22"></script>
-  <script src="src/ui/views.js?v=20261025c22"></script>
-  <script src="src/ui/main.js?v=20261025c22"></script>
+  <script src="src/core/icons.js?v=20261025c24"></script>
+  <script src="src/core/theme.js?v=20261025c24"></script>
+  <script src="src/core/audio.js?v=20261025c24"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c24"></script>
+  <script src="src/core/storage.js?v=20261025c24"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c24"></script>
+  <script src="src/core/auth.js?v=20261025c24"></script>
+  <script src="src/data/shopItems.js?v=20261025c24"></script>
+  <script src="src/data/achievements.js?v=20261025c24"></script>
+  <script src="src/data/levels.js?v=20261025c24"></script>
+  <script src="src/core/realtime.js?v=20261025c24"></script>
+  <script src="src/graphics/characters.js?v=20261025c24"></script>
+  <script src="src/graphics/auras.js?v=20261025c24"></script>
+  <script src="src/graphics/trails.js?v=20261025c24"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c24"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c24"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c24"></script>
+  <script src="src/game/traps.js?v=20261025c24"></script>
+  <script src="src/game/physics.js?v=20261025c24"></script>
+  <script src="src/game/engine.js?v=20261025c24"></script>
+  <script src="src/ui/router.js?v=20261025c24"></script>
+  <script src="src/ui/views.js?v=20261025c24"></script>
+  <script src="src/ui/main.js?v=20261025c24"></script>
 </body>
 </html>
