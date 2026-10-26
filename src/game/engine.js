@@ -451,6 +451,11 @@
     ctx.fillStyle = pal.stageBg;
     ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
+    const is3D = Boolean(pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.draw3DStageChamber(ctx, VIEW_W, VIEW_H, cameraX, pal);
+    }
+
     // Screen shake offset
     const sx = shakeMag > 0 ? (Math.random() - 0.5) * shakeMag * 2 : 0;
     const sy = shakeMag > 0 ? (Math.random() - 0.5) * shakeMag * 2 : 0;
@@ -460,10 +465,21 @@
     for (let bx = 60; bx < runtime.width + 200; bx += 190) {
       const screenX = bx - cameraX * 0.45;
       if (screenX > -80 && screenX < VIEW_W + 80) {
-        ctx.fillRect(screenX, 48 + (bx % 70), 38, VIEW_H);
+        if (is3D) {
+          window.Exotic3D.drawExtrudedBox(ctx, screenX, 48 + (bx % 70), 38, VIEW_H, {
+            palette: pal,
+            vanishX: VIEW_W * 0.5,
+            depth: 15,
+            frontColor: pal.bgPillar,
+            castShadow: false
+          });
+        } else {
+          ctx.fillRect(screenX, 48 + (bx % 70), 38, VIEW_H);
+        }
       }
     }
 
+    window.ExoticWorldDraw.setVanishX?.(cameraX + VIEW_W * 0.5);
     ctx.translate(-cameraX + sx, sy);
 
     // Dishonest Background Wall Signs
@@ -629,6 +645,18 @@
     if (!player.dead) {
       const cx = player.x + player.w * 0.5;
       const cy = player.y + player.h * 0.5;
+
+      if (is3D) {
+        window.Exotic3D.drawGroundShadow(
+          ctx,
+          cx,
+          player.y + player.h + (player.onGround ? 1 : 5),
+          player.onGround ? 13 : 9.5,
+          player.onGround ? 3.8 : 2.6,
+          player.onGround ? 0.32 : 0.18,
+          pal
+        );
+      }
 
       window.ExoticAuraRenderer.drawBack(ctx, eq.aura, cx, cy, time, pal);
 

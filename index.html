@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-color-mode="monochrome">
+<html lang="en" data-theme="dark" data-color-mode="monochrome" data-dimension="2d">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c30" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c30" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c30" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c30" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c30" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c31" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261025c31" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261025c31" />
+  <link rel="stylesheet" href="styles/components.css?v=20261025c31" />
+  <link rel="stylesheet" href="styles/views.css?v=20261025c31" />
 </head>
 <body>
   <div id="app">
@@ -43,6 +43,10 @@
           <span id="header-sp" class="mono">0</span>
           <span style="color:var(--fg-secondary); font-weight:500;">SP</span>
         </div>
+        <button type="button" id="header-3d-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" title="Enable 3D Mode" aria-label="Enable 3D Mode">
+          <span data-icon="cube3d"></span>
+          <span>3D Mode</span>
+        </button>
         <button type="button" id="header-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm">
           <span data-icon="sun"></span>
           <span>Light Mode</span>
@@ -58,6 +62,10 @@
       <!-- 1. SPLASH LOADING SCREEN -->
       <section id="view-splash" class="ex-view is-active" aria-label="Splash Loading Screen">
         <div class="splash-topbar">
+          <button type="button" id="splash-3d-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" aria-label="Enable 3D Mode">
+            <span data-icon="cube3d"></span>
+            <span>3D Mode</span>
+          </button>
           <button type="button" id="splash-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
             <span data-icon="sun"></span>
             <span>Light Mode</span>
@@ -87,10 +95,16 @@
             <span data-icon="logo"></span>
             <span>EXOTIC</span>
           </div>
-          <button type="button" id="signup-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
-            <span data-icon="sun"></span>
-            <span>Light Mode</span>
-          </button>
+          <div class="auth-topbar-actions">
+            <button type="button" id="signup-3d-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" aria-label="Enable 3D Mode">
+              <span data-icon="cube3d"></span>
+              <span>3D Mode</span>
+            </button>
+            <button type="button" id="signup-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
+              <span data-icon="sun"></span>
+              <span>Light Mode</span>
+            </button>
+          </div>
         </div>
 
         <div class="auth-shell">
@@ -328,10 +342,16 @@
             <span data-icon="logo"></span>
             <span>EXOTIC</span>
           </div>
-          <button type="button" id="signin-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
-            <span data-icon="sun"></span>
-            <span>Light Mode</span>
-          </button>
+          <div class="auth-topbar-actions">
+            <button type="button" id="signin-3d-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" aria-label="Enable 3D Mode">
+              <span data-icon="cube3d"></span>
+              <span>3D Mode</span>
+            </button>
+            <button type="button" id="signin-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
+              <span data-icon="sun"></span>
+              <span>Light Mode</span>
+            </button>
+          </div>
         </div>
 
         <div class="auth-shell">
@@ -636,6 +656,10 @@
               <span data-icon="fullscreen"></span>
               <span class="play-fs-text">Full Screen (F)</span>
             </button>
+            <button type="button" id="play-3d-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" title="Enable 3D Mode" aria-label="Enable 3D Mode">
+              <span data-icon="cube3d"></span>
+              <span class="play-3d-text">3D Mode</span>
+            </button>
             <button type="button" id="play-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch to Light Mode">
               <span data-icon="sun"></span>
               <span class="play-theme-text">Light Mode</span>
@@ -886,6 +910,10 @@
               <span data-icon="fullscreen"></span>
               <span>Full Screen</span>
             </button>
+            <button type="button" id="brawl-3d-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" title="Enable 3D Mode" aria-label="Enable 3D Mode">
+              <span data-icon="cube3d"></span>
+              <span class="play-3d-text">3D Mode</span>
+            </button>
             <button type="button" id="brawl-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-label="Switch Theme">
               <span data-icon="sun"></span>
               <span>Light Mode</span>
@@ -1086,6 +1114,23 @@
                   <button type="button" id="set-color-colored" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" title="Switch to Colored Mode">
                     <span data-icon="palette"></span>
                     <span>Colored</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-row" id="set-dimension-mode-row">
+                <div class="settings-row-info">
+                  <span class="settings-row-title">Dimension Mode</span>
+                  <span class="settings-row-desc">Toggle volumetric 3D Mode across stages, characters, arenas, previews, and screens.</span>
+                </div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                  <button type="button" id="set-dim-2d" class="ex-pill-btn ex-pill-btn--primary ex-pill-btn--sm" aria-pressed="true" title="Switch to 2D Mode">
+                    <span data-icon="plane2d"></span>
+                    <span>2D</span>
+                  </button>
+                  <button type="button" id="set-dim-3d" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--sm" aria-pressed="false" title="Switch to 3D Mode">
+                    <span data-icon="cube3d"></span>
+                    <span>3D</span>
                   </button>
                 </div>
               </div>
@@ -1552,6 +1597,10 @@
             <span data-icon="fullscreen"></span>
             <span>Enter Full Screen (F)</span>
           </button>
+          <button type="button" id="pause-3d-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full" aria-pressed="false" aria-label="Enable 3D Mode">
+            <span data-icon="cube3d"></span>
+            <span>3D Mode</span>
+          </button>
           <button type="button" id="pause-theme-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full" aria-label="Switch to Light Mode">
             <span data-icon="sun"></span>
             <span>Light Mode</span>
@@ -1727,6 +1776,10 @@
             <span data-icon="play"></span>
             <span>Resume Brawl</span>
           </button>
+          <button type="button" id="brawl-pause-3d-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full" aria-pressed="false" aria-label="Enable 3D Mode">
+            <span data-icon="cube3d"></span>
+            <span>3D Mode</span>
+          </button>
           <button type="button" id="brawl-restart-btn" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--md ex-pill-btn--full">
             <span data-icon="retry"></span>
             <span>Restart Match</span>
@@ -1777,31 +1830,32 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c30"></script>
-  <script src="src/core/theme.js?v=20261025c30"></script>
-  <script src="src/core/audio.js?v=20261025c30"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c30"></script>
-  <script src="src/core/storage.js?v=20261025c30"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c30"></script>
-  <script src="src/core/auth.js?v=20261025c30"></script>
-  <script src="src/data/shopItems.js?v=20261025c30"></script>
-  <script src="src/data/brawlData.js?v=20261025c30"></script>
-  <script src="src/data/achievements.js?v=20261025c30"></script>
-  <script src="src/data/levels.js?v=20261025c30"></script>
-  <script src="src/core/realtime.js?v=20261025c30"></script>
-  <script src="src/graphics/characters.js?v=20261025c30"></script>
-  <script src="src/graphics/auras.js?v=20261025c30"></script>
-  <script src="src/graphics/trails.js?v=20261025c30"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c30"></script>
-  <script src="src/graphics/brawlRenderer.js?v=20261025c30"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c30"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c30"></script>
-  <script src="src/game/traps.js?v=20261025c30"></script>
-  <script src="src/game/physics.js?v=20261025c30"></script>
-  <script src="src/game/engine.js?v=20261025c30"></script>
-  <script src="src/game/brawlEngine.js?v=20261025c30"></script>
-  <script src="src/ui/router.js?v=20261025c30"></script>
-  <script src="src/ui/views.js?v=20261025c30"></script>
-  <script src="src/ui/main.js?v=20261025c30"></script>
+  <script src="src/core/icons.js?v=20261025c31"></script>
+  <script src="src/core/theme.js?v=20261025c31"></script>
+  <script src="src/core/audio.js?v=20261025c31"></script>
+  <script src="src/core/supabaseClient.js?v=20261025c31"></script>
+  <script src="src/core/storage.js?v=20261025c31"></script>
+  <script src="src/core/biometricHardware.js?v=20261025c31"></script>
+  <script src="src/core/auth.js?v=20261025c31"></script>
+  <script src="src/data/shopItems.js?v=20261025c31"></script>
+  <script src="src/data/brawlData.js?v=20261025c31"></script>
+  <script src="src/data/achievements.js?v=20261025c31"></script>
+  <script src="src/data/levels.js?v=20261025c31"></script>
+  <script src="src/core/realtime.js?v=20261025c31"></script>
+  <script src="src/graphics/renderer3d.js?v=20261025c31"></script>
+  <script src="src/graphics/characters.js?v=20261025c31"></script>
+  <script src="src/graphics/auras.js?v=20261025c31"></script>
+  <script src="src/graphics/trails.js?v=20261025c31"></script>
+  <script src="src/graphics/worldDraw.js?v=20261025c31"></script>
+  <script src="src/graphics/brawlRenderer.js?v=20261025c31"></script>
+  <script src="src/graphics/backdrop.js?v=20261025c31"></script>
+  <script src="src/graphics/previewDirector.js?v=20261025c31"></script>
+  <script src="src/game/traps.js?v=20261025c31"></script>
+  <script src="src/game/physics.js?v=20261025c31"></script>
+  <script src="src/game/engine.js?v=20261025c31"></script>
+  <script src="src/game/brawlEngine.js?v=20261025c31"></script>
+  <script src="src/ui/router.js?v=20261025c31"></script>
+  <script src="src/ui/views.js?v=20261025c31"></script>
+  <script src="src/ui/main.js?v=20261025c31"></script>
 </body>
 </html>

@@ -51,6 +51,15 @@
 
     draw(ctx, trailId, pal, charId, skinId, time) {
       if (!trailId || trailId === 'trail_none' || this.nodes.length === 0) return;
+      if (pal && pal.is3D && !this._in3DExtrude) {
+        this._in3DExtrude = true;
+        ctx.save();
+        ctx.globalAlpha = 0.36;
+        ctx.translate(3.5, -2.8);
+        this.draw(ctx, trailId, pal, charId, skinId, time);
+        ctx.restore();
+        this._in3DExtrude = false;
+      }
       const { fillRing, fillDiamond } = window.ExoticCharacterRenderer;
       const isColored = Boolean(pal && pal.colored);
       const isLight = pal && pal.mode === 'light';

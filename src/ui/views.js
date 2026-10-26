@@ -243,6 +243,58 @@
       } ex-pill-btn--sm`;
       colorMonoBtn.setAttribute('aria-pressed', String(!isColored));
     }
+
+    const is3D = window.ExoticTheme.is3D ? window.ExoticTheme.is3D() : false;
+    const cubeIcon = window.ExoticIcons.get('cube3d');
+    const dimLabel = is3D ? '3D Mode: On' : '3D Mode';
+    const dimHint = is3D ? 'Disable 3D Mode' : 'Enable 3D Mode';
+    const dimVariant = is3D ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary';
+
+    for (const id of ['header-3d-btn', 'splash-3d-btn', 'signup-3d-btn', 'signin-3d-btn']) {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.className = `ex-pill-btn ${dimVariant} ex-pill-btn--sm`;
+        btn.innerHTML = `${cubeIcon}<span>${dimLabel}</span>`;
+        btn.setAttribute('aria-pressed', String(is3D));
+        btn.setAttribute('title', dimHint);
+        btn.setAttribute('aria-label', dimHint);
+      }
+    }
+
+    for (const id of ['play-3d-btn', 'brawl-3d-btn']) {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.className = `ex-pill-btn ${dimVariant} ex-pill-btn--sm`;
+        btn.innerHTML = `${cubeIcon}<span class="play-3d-text">${dimLabel}</span>`;
+        btn.setAttribute('aria-pressed', String(is3D));
+        btn.setAttribute('title', dimHint);
+        btn.setAttribute('aria-label', dimHint);
+      }
+    }
+
+    for (const id of ['pause-3d-btn', 'brawl-pause-3d-btn']) {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.className = `ex-pill-btn ${dimVariant} ex-pill-btn--md ex-pill-btn--full`;
+        btn.innerHTML = `${cubeIcon}<span>${dimLabel}</span>`;
+        btn.setAttribute('aria-pressed', String(is3D));
+        btn.setAttribute('title', dimHint);
+        btn.setAttribute('aria-label', dimHint);
+      }
+    }
+
+    const dim2dBtn = document.getElementById('set-dim-2d');
+    const dim3dBtn = document.getElementById('set-dim-3d');
+    if (dim2dBtn && dim3dBtn) {
+      dim2dBtn.className = `ex-pill-btn ${
+        !is3D ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      dim2dBtn.setAttribute('aria-pressed', String(!is3D));
+      dim3dBtn.className = `ex-pill-btn ${
+        is3D ? 'ex-pill-btn--primary' : 'ex-pill-btn--secondary'
+      } ex-pill-btn--sm`;
+      dim3dBtn.setAttribute('aria-pressed', String(is3D));
+    }
   }
 
   function updateGlobalHeader() {
@@ -3751,6 +3803,32 @@
     document.getElementById('brawl-theme-btn')?.addEventListener('click', handleThemeToggleClick);
     document.getElementById('pause-theme-btn')?.addEventListener('click', handleThemeToggleClick);
 
+    const handleDimensionToggleClick = () => {
+      window.ExoticAudio.unlock();
+      window.ExoticAudio.click();
+      const dimMode = window.ExoticTheme.toggleDimensionMode();
+      window.ExoticStorage.updateSettings({ dimensionMode: dimMode });
+      updateGlobalHeader();
+      if (window.ExoticRouter.getCurrent() === 'settings') renderSettingsView();
+      showToast(dimMode === '3d' ? '3D Mode Enabled' : '3D Mode Disabled');
+    };
+    for (const id of [
+      'header-3d-btn',
+      'splash-3d-btn',
+      'signup-3d-btn',
+      'signin-3d-btn',
+      'play-3d-btn',
+      'brawl-3d-btn',
+      'pause-3d-btn',
+      'brawl-pause-3d-btn'
+    ]) {
+      document.getElementById(id)?.addEventListener('click', handleDimensionToggleClick);
+    }
+
+    window.ExoticTheme.subscribe?.(() => {
+      syncThemeButtonsUI();
+    });
+
     document.getElementById('signup-switch-signin-btn')?.addEventListener('click', () => {
       window.ExoticAudio.unlock();
       window.ExoticAudio.click();
@@ -4541,6 +4619,22 @@
       window.ExoticAudio.click();
       window.ExoticTheme.setColorMode('monochrome');
       window.ExoticStorage.updateSettings({ colorMode: 'monochrome' });
+      updateGlobalHeader();
+      renderSettingsView();
+    });
+
+    document.getElementById('set-dim-2d')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      window.ExoticTheme.setDimensionMode('2d');
+      window.ExoticStorage.updateSettings({ dimensionMode: '2d' });
+      updateGlobalHeader();
+      renderSettingsView();
+    });
+
+    document.getElementById('set-dim-3d')?.addEventListener('click', () => {
+      window.ExoticAudio.click();
+      window.ExoticTheme.setDimensionMode('3d');
+      window.ExoticStorage.updateSettings({ dimensionMode: '3d' });
       updateGlobalHeader();
       renderSettingsView();
     });

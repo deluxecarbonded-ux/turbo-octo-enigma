@@ -1503,10 +1503,33 @@
     ctx.globalAlpha = 1;
 
     // 8. Fighters + Auras + Trails + Held Weapons + Attack Slashes + Overhead Tags
+    const is3D = Boolean(pal.is3D && window.Exotic3D);
     for (const f of fighters) {
       if (f.eliminated) continue;
       const fcx = f.x + f.w * 0.5;
       const fcy = f.y + f.h * 0.5;
+
+      if (is3D) {
+        // Project dynamic 3D ground contact shadow onto nearest stage platform underneath fighter
+        let shadowY = null;
+        for (const p of platforms) {
+          if (fcx >= p.x && fcx <= p.x + p.w && p.y >= f.y + f.h - 6) {
+            if (shadowY === null || p.y < shadowY) shadowY = p.y;
+          }
+        }
+        if (shadowY !== null && shadowY - (f.y + f.h) < 165) {
+          const distFrac = Math.max(0.35, 1 - (shadowY - (f.y + f.h)) / 180);
+          window.Exotic3D.drawGroundShadow(
+            ctx,
+            fcx,
+            shadowY - 1,
+            13 * distFrac,
+            3.8 * distFrac,
+            0.34 * distFrac,
+            pal
+          );
+        }
+      }
 
       // Valkyrie Respawn Sled
       if (f.respawnTimer > 0) {

@@ -495,3 +495,38 @@
   color: #ffffff;
 }
 
+[data-color-mode="colored"] [data-icon="cube3d"],
+[data-color-mode="colored"] [data-icon="plane2d"] {
+  color: var(--accent-skill);
+}
+
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon="cube3d"],
+[data-color-mode="colored"] .ex-pill-btn--primary [data-icon="plane2d"] {
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   3D Spatial UI Depth (Active ONLY when html[data-dimension="3d"])
+   Scoped to .ex-view.is-active so inactive views allocate zero 3D GPU layers.
+   Zero borders, zero outlines, zero box-shadows, zero gradients.
+   ========================================================================== */
+html[data-dimension="3d"] .ex-view.is-active .ex-video-card {
+  transform: perspective(940px) rotateX(3.6deg) rotateY(-2.4deg);
+  transition:
+    transform 220ms var(--ease-spring),
+    background-color 180ms var(--ease-snappy);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .ex-video-card:hover {
+  transform: perspective(940px) rotateX(-2deg) rotateY(2.2deg) translateY(-5px) scale(1.015);
+}
+
+html[data-dimension="3d"] .ex-pill-btn:hover:not(:disabled) {
+  transform: perspective(520px) rotateX(6deg) translateY(-2px);
+}
+
+html[data-dimension="3d"] .ex-pill-btn:active:not(:disabled) {
+  transform: perspective(520px) rotateX(-4deg) translateY(1px) scale(0.96);
+}
+
+

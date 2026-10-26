@@ -545,9 +545,23 @@
 
   window.ExoticAuraRenderer = {
     drawBack(ctx, auraId, cx, cy, time, pal) {
+      if (pal && pal.is3D && auraId && auraId !== 'aura_none') {
+        ctx.save();
+        ctx.globalAlpha = 0.34;
+        ctx.translate(3.2, -2.6);
+        renderLayer(ctx, auraId, cx, cy, time, pal, false);
+        ctx.restore();
+      }
       renderLayer(ctx, auraId, cx, cy, time, pal, false);
     },
     drawFront(ctx, auraId, cx, cy, time, pal) {
+      if (pal && pal.is3D && auraId && auraId !== 'aura_none') {
+        ctx.save();
+        ctx.globalAlpha = 0.32;
+        ctx.translate(2.4, -2.0);
+        renderLayer(ctx, auraId, cx, cy, time, pal, true);
+        ctx.restore();
+      }
       renderLayer(ctx, auraId, cx, cy, time, pal, true);
     }
   };

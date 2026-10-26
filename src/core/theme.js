@@ -158,6 +158,7 @@
 
   let currentMode = 'dark';
   let currentColorMode = 'monochrome';
+  let currentDimensionMode = '2d';
   const listeners = new Set();
 
   function normalizeMode(mode) {
@@ -166,6 +167,10 @@
 
   function normalizeColorMode(colorMode) {
     return colorMode === 'colored' ? 'colored' : 'monochrome';
+  }
+
+  function normalizeDimensionMode(dim) {
+    return dim === '3d' ? '3d' : '2d';
   }
 
   function syncTabFavicon(mode, colorMode) {
@@ -190,27 +195,35 @@
     link.href = dataUri;
   }
 
-  function resolvePalette(mode, colorMode) {
+  function resolvePalette(mode, colorMode, dimMode) {
     const m = normalizeMode(mode || currentMode);
     const c = normalizeColorMode(colorMode || currentColorMode);
-    return PALETTES[`${m}_${c}`] || PALETTES.dark_monochrome;
+    const d = normalizeDimensionMode(dimMode || currentDimensionMode);
+    const base = PALETTES[`${m}_${c}`] || PALETTES.dark_monochrome;
+    return {
+      ...base,
+      dimensionMode: d,
+      is3D: d === '3d'
+    };
   }
 
   function applyAttributesAndNotify(notify = true) {
     document.documentElement.setAttribute('data-theme', currentMode);
     document.documentElement.setAttribute('data-color-mode', currentColorMode);
+    document.documentElement.setAttribute('data-dimension', currentDimensionMode);
     syncTabFavicon(currentMode, currentColorMode);
     try {
       localStorage.setItem('exotic_theme_luminance', currentMode);
       localStorage.setItem('exotic_theme_color_mode', currentColorMode);
+      localStorage.setItem('exotic_theme_dimension_mode', currentDimensionMode);
     } catch {
       // Ignore storage write error
     }
     if (notify) {
-      const pal = resolvePalette(currentMode, currentColorMode);
+      const pal = resolvePalette(currentMode, currentColorMode, currentDimensionMode);
       listeners.forEach((fn) => {
         try {
-          fn(currentMode, pal, currentColorMode);
+          fn(currentMode, pal, currentColorMode, currentDimensionMode);
         } catch {
           // Ignore listener error
         }
@@ -219,9 +232,10 @@
   }
 
   window.ExoticTheme = {
-    init(initialMode = 'dark', initialColorMode = 'monochrome') {
+    init(initialMode = 'dark', initialColorMode = 'monochrome', initialDimensionMode = '2d') {
       currentMode = normalizeMode(initialMode);
       currentColorMode = normalizeColorMode(initialColorMode);
+      currentDimensionMode = normalizeDimensionMode(initialDimensionMode);
       applyAttributesAndNotify(false);
     },
     getMode() {
@@ -230,8 +244,14 @@
     getColorMode() {
       return currentColorMode;
     },
+    getDimensionMode() {
+      return currentDimensionMode;
+    },
     isColored() {
       return currentColorMode === 'colored';
+    },
+    is3D() {
+      return currentDimensionMode === '3d';
     },
     setMode(mode) {
       const next = normalizeMode(mode);
@@ -255,6 +275,17 @@
       currentColorMode = next;
       applyAttributesAndNotify(true);
     },
+    setDimensionMode(dimMode) {
+      const next = normalizeDimensionMode(dimMode);
+      if (
+        next === currentDimensionMode &&
+        document.documentElement.getAttribute('data-dimension') === next
+      ) {
+        return;
+      }
+      currentDimensionMode = next;
+      applyAttributesAndNotify(true);
+    },
     toggle() {
       const next = currentMode === 'dark' ? 'light' : 'dark';
       this.setMode(next);
@@ -265,8 +296,17 @@
       this.setColorMode(next);
       return next;
     },
-    getPalette(overrideMode, overrideColorMode) {
-      return resolvePalette(overrideMode || currentMode, overrideColorMode || currentColorMode);
+    toggleDimensionMode() {
+      const next = currentDimensionMode === '3d' ? '2d' : '3d';
+      this.setDimensionMode(next);
+      return next;
+    },
+    getPalette(overrideMode, overrideColorMode, overrideDimensionMode) {
+      return resolvePalette(
+        overrideMode || currentMode,
+        overrideColorMode || currentColorMode,
+        overrideDimensionMode || currentDimensionMode
+      );
     },
     onChange(cb) {
       listeners.add(cb);

@@ -103,30 +103,52 @@
 
   function drawBrawlBackdrop(ctx, map, viewW, viewH, time, pal) {
     const ap = resolveArenaPalette(map, pal);
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
     ctx.fillStyle = ap.sky;
     ctx.fillRect(0, 0, viewW, viewH);
 
-    // Subtle floating atmospheric diamond motes
+    if (is3D) {
+      window.Exotic3D.draw3DStageChamber(ctx, viewW, viewH, Math.sin(time * 0.4) * 36, pal);
+    }
+
+    // Subtle floating atmospheric diamond motes (or 3D tumbled cubes in 3D Mode!)
     ctx.save();
-    ctx.globalAlpha = pal.colored ? 0.22 : 0.12;
+    ctx.globalAlpha = pal.colored ? (is3D ? 0.34 : 0.22) : is3D ? 0.22 : 0.12;
     ctx.fillStyle = ap.accent;
     for (let i = 0; i < 10; i++) {
       const mx = ((i * 137 + time * (10 + (i % 3) * 5)) % (viewW + 80)) - 40;
       const my = 46 + ((i * 89) % (viewH - 120)) + Math.sin(time * 1.6 + i) * 8;
       const r = 2.5 + (i % 3) * 1.4;
-      fillDiamond(ctx, mx, my, r, r);
+      if (is3D) {
+        window.Exotic3D.draw3DTumbledCube(ctx, mx, my, r * 2.3, time * 1.3 + i, ap.accent, pal);
+      } else {
+        fillDiamond(ctx, mx, my, r, r);
+      }
     }
     ctx.restore();
   }
 
   function drawBrawlStageWorld(ctx, map, platforms, time, pal) {
     const ap = resolveArenaPalette(map, pal);
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
+    const vanishX = 480;
 
     // Architectural backdrop monolith pillars in world space
     ctx.save();
     ctx.fillStyle = ap.pillar;
     for (const pil of map.pillars || []) {
-      fillRoundRect(ctx, pil.x, pil.y, pil.w, pil.h, 6);
+      if (is3D) {
+        window.Exotic3D.drawExtrudedBox(ctx, pil.x, pil.y, pil.w, pil.h, {
+          palette: pal,
+          vanishX,
+          depth: 18,
+          frontColor: ap.pillar,
+          radius: 6,
+          castShadow: false
+        });
+      } else {
+        fillRoundRect(ctx, pil.x, pil.y, pil.w, pil.h, 6);
+      }
       ctx.globalAlpha = 0.35;
       ctx.fillStyle = ap.cutout;
       ctx.fillRect(pil.x + pil.w * 0.38, pil.y + 18, pil.w * 0.24, pil.h - 36);
@@ -138,20 +160,65 @@
     // Draw platforms (solid floating islands + soft pass-through decks)
     for (const p of platforms) {
       if (p.type === 'solid') {
+        const wallH = Math.max(48, p.h * 0.72);
+        const taper = Math.min(44, p.w * 0.16);
+
+        if (is3D) {
+          const { dx, dy } = window.Exotic3D.computeExtrusion(p.x + p.w * 0.5, vanishX, 26);
+          // 3D extruded underside vault side facet
+          ctx.fillStyle = window.Exotic3D.shadeFace(ap.islandUnder, 'deep', pal);
+          if (dx >= 0) {
+            window.Exotic3D.fillQuad(
+              ctx,
+              p.x + p.w,
+              p.y + wallH - 4,
+              p.x + p.w + dx,
+              p.y + wallH - 4 + dy,
+              p.x + p.w - taper + dx * 0.7,
+              p.y + p.h + dy * 0.7,
+              p.x + p.w - taper,
+              p.y + p.h
+            );
+          } else {
+            window.Exotic3D.fillQuad(
+              ctx,
+              p.x + dx,
+              p.y + wallH - 4 + dy,
+              p.x,
+              p.y + wallH - 4,
+              p.x + taper,
+              p.y + p.h,
+              p.x + taper + dx * 0.7,
+              p.y + p.h + dy * 0.7
+            );
+          }
+        }
+
         // Tapered floating island underside
         ctx.fillStyle = ap.islandUnder;
         ctx.beginPath();
         ctx.moveTo(p.x, p.y + 14);
         ctx.lineTo(p.x + p.w, p.y + 14);
-        ctx.lineTo(p.x + p.w - Math.min(44, p.w * 0.16), p.y + p.h);
-        ctx.lineTo(p.x + Math.min(44, p.w * 0.16), p.y + p.h);
+        ctx.lineTo(p.x + p.w - taper, p.y + p.h);
+        ctx.lineTo(p.x + taper, p.y + p.h);
         ctx.closePath();
         ctx.fill();
 
         // Main wall-slideable stage block (vertical top ~75% of island height)
-        const wallH = Math.max(48, p.h * 0.72);
-        ctx.fillStyle = ap.island;
-        fillRoundRect(ctx, p.x, p.y, p.w, wallH, 6);
+        if (is3D) {
+          window.Exotic3D.drawExtrudedBox(ctx, p.x, p.y, p.w, wallH, {
+            palette: pal,
+            vanishX,
+            depth: 26,
+            frontColor: ap.island,
+            capColor: ap.cap,
+            radius: 6,
+            castShadow: false
+          });
+        } else {
+          ctx.fillStyle = ap.island;
+          fillRoundRect(ctx, p.x, p.y, p.w, wallH, 6);
+        }
 
         // Top turf / cap strip
         ctx.fillStyle = ap.cap;
@@ -168,11 +235,31 @@
         ctx.globalAlpha = 1;
       } else {
         // Soft pass-through aerial platform (distinct beveled deck + underside brackets)
-        ctx.fillStyle = ap.islandUnder;
-        fillRoundRect(ctx, p.x + 8, p.y + 6, p.w - 16, p.h, 4);
+        if (is3D) {
+          window.Exotic3D.drawExtrudedBox(ctx, p.x + 8, p.y + 6, p.w - 16, p.h, {
+            palette: pal,
+            vanishX,
+            depth: 15,
+            frontColor: ap.islandUnder,
+            radius: 4,
+            castShadow: true
+          });
+          window.Exotic3D.drawExtrudedBox(ctx, p.x, p.y, p.w, p.h - 2, {
+            palette: pal,
+            vanishX,
+            depth: 18,
+            frontColor: ap.soft,
+            capColor: ap.soft,
+            radius: 5,
+            castShadow: false
+          });
+        } else {
+          ctx.fillStyle = ap.islandUnder;
+          fillRoundRect(ctx, p.x + 8, p.y + 6, p.w - 16, p.h, 4);
 
-        ctx.fillStyle = ap.soft;
-        fillRoundRect(ctx, p.x, p.y, p.w, p.h - 2, 5);
+          ctx.fillStyle = ap.soft;
+          fillRoundRect(ctx, p.x, p.y, p.w, p.h - 2, 5);
+        }
 
         if (p.motion) {
           ctx.fillStyle = ap.accent;
@@ -234,6 +321,17 @@
   }
 
   function drawWeaponInHand(ctx, weaponId, opts) {
+    if (opts && opts.pal && opts.pal.is3D && !opts._is3DShadowPass) {
+      ctx.save();
+      ctx.globalAlpha = 0.44;
+      drawWeaponInHand(ctx, weaponId, {
+        ...opts,
+        cx: opts.cx - (opts.facing || 1) * 2.6,
+        cy: opts.cy - 2.2,
+        _is3DShadowPass: true
+      });
+      ctx.restore();
+    }
     const {
       cx,
       cy,
@@ -485,6 +583,15 @@
 
   function drawThrownWeapon(ctx, proj, pal, time) {
     const wc = resolveWeaponColors(proj.weaponId, pal);
+    if (pal && pal.is3D && window.Exotic3D) {
+      ctx.save();
+      ctx.translate(proj.x + 2.8, proj.y - 2.4);
+      ctx.rotate(time * 18 * (proj.vx >= 0 ? 1 : -1));
+      ctx.fillStyle = window.Exotic3D.shadeFace(wc.primary, 'side', pal);
+      fillRing(ctx, 0, 0, 14, 10.5);
+      fillRoundRect(ctx, -11, -3, 22, 6, 2.5);
+      ctx.restore();
+    }
     ctx.save();
     ctx.translate(proj.x, proj.y);
     ctx.rotate(time * 18 * (proj.vx >= 0 ? 1 : -1));
@@ -646,12 +753,34 @@
 
     const floorY = dim.h * 0.77;
     const ap = resolveArenaPalette(map, pal);
-    ctx.fillStyle = ap.islandUnder;
-    fillRoundRect(ctx, 18, floorY + 6, dim.w - 36, 26, 6);
-    ctx.fillStyle = ap.island;
-    fillRoundRect(ctx, 14, floorY, dim.w - 28, 16, 5);
-    ctx.fillStyle = ap.cap;
-    fillRoundRect(ctx, 14, floorY, dim.w - 28, 4.5, 2.5);
+    if (pal && pal.is3D && window.Exotic3D) {
+      window.Exotic3D.drawExtrudedBox(ctx, 18, floorY + 6, dim.w - 36, 26, {
+        palette: pal,
+        vanishX: dim.w * 0.5,
+        depth: 14,
+        frontColor: ap.islandUnder,
+        radius: 6,
+        castShadow: false
+      });
+      window.Exotic3D.drawExtrudedBox(ctx, 14, floorY, dim.w - 28, 16, {
+        palette: pal,
+        vanishX: dim.w * 0.5,
+        depth: 18,
+        frontColor: ap.island,
+        capColor: ap.cap,
+        radius: 5,
+        castShadow: false
+      });
+      ctx.fillStyle = ap.cap;
+      fillRoundRect(ctx, 14, floorY, dim.w - 28, 4.5, 2.5);
+    } else {
+      ctx.fillStyle = ap.islandUnder;
+      fillRoundRect(ctx, 18, floorY + 6, dim.w - 36, 26, 6);
+      ctx.fillStyle = ap.island;
+      fillRoundRect(ctx, 14, floorY, dim.w - 28, 16, 5);
+      ctx.fillStyle = ap.cap;
+      fillRoundRect(ctx, 14, floorY, dim.w - 28, 4.5, 2.5);
+    }
 
     const wDef = window.ExoticBrawlData.getWeaponById(weaponId);
     const cycle = norm * 3; // 3 distinct combo beats across loop

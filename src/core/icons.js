@@ -52,7 +52,9 @@
     fist: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4a2 2 0 012 2v2h1V5.5a2 2 0 014 0V8h1V6.5a2 2 0 014 0v6.7c0 4.3-3.1 7.8-7.4 7.8H10a6 6 0 01-6-6v-3.5A2.5 2.5 0 016.5 9H7V6a2 2 0 010-2z"/></svg>`,
     sword: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.4 3H21v3.6l-8.8 8.8 2.1 2.1-1.6 1.6-2.1-2.1-4.4 4.4-2.6-2.6 4.4-4.4-2.1-2.1 1.6-1.6 2.1 2.1L17.4 3z"/></svg>`,
     map: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 7h7v2.6H2V7zm13 0h7v2.6h-7V7zM5 13h14v3.5l-2.5 3.5h-9L5 16.5V13zm3.5-9h7v2.4h-7V4z"/></svg>`,
-    copy: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 3h11a2 2 0 012 2v11h-2.5V5.5H8V3zM5 7h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2zm1.5 2.5v8h7v-8h-7z"/></svg>`
+    copy: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 3h11a2 2 0 012 2v11h-2.5V5.5H8V3zM5 7h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2zm1.5 2.5v8h7v-8h-7z"/></svg>`,
+    cube3d: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.2L20.8 7.2L12 12.2L3.2 7.2L12 2.2zM2.6 8.8L11.1 13.7V21.8L2.6 16.9V8.8zM21.4 8.8V16.9L12.9 21.8V13.7L21.4 8.8z"/></svg>`,
+    plane2d: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 3v10h11V7h-11zm2.5 2.5h6v5H9v-5z"/></svg>`
   };
 
   window.ExoticIcons = {

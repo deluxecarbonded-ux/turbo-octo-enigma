@@ -74,6 +74,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
+  overflow: clip;
 }
 
 .ex-view {
@@ -130,6 +131,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 10px;
   padding: 16px 28px;
   z-index: 2;
 }
@@ -1234,6 +1236,13 @@
   flex-shrink: 0;
 }
 
+.auth-topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .auth-shell {
   width: 100%;
   max-width: 532px;
@@ -1814,7 +1823,8 @@
   }
 
   .play-fs-text,
-  .play-theme-text {
+  .play-theme-text,
+  .play-3d-text {
     display: none;
   }
 
@@ -2107,4 +2117,55 @@
   background-color: var(--fg-primary);
   opacity: 1;
 }
+
+/* ==========================================================================
+   3D Spatial View Architecture (Active ONLY when html[data-dimension="3d"])
+   ========================================================================== */
+html[data-dimension="3d"] .ex-view.is-active .menu-hero {
+  transform: perspective(1150px) rotateY(2.8deg) rotateX(1.2deg);
+  transition: transform 260ms var(--ease-snappy), background-color 220ms var(--ease-snappy);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .menu-hero:hover {
+  transform: perspective(1150px) rotateY(1deg) rotateX(0.4deg) translateY(-2px);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .menu-showcase-card {
+  transform: perspective(1150px) rotateY(-3.2deg) rotateX(1.4deg);
+  transition: transform 260ms var(--ease-snappy), background-color 220ms var(--ease-snappy);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .menu-showcase-card:hover {
+  transform: perspective(1150px) rotateY(-1.2deg) rotateX(0.6deg) translateY(-3px);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .game-stage-wrapper {
+  transform: perspective(1500px) rotateX(1.4deg);
+  transition: transform 240ms var(--ease-snappy);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .settings-card,
+html[data-dimension="3d"] .ex-view.is-active .ach-card,
+html[data-dimension="3d"] .ex-view.is-active .auth-card,
+html[data-dimension="3d"] .ex-view.is-active .brawl-config-card,
+html[data-dimension="3d"] .ex-view.is-active .brawl-controls-card,
+html[data-dimension="3d"] .ex-view.is-active .brawl-loadout-strip {
+  transform: perspective(1100px) rotateX(2deg);
+  transition: transform 220ms var(--ease-snappy), background-color 200ms var(--ease-snappy);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .ach-card:hover,
+html[data-dimension="3d"] .ex-view.is-active .settings-card:hover {
+  transform: perspective(1100px) rotateX(0.6deg) translateY(-3px);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .lb-row {
+  transform: perspective(900px) rotateX(2.2deg);
+  transition: transform 180ms var(--ease-snappy), background-color 180ms var(--ease-snappy);
+}
+
+html[data-dimension="3d"] .ex-view.is-active .lb-row:hover {
+  transform: perspective(900px) rotateX(0deg) translateX(4px);
+}
+
 

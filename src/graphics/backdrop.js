@@ -63,13 +63,29 @@
     const parallaxY = (mouseY - 0.5) * 16;
 
     // Architectural background monoliths
+    const is3D = Boolean(pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.draw3DStageChamber(backdropCtx, dim.w, dim.h, parallaxX * 4, pal);
+    }
+    const vanishX = dim.w * (0.35 + mouseX * 0.3);
     for (let i = 0; i < pillars.length; i++) {
       const p = pillars[i];
       const px = p.x * dim.w + parallaxX * p.depth - p.w * 0.5;
       const ph = p.h * dim.h;
       const py = dim.h - ph + parallaxY * p.depth * 0.5;
-      backdropCtx.fillStyle = i % 2 === 0 ? pal.bgPillar : pal.bgPillarAlt;
-      backdropCtx.fillRect(px, py, p.w, ph + 30);
+      const col = i % 2 === 0 ? pal.bgPillar : pal.bgPillarAlt;
+      if (is3D) {
+        window.Exotic3D.drawExtrudedBox(backdropCtx, px, py, p.w, ph + 30, {
+          palette: pal,
+          vanishX,
+          depth: 14 + p.depth * 22,
+          frontColor: col,
+          castShadow: false
+        });
+      } else {
+        backdropCtx.fillStyle = col;
+        backdropCtx.fillRect(px, py, p.w, ph + 30);
+      }
     }
 
     // Drifting geometric motes
@@ -85,15 +101,31 @@
       }
       const mx = m.x * dim.w + Math.sin(time * 1.2 + m.drift) * 14 + parallaxX * 0.4;
       const my = m.y * dim.h;
-      backdropCtx.save();
-      if (motePool) {
-        backdropCtx.globalAlpha = 0.65;
-        backdropCtx.fillStyle = motePool[i % motePool.length];
+      const moteCol = motePool ? motePool[i % motePool.length] : pal.bgMote;
+      if (is3D) {
+        backdropCtx.save();
+        if (motePool) backdropCtx.globalAlpha = 0.78;
+        window.Exotic3D.draw3DTumbledCube(
+          backdropCtx,
+          mx,
+          my,
+          m.size * 1.75,
+          time * 1.4 + m.drift,
+          moteCol,
+          pal
+        );
+        backdropCtx.restore();
+      } else {
+        backdropCtx.save();
+        if (motePool) {
+          backdropCtx.globalAlpha = 0.65;
+          backdropCtx.fillStyle = moteCol;
+        }
+        backdropCtx.translate(mx, my);
+        backdropCtx.rotate(time + m.drift);
+        backdropCtx.fillRect(-m.size * 0.5, -m.size * 0.5, m.size, m.size);
+        backdropCtx.restore();
       }
-      backdropCtx.translate(mx, my);
-      backdropCtx.rotate(time + m.drift);
-      backdropCtx.fillRect(-m.size * 0.5, -m.size * 0.5, m.size, m.size);
-      backdropCtx.restore();
     }
 
     backdropCtx.restore();
@@ -113,16 +145,49 @@
     menuCharCtx.fillStyle = pal.stageBg;
     menuCharCtx.fillRect(0, 0, dim.w, dim.h);
 
-    // Subtle background columns
-    menuCharCtx.fillStyle = pal.bgPillarAlt;
-    menuCharCtx.fillRect(dim.w * 0.14, 30, 32, dim.h);
-    menuCharCtx.fillRect(dim.w * 0.76, 55, 42, dim.h);
+    const is3D = Boolean(pal.is3D && window.Exotic3D);
+    const vanishX = dim.w * 0.5;
+    if (is3D) {
+      window.Exotic3D.draw3DStageChamber(menuCharCtx, dim.w, dim.h, Math.sin(time * 0.6) * 28, pal);
+      window.Exotic3D.drawExtrudedBox(menuCharCtx, dim.w * 0.14, 30, 32, dim.h, {
+        palette: pal,
+        vanishX,
+        depth: 14,
+        frontColor: pal.bgPillarAlt,
+        castShadow: false
+      });
+      window.Exotic3D.drawExtrudedBox(menuCharCtx, dim.w * 0.76, 55, 42, dim.h, {
+        palette: pal,
+        vanishX,
+        depth: 16,
+        frontColor: pal.bgPillarAlt,
+        castShadow: false
+      });
+    } else {
+      // Subtle background columns
+      menuCharCtx.fillStyle = pal.bgPillarAlt;
+      menuCharCtx.fillRect(dim.w * 0.14, 30, 32, dim.h);
+      menuCharCtx.fillRect(dim.w * 0.76, 55, 42, dim.h);
+    }
 
     const floorY = dim.h * 0.74;
-    menuCharCtx.fillStyle = pal.platform;
-    menuCharCtx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, dim.h - floorY);
-    menuCharCtx.fillStyle = pal.platformCap;
-    menuCharCtx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, 4);
+    if (is3D) {
+      window.Exotic3D.drawExtrudedBox(menuCharCtx, dim.w * 0.1, floorY, dim.w * 0.8, dim.h - floorY, {
+        palette: pal,
+        vanishX,
+        depth: 22,
+        frontColor: pal.platform,
+        capColor: pal.platformCap,
+        castShadow: false
+      });
+      menuCharCtx.fillStyle = pal.platformCap;
+      menuCharCtx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, 4);
+    } else {
+      menuCharCtx.fillStyle = pal.platform;
+      menuCharCtx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, dim.h - floorY);
+      menuCharCtx.fillStyle = pal.platformCap;
+      menuCharCtx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, 4);
+    }
 
     // Autonomous showcase figure-8 patrol + periodic jump + emote
     const cycle = time * 1.65;
@@ -133,6 +198,19 @@
     const py = floorY - 30 - jumpWave * 42;
     const vy = -Math.cos(cycle * 2) * 140;
     const facing = vx >= 0 ? 1 : -1;
+
+    if (is3D) {
+      const shadowScale = Math.max(0.45, 1 - jumpWave * 0.45);
+      window.Exotic3D.drawGroundShadow(
+        menuCharCtx,
+        px + 14,
+        floorY - 2,
+        15 * shadowScale,
+        4.2 * shadowScale,
+        0.32 * shadowScale,
+        pal
+      );
+    }
 
     const emoteCycle = time % 5.5;
     const emoteProgress = emoteCycle > 4.2 ? (emoteCycle - 4.2) / 1.1 : 0;
@@ -199,6 +277,10 @@
       window.addEventListener('pointermove', (e) => {
         mouseX = e.clientX / Math.max(1, window.innerWidth);
         mouseY = e.clientY / Math.max(1, window.innerHeight);
+      });
+
+      window.ExoticTheme.subscribe?.(() => {
+        renderBackdrop(performance.now() / 1000, 0);
       });
 
       requestAnimationFrame(tick);

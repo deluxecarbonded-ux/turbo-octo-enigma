@@ -52,6 +52,7 @@
       settings: {
         theme: 'dark',
         colorMode: 'monochrome',
+        dimensionMode: '2d',
         muted: false,
         volume: 0.7,
         screenShake: true,
@@ -110,6 +111,9 @@
           state.settings.colorMode = 'monochrome';
           state.defaultMonochromeMigrated = true;
           persistLocalOnly();
+        }
+        if (state.settings.dimensionMode !== '3d') {
+          state.settings.dimensionMode = '2d';
         }
       }
     } catch {
@@ -225,6 +229,13 @@
         window.ExoticTheme.getColorMode() !== nextSettings.colorMode
       ) {
         window.ExoticTheme.setColorMode(nextSettings.colorMode);
+      }
+      if (
+        nextSettings.dimensionMode &&
+        window.ExoticTheme.getDimensionMode &&
+        window.ExoticTheme.getDimensionMode() !== nextSettings.dimensionMode
+      ) {
+        window.ExoticTheme.setDimensionMode(nextSettings.dimensionMode);
       }
     }
     if (window.ExoticAudio) {
@@ -371,6 +382,9 @@
         if (sets.theme) state.settings.theme = sets.theme;
         if (sets.color_mode === 'colored' || sets.color_mode === 'monochrome') {
           state.settings.colorMode = sets.color_mode;
+        }
+        if (sets.dimension_mode === '2d' || sets.dimension_mode === '3d') {
+          state.settings.dimensionMode = sets.dimension_mode;
         }
         if (typeof sets.muted === 'boolean') state.settings.muted = sets.muted;
         if (sets.volume != null) state.settings.volume = Number(sets.volume);

@@ -2393,6 +2393,26 @@
       }
       ctx.scale(sx, sy);
 
+      if (pal.is3D && window.Exotic3D) {
+        const sc = h / 26;
+        const cc3d = resolveCharacterColors(characterId, pal);
+        const sk3d = resolveSkinColors(skinId, cc3d, pal);
+        const extX = -facing * 4.4 * sc;
+        const extY = -3.0 * sc;
+        const farCol = window.Exotic3D.shadeFace(sk3d.primary, 'extrudeFar', pal);
+        const nearCol = window.Exotic3D.shadeFace(sk3d.primary, 'extrudeNear', pal);
+
+        for (let step = 4; step >= 1; step--) {
+          const frac = step / 4;
+          ctx.save();
+          ctx.translate(extX * frac, extY * frac);
+          applyBodyPath(ctx, characterId, w, h, facing, vx, vy, time);
+          ctx.fillStyle = step >= 3 ? farCol : nearCol;
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
       drawSkinFill(ctx, skinId, characterId, w, h, facing, vx, vy, pal, time);
       drawCharacterFeatures(ctx, characterId, skinId, w, h, facing, vx, vy, pal, time);
       drawEmoteOverlay(ctx, emoteId, emoteProgress, pal);

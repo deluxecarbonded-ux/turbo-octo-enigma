@@ -32,6 +32,30 @@
     return { w: rect.width, h: rect.height, dpr };
   }
 
+  function drawPreviewSlab(ctx, x, y, w, h, vanishX, pal, depth = 14) {
+    if (pal && pal.is3D && window.Exotic3D) {
+      window.Exotic3D.drawExtrudedBox(ctx, x, y, w, h, {
+        palette: pal,
+        vanishX,
+        depth,
+        frontColor: pal.platform,
+        capColor: pal.platformCap,
+        castShadow: false
+      });
+      if (pal.colored) {
+        ctx.fillStyle = pal.platformCap;
+        ctx.fillRect(x, y, w, 3);
+      }
+      return;
+    }
+    ctx.fillStyle = pal.platform;
+    ctx.fillRect(x, y, w, h);
+    if (pal.colored) {
+      ctx.fillStyle = pal.platformCap;
+      ctx.fillRect(x, y, w, 3);
+    }
+  }
+
   function renderShopPreview(rec, time, dt, pal) {
     const { ctx, canvas, item, trailSys, scrubber } = rec;
     const dim = fitCanvas(canvas);
@@ -53,10 +77,30 @@
     ctx.fillStyle = pal.stageBg;
     ctx.fillRect(0, 0, dim.w, dim.h);
 
-    // Subtle architectural backdrop columns
-    ctx.fillStyle = pal.bgPillar;
-    ctx.fillRect(dim.w * 0.12, 16, 20, dim.h);
-    ctx.fillRect(dim.w * 0.8, 28, 26, dim.h);
+    const is3D = Boolean(pal.is3D && window.Exotic3D);
+    window.ExoticWorldDraw.setVanishX?.(dim.w * 0.5);
+    if (is3D && item.category !== 'maps' && item.category !== 'weapons') {
+      window.Exotic3D.draw3DStageChamber(ctx, dim.w, dim.h, Math.sin(time * 0.8 + rec.seed) * 20, pal);
+      window.Exotic3D.drawExtrudedBox(ctx, dim.w * 0.12, 16, 20, dim.h, {
+        palette: pal,
+        vanishX: dim.w * 0.5,
+        depth: 10,
+        frontColor: pal.bgPillar,
+        castShadow: false
+      });
+      window.Exotic3D.drawExtrudedBox(ctx, dim.w * 0.8, 28, 26, dim.h, {
+        palette: pal,
+        vanishX: dim.w * 0.5,
+        depth: 12,
+        frontColor: pal.bgPillar,
+        castShadow: false
+      });
+    } else {
+      // Subtle architectural backdrop columns
+      ctx.fillStyle = pal.bgPillar;
+      ctx.fillRect(dim.w * 0.12, 16, 20, dim.h);
+      ctx.fillRect(dim.w * 0.8, 28, 26, dim.h);
+    }
 
     const floorY = dim.h * 0.77;
 
@@ -82,14 +126,8 @@
     if (item.category === 'upgrades') {
       // Bespoke live mechanic simulation per Upgrade
       if (item.id === 'upg_coyote') {
-        ctx.fillStyle = pal.platform;
-        ctx.fillRect(14, floorY, dim.w * 0.34, dim.h - floorY);
-        ctx.fillRect(dim.w * 0.66, floorY, dim.w * 0.3, dim.h - floorY);
-        if (pal.colored) {
-          ctx.fillStyle = pal.platformCap;
-          ctx.fillRect(14, floorY, dim.w * 0.34, 3);
-          ctx.fillRect(dim.w * 0.66, floorY, dim.w * 0.3, 3);
-        }
+        drawPreviewSlab(ctx, 14, floorY, dim.w * 0.34, dim.h - floorY, dim.w * 0.5, pal);
+        drawPreviewSlab(ctx, dim.w * 0.66, floorY, dim.w * 0.3, dim.h - floorY, dim.w * 0.5, pal);
 
         const px = 22 + norm * (dim.w - 68);
         let py = floorY - 26;
@@ -116,12 +154,7 @@
           time
         });
       } else if (item.id === 'upg_magnet') {
-        ctx.fillStyle = pal.platform;
-        ctx.fillRect(12, floorY, dim.w - 24, dim.h - floorY);
-        if (pal.colored) {
-          ctx.fillStyle = pal.platformCap;
-          ctx.fillRect(12, floorY, dim.w - 24, 3);
-        }
+        drawPreviewSlab(ctx, 12, floorY, dim.w - 24, dim.h - floorY, dim.w * 0.5, pal);
         const px = dim.w * 0.5 + Math.sin(norm * Math.PI * 2) * (dim.w * 0.25) - 12;
         const py = floorY - 26;
 
@@ -153,14 +186,8 @@
           time
         });
       } else if (item.id === 'upg_double_jump') {
-        ctx.fillStyle = pal.platform;
-        ctx.fillRect(12, floorY, dim.w * 0.26, dim.h - floorY);
-        ctx.fillRect(dim.w * 0.74, floorY, dim.w * 0.22, dim.h - floorY);
-        if (pal.colored) {
-          ctx.fillStyle = pal.platformCap;
-          ctx.fillRect(12, floorY, dim.w * 0.26, 3);
-          ctx.fillRect(dim.w * 0.74, floorY, dim.w * 0.22, 3);
-        }
+        drawPreviewSlab(ctx, 12, floorY, dim.w * 0.26, dim.h - floorY, dim.w * 0.5, pal);
+        drawPreviewSlab(ctx, dim.w * 0.74, floorY, dim.w * 0.22, dim.h - floorY, dim.w * 0.5, pal);
 
         const px = 22 + norm * (dim.w - 68);
         let py = floorY - 26;
@@ -189,14 +216,8 @@
           time
         });
       } else if (item.id === 'upg_dash') {
-        ctx.fillStyle = pal.platform;
-        ctx.fillRect(10, floorY, dim.w * 0.28, dim.h - floorY);
-        ctx.fillRect(dim.w * 0.72, floorY, dim.w * 0.24, dim.h - floorY);
-        if (pal.colored) {
-          ctx.fillStyle = pal.platformCap;
-          ctx.fillRect(10, floorY, dim.w * 0.28, 3);
-          ctx.fillRect(dim.w * 0.72, floorY, dim.w * 0.24, 3);
-        }
+        drawPreviewSlab(ctx, 10, floorY, dim.w * 0.28, dim.h - floorY, dim.w * 0.5, pal);
+        drawPreviewSlab(ctx, dim.w * 0.72, floorY, dim.w * 0.24, dim.h - floorY, dim.w * 0.5, pal);
         window.ExoticWorldDraw.drawSpikes(
           ctx,
           { x: dim.w * 0.4, y: dim.h - 4, count: 4, dir: 'up' },
@@ -257,14 +278,8 @@
           troll: { type: 'drop' },
           triggered: false
         };
-        ctx.fillStyle = pal.platform;
-        ctx.fillRect(10, floorY, dim.w * 0.26, dim.h - floorY);
-        ctx.fillRect(dim.w * 0.64, floorY, dim.w * 0.32, dim.h - floorY);
-        if (pal.colored) {
-          ctx.fillStyle = pal.platformCap;
-          ctx.fillRect(10, floorY, dim.w * 0.26, 3);
-          ctx.fillRect(dim.w * 0.64, floorY, dim.w * 0.32, 3);
-        }
+        drawPreviewSlab(ctx, 10, floorY, dim.w * 0.26, dim.h - floorY, dim.w * 0.5, pal);
+        drawPreviewSlab(ctx, dim.w * 0.64, floorY, dim.w * 0.32, dim.h - floorY, dim.w * 0.5, pal);
         window.ExoticWorldDraw.drawPlatform(ctx, fakePlat, pal, true, time);
         window.ExoticWorldDraw.drawSpikes(
           ctx,
@@ -296,12 +311,7 @@
         });
       } else {
         // upg_shield Second Wind parry bounce
-        ctx.fillStyle = pal.platform;
-        ctx.fillRect(12, floorY, dim.w - 24, dim.h - floorY);
-        if (pal.colored) {
-          ctx.fillStyle = pal.platformCap;
-          ctx.fillRect(12, floorY, dim.w - 24, 3);
-        }
+        drawPreviewSlab(ctx, 12, floorY, dim.w - 24, dim.h - floorY, dim.w * 0.5, pal);
         window.ExoticWorldDraw.drawSpikes(
           ctx,
           { x: dim.w * 0.5 - 18, y: floorY, count: 2, dir: 'up' },
@@ -347,10 +357,23 @@
     }
 
     // Standard Showcase Stage for Auras, Characters, Skins, Trails, Emotes
-    ctx.fillStyle = pal.platform;
-    ctx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, dim.h - floorY);
-    ctx.fillStyle = pal.platformCap;
-    ctx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, 3.5);
+    if (is3D) {
+      window.Exotic3D.drawExtrudedBox(ctx, dim.w * 0.1, floorY, dim.w * 0.8, dim.h - floorY, {
+        palette: pal,
+        vanishX: dim.w * 0.5,
+        depth: 18,
+        frontColor: pal.platform,
+        capColor: pal.platformCap,
+        castShadow: false
+      });
+      ctx.fillStyle = pal.platformCap;
+      ctx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, 3.5);
+    } else {
+      ctx.fillStyle = pal.platform;
+      ctx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, dim.h - floorY);
+      ctx.fillStyle = pal.platformCap;
+      ctx.fillRect(dim.w * 0.1, floorY, dim.w * 0.8, 3.5);
+    }
 
     const charId = item.category === 'characters' ? item.id : eq.character;
     const skinId = item.category === 'skins' ? item.id : eq.skin;
@@ -406,6 +429,20 @@
     const cx = pState.x + pState.w * 0.5;
     const cy = pState.y + pState.h * 0.5;
 
+    if (is3D) {
+      const dist = Math.max(0, floorY - (pState.y + pState.h));
+      const scShadow = Math.max(0.45, 1 - dist / 65);
+      window.Exotic3D.drawGroundShadow(
+        ctx,
+        cx,
+        floorY - 1.5,
+        13 * scShadow,
+        3.6 * scShadow,
+        0.3 * scShadow,
+        pal
+      );
+    }
+
     window.ExoticAuraRenderer.drawBack(ctx, auraId, cx, cy, time, pal);
     window.ExoticCharacterRenderer.draw(ctx, {
       ...pState,
@@ -456,13 +493,29 @@
     const panWave = 0.5 - 0.5 * Math.cos(norm * Math.PI * 2);
     const camX = panWave * maxPan;
 
+    const is3D = Boolean(pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.draw3DStageChamber(ctx, dim.w, dim.h, camX, pal);
+    }
+
     ctx.scale(scale, scale);
     ctx.translate(-camX, 0);
+    window.ExoticWorldDraw.setVanishX?.(camX + viewWorldW * 0.5);
 
     // Background pillars inside level preview
     ctx.fillStyle = pal.bgPillar;
     for (let bx = 80; bx < level.width; bx += 220) {
-      ctx.fillRect(bx, 60, 34, level.height);
+      if (is3D) {
+        window.Exotic3D.drawExtrudedBox(ctx, bx, 60, 34, level.height, {
+          palette: pal,
+          vanishX: camX + viewWorldW * 0.5,
+          depth: 16,
+          frontColor: pal.bgPillar,
+          castShadow: false
+        });
+      } else {
+        ctx.fillRect(bx, 60, 34, level.height);
+      }
     }
 
     // Dishonest wall signs (flip mid-preview loop!)
@@ -612,12 +665,8 @@
     ctx.fillRect(0, 0, dim.w, dim.h);
 
     const floorY = Math.round(dim.h * 0.82);
-    ctx.fillStyle = pal.platform;
-    ctx.fillRect(4, floorY, dim.w - 8, dim.h - floorY);
-    if (pal.colored) {
-      ctx.fillStyle = pal.platformCap;
-      ctx.fillRect(4, floorY, dim.w - 8, 2);
-    }
+    window.ExoticWorldDraw.setVanishX?.(dim.w * 0.5);
+    drawPreviewSlab(ctx, 4, floorY, dim.w - 8, dim.h - floorY, dim.w * 0.5, pal, 6);
 
     const sc = Math.min(0.68, (floorY - 6) / 28);
     const rw = 24 * sc;

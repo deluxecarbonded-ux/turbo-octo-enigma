@@ -1,25 +1,52 @@
 (function () {
+  let activeVanishX = null;
+
+  function setVanishX(vx) {
+    activeVanishX = typeof vx === 'number' && Number.isFinite(vx) ? vx : null;
+  }
+
   function drawSign(ctx, sign, pal) {
     const text = sign.triggered ? sign.after : sign.before;
     const w = sign.w || 124;
     const h = sign.h || 34;
     const x = sign.x - w * 0.5;
     const y = sign.y - h * 0.5;
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
 
-    ctx.save();
-    // Sign post
-    ctx.fillStyle = pal.bgPillarAlt;
-    ctx.fillRect(sign.x - 3, y + h, 6, 38);
-
-    // Sign board (inverts/lights up when triggered for comedic punch)
-    ctx.fillStyle = sign.triggered
+    const boardColor = sign.triggered
       ? pal.colored
         ? pal.signTriggeredBg
         : pal.platform
       : pal.colored
         ? pal.signBg
         : pal.bgPillarAlt;
-    window.ExoticCharacterRenderer.fillRoundRect(ctx, x, y, w, h, 8);
+
+    ctx.save();
+    if (is3D) {
+      window.Exotic3D.drawExtrudedBox(ctx, sign.x - 3, y + h, 6, 38, {
+        palette: pal,
+        vanishX: activeVanishX,
+        depth: 8,
+        frontColor: pal.bgPillarAlt,
+        castShadow: false
+      });
+      window.Exotic3D.drawExtrudedBox(ctx, x, y, w, h, {
+        palette: pal,
+        vanishX: activeVanishX,
+        depth: 10,
+        frontColor: boardColor,
+        radius: 8,
+        castShadow: false
+      });
+    } else {
+      // Sign post
+      ctx.fillStyle = pal.bgPillarAlt;
+      ctx.fillRect(sign.x - 3, y + h, 6, 38);
+
+      // Sign board (inverts/lights up when triggered for comedic punch)
+      ctx.fillStyle = boardColor;
+      window.ExoticCharacterRenderer.fillRoundRect(ctx, x, y, w, h, 8);
+    }
 
     ctx.fillStyle = sign.triggered
       ? pal.colored
@@ -38,16 +65,39 @@
   function drawFakeCheckpoint(ctx, cp, pal, time) {
     ctx.save();
     const poleH = 46;
-    // Flag pole
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.drawGroundShadow(ctx, cp.x, cp.y, 10, 3, 0.25, pal);
+      window.Exotic3D.drawExtrudedBox(ctx, cp.x - 2, cp.y - poleH, 4, poleH, {
+        palette: pal,
+        vanishX: activeVanishX,
+        depth: 6,
+        frontColor: pal.platform,
+        castShadow: false
+      });
+    } else {
+      // Flag pole
+      ctx.fillStyle = pal.platform;
+      ctx.fillRect(cp.x - 2, cp.y - poleH, 4, poleH);
+    }
     ctx.fillStyle = pal.platform;
-    ctx.fillRect(cp.x - 2, cp.y - poleH, 4, poleH);
     ctx.beginPath();
     ctx.arc(cp.x, cp.y - poleH - 2, 3.5, 0, Math.PI * 2);
     ctx.fill();
 
     // Waving pennant flag
     const wave = Math.sin(time * 7) * 2.5;
-    ctx.fillStyle = cp.triggered ? pal.hazard : pal.platformCap;
+    const flagCol = cp.triggered ? pal.hazard : pal.platformCap;
+    if (is3D) {
+      ctx.fillStyle = window.Exotic3D.shadeFace(flagCol, 'side', pal);
+      ctx.beginPath();
+      ctx.moveTo(cp.x + 5, cp.y - poleH - 1);
+      ctx.lineTo(cp.x + 33, cp.y - poleH + 6 + wave);
+      ctx.lineTo(cp.x + 5, cp.y - poleH + 15);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = flagCol;
     ctx.beginPath();
     ctx.moveTo(cp.x + 2, cp.y - poleH + 2);
     ctx.lineTo(cp.x + 30, cp.y - poleH + 9 + wave);
@@ -65,13 +115,33 @@
   function drawChaserWall(ctx, wall, pal) {
     if (!wall || !wall.active) return;
     ctx.save();
-    ctx.fillStyle = pal.platform;
-    ctx.fillRect(wall.x - wall.w, 0, wall.w, 540);
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.drawExtrudedBox(ctx, wall.x - wall.w, 0, wall.w, 540, {
+        palette: pal,
+        dx: 12,
+        dy: -10,
+        frontColor: pal.platform,
+        castShadow: false
+      });
+    } else {
+      ctx.fillStyle = pal.platform;
+      ctx.fillRect(wall.x - wall.w, 0, wall.w, 540);
+    }
 
     // Sawtooth spike wall teeth along right leading edge
     const toothH = 24;
-    ctx.fillStyle = pal.hazard;
     for (let ty = 0; ty < 540; ty += toothH) {
+      if (is3D) {
+        ctx.fillStyle = window.Exotic3D.shadeFace(pal.hazard, 'top', pal);
+        ctx.beginPath();
+        ctx.moveTo(wall.x, ty);
+        ctx.lineTo(wall.x + 17, ty + toothH * 0.5 - 3);
+        ctx.lineTo(wall.x + 15, ty + toothH * 0.5);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = pal.hazard;
       ctx.beginPath();
       ctx.moveTo(wall.x, ty);
       ctx.lineTo(wall.x + 15, ty + toothH * 0.5);
@@ -95,8 +165,20 @@
       return;
     }
 
-    ctx.fillStyle = pal.platform;
-    ctx.fillRect(p.x, p.y, p.w, p.h);
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.drawExtrudedBox(ctx, p.x, p.y, p.w, p.h, {
+        palette: pal,
+        vanishX: activeVanishX,
+        depth: Math.min(20, Math.max(12, p.h * 0.42)),
+        frontColor: pal.platform,
+        capColor: pal.platformCap,
+        castShadow: p.h < 180
+      });
+    } else {
+      ctx.fillStyle = pal.platform;
+      ctx.fillRect(p.x, p.y, p.w, p.h);
+    }
 
     // Solid contrasting surface cap (no border, pure tonal top strip)
     ctx.fillStyle = pal.platformCap;
@@ -148,9 +230,25 @@
       return;
     }
 
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
     const h = toothH * progress;
     for (let i = 0; i < sp.count; i++) {
       const bx = sp.x + i * toothW;
+      if (is3D) {
+        window.Exotic3D.draw3DPyramidSpike(
+          ctx,
+          bx,
+          sp.y,
+          toothW,
+          h,
+          sp.dir,
+          pal.hazard,
+          pal,
+          activeVanishX
+        );
+        continue;
+      }
+
       ctx.fillStyle = pal.hazard;
       ctx.beginPath();
       if (sp.dir === 'down') {
@@ -184,21 +282,46 @@
 
   function drawCrusher(ctx, cr, pal) {
     if (cr.y + cr.h < -8) return;
-    ctx.fillStyle = pal.platform;
-    ctx.fillRect(cr.x, cr.y, cr.w, cr.h);
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.drawExtrudedBox(ctx, cr.x, cr.y, cr.w, cr.h, {
+        palette: pal,
+        vanishX: activeVanishX,
+        depth: 16,
+        frontColor: pal.platform,
+        castShadow: true
+      });
+    } else {
+      ctx.fillStyle = pal.platform;
+      ctx.fillRect(cr.x, cr.y, cr.w, cr.h);
+    }
 
     // Warning teeth along bottom edge
     const teeth = Math.max(2, Math.floor(cr.w / 16));
     const tw = cr.w / teeth;
-    ctx.fillStyle = pal.hazard;
     for (let i = 0; i < teeth; i++) {
       const tx = cr.x + i * tw;
-      ctx.beginPath();
-      ctx.moveTo(tx, cr.y + cr.h);
-      ctx.lineTo(tx + tw, cr.y + cr.h);
-      ctx.lineTo(tx + tw * 0.5, cr.y + cr.h + 9);
-      ctx.closePath();
-      ctx.fill();
+      if (is3D) {
+        window.Exotic3D.draw3DPyramidSpike(
+          ctx,
+          tx,
+          cr.y + cr.h,
+          tw,
+          9,
+          'down',
+          pal.hazard,
+          pal,
+          activeVanishX
+        );
+      } else {
+        ctx.fillStyle = pal.hazard;
+        ctx.beginPath();
+        ctx.moveTo(tx, cr.y + cr.h);
+        ctx.lineTo(tx + tw, cr.y + cr.h);
+        ctx.lineTo(tx + tw * 0.5, cr.y + cr.h + 9);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
 
     // Angry geometric eyes inside crusher block
@@ -222,26 +345,41 @@
 
   function drawSaw(ctx, saw, pal, time) {
     const { fillRing } = window.ExoticCharacterRenderer;
-    ctx.save();
-    ctx.translate(saw.x, saw.y);
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
     const spinSpeed = saw.awake === false && !saw.patrolDY && !saw.patrolDX ? 1.2 : 9.5;
-    ctx.rotate(time * spinSpeed);
-
     const teeth = 10;
     const r = saw.r;
-    ctx.fillStyle = pal.hazard;
-    ctx.beginPath();
-    for (let i = 0; i < teeth * 2; i++) {
-      const rad = i % 2 === 0 ? r + 4 : r - 3;
-      const a = (i * Math.PI) / teeth;
-      const px = Math.cos(a) * rad;
-      const py = Math.sin(a) * rad;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.fill();
 
+    const fillSawWheel = (ox, oy, color) => {
+      ctx.save();
+      ctx.translate(saw.x + ox, saw.y + oy);
+      ctx.rotate(time * spinSpeed);
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      for (let i = 0; i < teeth * 2; i++) {
+        const rad = i % 2 === 0 ? r + 4 : r - 3;
+        const a = (i * Math.PI) / teeth;
+        const px = Math.cos(a) * rad;
+        const py = Math.sin(a) * rad;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
+
+    if (is3D) {
+      const { dx, dy } = window.Exotic3D.computeExtrusion(saw.x, activeVanishX, 10);
+      const rearCol = window.Exotic3D.shadeFace(pal.hazard, 'side', pal);
+      fillSawWheel(dx * 0.65, dy * 0.65, rearCol);
+      fillSawWheel(dx * 0.32, dy * 0.32, rearCol);
+    }
+
+    fillSawWheel(0, 0, pal.hazard);
+
+    ctx.save();
+    ctx.translate(saw.x, saw.y);
     ctx.fillStyle = pal.playerSecondary;
     fillRing(ctx, 0, 0, r * 0.48, r * 0.2);
     ctx.restore();
@@ -249,6 +387,31 @@
 
   function drawSpring(ctx, spr, pal) {
     const comp = spr.compress || 0;
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.drawExtrudedBox(
+        ctx,
+        spr.x + 4,
+        spr.y + 5 + comp * 4,
+        spr.w - 8,
+        spr.h - 5 - comp * 4,
+        {
+          palette: pal,
+          vanishX: activeVanishX,
+          depth: 10,
+          frontColor: pal.springBase,
+          castShadow: false
+        }
+      );
+      window.Exotic3D.drawExtrudedBox(ctx, spr.x, spr.y + comp * 5, spr.w, 5, {
+        palette: pal,
+        vanishX: activeVanishX,
+        depth: 12,
+        frontColor: pal.springTop,
+        castShadow: false
+      });
+      return;
+    }
     ctx.fillStyle = pal.springBase;
     ctx.fillRect(spr.x + 4, spr.y + 5 + comp * 4, spr.w - 8, spr.h - 5 - comp * 4);
     ctx.fillStyle = pal.springTop;
@@ -257,8 +420,19 @@
 
   function drawGravityZone(ctx, gz, pal, time) {
     ctx.save();
-    ctx.fillStyle = pal.gravityZone;
-    ctx.fillRect(gz.x, gz.y, gz.w, gz.h);
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
+    if (is3D) {
+      window.Exotic3D.drawExtrudedBox(ctx, gz.x, gz.y, gz.w, gz.h, {
+        palette: pal,
+        vanishX: activeVanishX,
+        depth: 18,
+        frontColor: pal.gravityZone,
+        castShadow: false
+      });
+    } else {
+      ctx.fillStyle = pal.gravityZone;
+      ctx.fillRect(gz.x, gz.y, gz.w, gz.h);
+    }
 
     ctx.fillStyle = pal.auraSoft;
     ctx.globalAlpha = 0.28;
@@ -283,13 +457,29 @@
   function drawCoin(ctx, c, pal, time) {
     if (c.collected) return;
     const { fillDiamond } = window.ExoticCharacterRenderer;
-    const spin = Math.max(0.22, Math.abs(Math.cos(time * 4.5 + c.x * 0.02)));
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
+    const angle = time * 4.5 + c.x * 0.02;
+    const spin = Math.max(0.22, Math.abs(Math.cos(angle)));
     const bob = Math.sin(time * 3.8 + c.x * 0.05) * 2.5;
+
+    if (is3D) {
+      window.Exotic3D.drawGroundShadow(ctx, c.x, c.y + 13, 6.5, 2.2, 0.24, pal);
+      const rimShift = Math.sin(angle) * 3.4;
+      ctx.save();
+      ctx.translate(c.x + rimShift, c.y + bob);
+      ctx.scale(spin, 1);
+      ctx.fillStyle = window.Exotic3D.shadeFace(pal.coinOuter, 'side', pal);
+      ctx.beginPath();
+      ctx.arc(0, 0, 8.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     ctx.save();
     ctx.translate(c.x, c.y + bob);
     ctx.scale(spin, 1);
 
-    ctx.fillStyle = pal.coinOuter;
+    ctx.fillStyle = is3D ? window.Exotic3D.shadeFace(pal.coinOuter, 'top', pal) : pal.coinOuter;
     ctx.beginPath();
     ctx.arc(0, 0, 8.5, 0, Math.PI * 2);
     ctx.fill();
@@ -302,7 +492,30 @@
   function drawSkillOrb(ctx, orb, alreadyOwned, pal, time) {
     if (!orb || orb.collected || alreadyOwned) return;
     const { fillRing, fillDiamond } = window.ExoticCharacterRenderer;
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
     const bob = Math.sin(time * 3.2) * 3.5;
+
+    if (is3D) {
+      window.Exotic3D.drawGroundShadow(ctx, orb.x, orb.y + 18, 9, 3, 0.26, pal);
+      ctx.save();
+      ctx.translate(orb.x, orb.y + bob);
+      ctx.scale(1, 0.46);
+      ctx.fillStyle = pal.skillOuter;
+      fillRing(ctx, 0, 4, 15.5, 12.2);
+      ctx.restore();
+      window.Exotic3D.draw3DOctahedron(
+        ctx,
+        orb.x,
+        orb.y + bob,
+        8.5,
+        11.5,
+        time * 2.6,
+        pal.skillOuter,
+        pal
+      );
+      return;
+    }
+
     ctx.save();
     ctx.translate(orb.x, orb.y + bob);
 
@@ -322,8 +535,24 @@
     const w = d.w || 38;
     const h = d.h || 54;
     const archR = w * 0.5;
+    const is3D = Boolean(pal && pal.is3D && window.Exotic3D);
 
     ctx.save();
+    if (is3D) {
+      const { dx, dy } = window.Exotic3D.computeExtrusion(d.x + archR, activeVanishX, 14);
+      const sideCol = window.Exotic3D.shadeFace(d.color || pal.doorFrame, 'side', pal);
+      // Extruded rear 3D archway mass
+      for (const s of [1, 0.5]) {
+        ctx.fillStyle = sideCol;
+        ctx.beginPath();
+        ctx.arc(d.x + archR + dx * s, d.y + archR + dy * s, archR, Math.PI, 0);
+        ctx.lineTo(d.x + w + dx * s, d.y + h + dy * s);
+        ctx.lineTo(d.x + dx * s, d.y + h + dy * s);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
     ctx.fillStyle = pal.doorFrame;
     ctx.beginPath();
     ctx.arc(d.x + archR, d.y + archR, archR, Math.PI, 0);
@@ -342,12 +571,32 @@
     ctx.fill();
 
     const pulse = 5 + Math.sin(time * 5) * 1.6;
-    ctx.fillStyle = pal.colored ? pal.doorCore : pal.doorFrame;
-    window.ExoticCharacterRenderer.fillDiamond(ctx, d.x + archR, d.y + h * 0.56, pulse, pulse * 1.35);
+    if (is3D) {
+      window.Exotic3D.draw3DOctahedron(
+        ctx,
+        d.x + archR,
+        d.y + h * 0.56,
+        pulse * 1.05,
+        pulse * 1.45,
+        time * 3.2,
+        pal.colored ? pal.doorCore : pal.doorFrame,
+        pal
+      );
+    } else {
+      ctx.fillStyle = pal.colored ? pal.doorCore : pal.doorFrame;
+      window.ExoticCharacterRenderer.fillDiamond(
+        ctx,
+        d.x + archR,
+        d.y + h * 0.56,
+        pulse,
+        pulse * 1.35
+      );
+    }
     ctx.restore();
   }
 
   window.ExoticWorldDraw = {
+    setVanishX,
     drawSign,
     drawFakeCheckpoint,
     drawChaserWall,
