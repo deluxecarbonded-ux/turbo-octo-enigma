@@ -709,6 +709,7 @@
     const catLower = `${cat.label} ${item.category} ${brawlTag}`.toLowerCase();
     const tierLower = String(item.tier || '').toLowerCase();
     const descLower = String(item.desc || '').toLowerCase();
+    const kwLower = String(item.keywords || '').toLowerCase();
     const currLabel = item.currency === 'sp' ? 'sp skill point skill points' : 'coin coins';
     const costBlob = item.cost === 0 ? 'free starter' : `${item.cost} ${currLabel}`;
     const statusBlob = [
@@ -719,7 +720,7 @@
       .filter(Boolean)
       .join(' ');
 
-    const fullBlob = `${nameLower} ${catLower} ${tierLower} ${descLower} ${costBlob} ${statusBlob}`;
+    const fullBlob = `${nameLower} ${catLower} ${tierLower} ${kwLower} ${descLower} ${costBlob} ${statusBlob}`;
     const tokens = q.split(/\s+/).filter(Boolean);
 
     let score = 0;
@@ -747,6 +748,9 @@
       }
       if (statusBlob.includes(tok) || costBlob.includes(tok)) {
         tokScore = Math.max(tokScore, 135);
+      }
+      if (kwLower.includes(tok)) {
+        tokScore = Math.max(tokScore, 240);
       }
       if (descLower.includes(tok)) tokScore = Math.max(tokScore, 75);
 

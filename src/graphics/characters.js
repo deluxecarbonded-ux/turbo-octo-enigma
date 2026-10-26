@@ -449,6 +449,56 @@
       return;
     }
 
+    if (charId === 'char_jason') {
+      const sc = h / 26;
+      // Backwards snapback cap rear bill + chiseled head + sleeveless tank torso + muscular arms + cargo boots
+      addRoundRectSubpath(
+        ctx,
+        (facing > 0 ? -12.8 : 5.4) * sc,
+        -9.8 * sc,
+        7.4 * sc,
+        2.3 * sc,
+        1.1 * sc
+      );
+      addRoundRectSubpath(ctx, -6.6 * sc, -12.6 * sc, 13.2 * sc, 14.0 * sc, 5.2 * sc);
+      addRoundRectSubpath(ctx, -6.0 * sc, 1.2 * sc, 12.0 * sc, 9.0 * sc, 3.0 * sc);
+      addCapsuleSubpath(ctx, -5.2 * sc, 2.8 * sc, (-8.4 - stride * 0.55) * sc, 7.8 * sc, 1.95 * sc);
+      addCapsuleSubpath(ctx, 5.2 * sc, 2.8 * sc, (8.4 + stride * 0.55) * sc, 7.2 * sc, 1.95 * sc);
+      addRoundRectSubpath(ctx, (-6.0 + stride * 0.85) * sc, 10.2 * sc, 5.4 * sc, 3.6 * sc, 1.6 * sc);
+      addRoundRectSubpath(ctx, (0.6 - stride * 0.85) * sc, 10.2 * sc, 5.4 * sc, 3.6 * sc, 1.6 * sc);
+      return;
+    }
+
+    if (charId === 'char_lucia') {
+      const sc = h / 26;
+      const tailWave = Math.sin(time * 12) * 1.6 * sc;
+      const tailLift = Math.max(-2.8, Math.min(2.8, vy * 0.008)) * sc;
+      // Flowing velocity-reactive ponytail + swept hair crown + athletic halter torso + arms + sneakers
+      addCapsuleSubpath(
+        ctx,
+        -facing * 4.6 * sc,
+        -8.8 * sc,
+        -facing * 10.4 * sc,
+        (-6.2 + tailWave * 0.5 + tailLift) * sc,
+        2.4 * sc
+      );
+      addCapsuleSubpath(
+        ctx,
+        -facing * 9.8 * sc,
+        (-6.2 + tailWave * 0.5 + tailLift) * sc,
+        -facing * 13.2 * sc,
+        (-1.2 - tailWave * 0.6 + tailLift) * sc,
+        1.8 * sc
+      );
+      addCircleSubpath(ctx, 0, -4.8 * sc, 7.2 * sc);
+      addRoundRectSubpath(ctx, -5.5 * sc, 1.6 * sc, 11.0 * sc, 8.6 * sc, 3.3 * sc);
+      addCapsuleSubpath(ctx, -4.6 * sc, 3.0 * sc, (-7.8 - stride * 0.55) * sc, 7.6 * sc, 1.65 * sc);
+      addCapsuleSubpath(ctx, 4.6 * sc, 3.0 * sc, (7.8 + stride * 0.55) * sc, 7.0 * sc, 1.65 * sc);
+      addRoundRectSubpath(ctx, (-5.6 + stride * 0.85) * sc, 10.2 * sc, 5.0 * sc, 3.5 * sc, 1.6 * sc);
+      addRoundRectSubpath(ctx, (0.6 - stride * 0.85) * sc, 10.2 * sc, 5.0 * sc, 3.5 * sc, 1.6 * sc);
+      return;
+    }
+
     if (charId === 'char_scream') {
       const sc = h / 26;
       const hoodDrag = Math.max(-3.6, Math.min(3.6, -vx * 0.015)) * sc;
@@ -542,6 +592,30 @@
           secondary: '#ffffff',
           mid: '#f43f5e',
           accent: '#fbbf24',
+          eyeWhite: '#ffffff',
+          pupil: '#0f172a'
+        };
+      case 'char_jason':
+        return {
+          colored: true,
+          primary: '#f1b38a',
+          secondary: '#f8fafc',
+          mid: '#dc2626',
+          accent: '#4d7c0f',
+          cap: '#1e293b',
+          hair: '#78350f',
+          boot: '#1c1917',
+          eyeWhite: '#ffffff',
+          pupil: '#0f172a'
+        };
+      case 'char_lucia':
+        return {
+          colored: true,
+          primary: '#dc966a',
+          secondary: '#ec4899',
+          mid: '#2563eb',
+          accent: '#fbbf24',
+          hair: '#1c1917',
           eyeWhite: '#ffffff',
           pupil: '#0f172a'
         };
@@ -1165,6 +1239,31 @@
           ctx.fillRect(bx, 10.2 * sc, bw, bh);
           ctx.fillRect(bx, 2.0 * sc, -bx - 6.8 * sc, 7.6 * sc);
           ctx.fillRect(6.8 * sc, 2.0 * sc, bw, 7.6 * sc);
+        } else if (charId === 'char_jason') {
+          // Slate backwards snapback cap + crisp white sleeveless tank top + olive cargo pants + dark boots
+          ctx.fillStyle = cc.cap || '#1e293b';
+          ctx.fillRect(bx, by, bw, -by - 7.3 * sc);
+          ctx.fillStyle = cc.secondary;
+          ctx.fillRect(-4.9 * sc, 1.8 * sc, 9.8 * sc, 5.1 * sc);
+          ctx.fillStyle = cc.accent;
+          ctx.fillRect(-6.2 * sc, 6.7 * sc, 12.4 * sc, 3.6 * sc);
+          ctx.fillStyle = cc.boot || '#1c1917';
+          ctx.fillRect(bx, 10.2 * sc, bw, bh);
+        } else if (charId === 'char_lucia') {
+          // Deep espresso hair crown & ponytail + Vice pink halter top + blue denim + white sneakers
+          ctx.fillStyle = cc.hair || '#1c1917';
+          ctx.fillRect(bx, by, bw, -by - 7.6 * sc);
+          if (facing > 0) {
+            ctx.fillRect(bx, -9.5 * sc, -bx - 5.2 * sc, 10.2 * sc);
+          } else {
+            ctx.fillRect(5.2 * sc, -9.5 * sc, bw, 10.2 * sc);
+          }
+          ctx.fillStyle = cc.secondary;
+          ctx.fillRect(-4.7 * sc, 2.0 * sc, 9.4 * sc, 4.4 * sc);
+          ctx.fillStyle = cc.mid;
+          ctx.fillRect(-5.8 * sc, 6.4 * sc, 11.6 * sc, 3.9 * sc);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(bx, 10.2 * sc, bw, bh);
         } else if (charId === 'char_scream') {
           // Festive Halloween pumpkin-orange trim along tattered reaper cloak tips
           ctx.fillStyle = cc.mid;
@@ -1192,6 +1291,178 @@
     const crestFill = cc.colored ? sk.primary : pal.playerPrimary;
     const lookX = facing * 2.3 + Math.max(-2, Math.min(2, vx * 0.005));
     const lookY = Math.max(-2, Math.min(2.2, vy * 0.003));
+
+    if (charId === 'char_jason') {
+      const bandFill = cc.colored ? cc.mid : eyeFill;
+      const capShade = cc.colored ? cc.cap || '#1e293b' : pal.playerMid;
+      const hairFill = cc.colored ? cc.hair || '#78350f' : crestFill;
+      const inkFill = cc.colored ? cc.pupil : eyeFill;
+      const whip = Math.sin(time * 13) * 1.9 * sc;
+
+      // Backwards snapback visor accent & crimson cap trim band
+      ctx.fillStyle = capShade;
+      fillRoundRect(
+        ctx,
+        (facing > 0 ? -12.6 : 5.4) * sc,
+        -9.6 * sc,
+        7.0 * sc,
+        1.9 * sc,
+        0.9 * sc
+      );
+      ctx.fillStyle = bandFill;
+      fillRoundRect(ctx, -6.5 * sc, -8.3 * sc, 13.0 * sc, 1.35 * sc, 0.65 * sc);
+
+      // Snapback forehead cutout arch + brown hair tuft
+      const archX = facing * 1.8 * sc;
+      ctx.fillStyle = cc.colored ? cc.primary : eyeFill;
+      ctx.beginPath();
+      ctx.arc(archX, -7.2 * sc, 2.35 * sc, Math.PI, 0, false);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = hairFill;
+      fillRoundRect(ctx, archX - 1.5 * sc, -8.4 * sc, 3.0 * sc, 1.35 * sc, 0.6 * sc);
+
+      // Focused outlaw eyes & sharp angled brows
+      const exL = (facing > 0 ? -1.4 : -3.8) * sc + lookX * 0.28;
+      const exR = (facing > 0 ? 3.0 : 0.6) * sc + lookX * 0.28;
+      const ey = -4.6 * sc + lookY * 0.25;
+
+      if (cc.colored) {
+        ctx.fillStyle = cc.eyeWhite;
+        fillRoundRect(ctx, exL - 1.25 * sc, ey - 1.15 * sc, 2.5 * sc, 2.3 * sc, 0.9 * sc);
+        fillRoundRect(ctx, exR - 1.25 * sc, ey - 1.15 * sc, 2.5 * sc, 2.3 * sc, 0.9 * sc);
+        ctx.fillStyle = cc.pupil;
+        fillRoundRect(ctx, exL - 0.55 * sc + facing * 0.35 * sc, ey - 0.75 * sc, 1.25 * sc, 1.55 * sc, 0.55 * sc);
+        fillRoundRect(ctx, exR - 0.55 * sc + facing * 0.35 * sc, ey - 0.75 * sc, 1.25 * sc, 1.55 * sc, 0.55 * sc);
+      } else {
+        ctx.fillStyle = eyeFill;
+        fillRoundRect(ctx, exL - 1.1 * sc, ey - 1.15 * sc, 2.2 * sc, 2.4 * sc, 0.9 * sc);
+        fillRoundRect(ctx, exR - 1.1 * sc, ey - 1.15 * sc, 2.2 * sc, 2.4 * sc, 0.9 * sc);
+      }
+
+      // Angled brows
+      ctx.fillStyle = cc.colored ? hairFill : inkFill;
+      fillCapsule(ctx, exL - 1.3 * sc, ey - 1.95 * sc, exL + 1.2 * sc, ey - 1.65 * sc, 0.48 * sc);
+      fillCapsule(ctx, exR - 1.2 * sc, ey - 1.65 * sc, exR + 1.3 * sc, ey - 1.95 * sc, 0.48 * sc);
+
+      // Rugged jawline 5-o'clock stubble dots & determined mouth line
+      ctx.fillStyle = cc.colored ? 'rgba(68, 42, 24, 0.42)' : pal.playerMid;
+      fillRoundRect(ctx, facing * 0.7 * sc - 1.6 * sc, -1.25 * sc, 3.2 * sc, 0.72 * sc, 0.35 * sc);
+      ctx.beginPath();
+      addCircleSubpath(ctx, -2.6 * sc, -0.7 * sc, 0.42 * sc);
+      addCircleSubpath(ctx, 2.8 * sc, -0.7 * sc, 0.42 * sc);
+      ctx.fill();
+
+      // Signature GTA 6 Crimson Neck Bandana (draped V-triangle + fluttering rear knot tails)
+      ctx.fillStyle = bandFill;
+      fillCapsule(
+        ctx,
+        -facing * 5.2 * sc,
+        1.7 * sc,
+        -facing * 9.8 * sc,
+        (2.8 + whip) * sc,
+        0.95 * sc
+      );
+      fillCapsule(
+        ctx,
+        -facing * 5.0 * sc,
+        2.5 * sc,
+        -facing * 8.9 * sc,
+        (4.6 - whip * 0.7) * sc,
+        0.82 * sc
+      );
+      ctx.beginPath();
+      ctx.moveTo(-4.8 * sc, 1.1 * sc);
+      ctx.lineTo(4.8 * sc, 1.1 * sc);
+      ctx.lineTo(facing * 0.8 * sc, 4.9 * sc);
+      ctx.closePath();
+      ctx.fill();
+
+      // Monochrome tank-top & cargo belt crisp accents
+      if (!cc.colored) {
+        ctx.fillStyle = pal.playerMid;
+        fillRoundRect(ctx, -5.8 * sc, 6.6 * sc, 11.6 * sc, 1.1 * sc, 0.5 * sc);
+      }
+      return;
+    }
+
+    if (charId === 'char_lucia') {
+      const hairFill = cc.colored ? cc.hair || '#1c1917' : pal.playerMid;
+      const halterFill = cc.colored ? cc.secondary : eyeFill;
+      const goldFill = cc.colored ? cc.accent : eyeFill;
+      const lipFill = cc.colored ? '#e11d48' : pal.playerMid;
+
+      // Swept wavy dark bangs across forehead + high ponytail hair-tie band
+      ctx.fillStyle = hairFill;
+      ctx.beginPath();
+      ctx.moveTo(-6.8 * sc, -7.2 * sc);
+      ctx.quadraticCurveTo(0, -13.0 * sc, 6.8 * sc, -7.2 * sc);
+      ctx.quadraticCurveTo(facing * 2.2 * sc, -9.2 * sc, -facing * 4.8 * sc, -5.6 * sc);
+      ctx.closePath();
+      ctx.fill();
+
+      // Pink hair tie wrapping the high ponytail base
+      ctx.fillStyle = halterFill;
+      fillCapsule(
+        ctx,
+        -facing * 5.0 * sc,
+        -9.6 * sc,
+        -facing * 4.2 * sc,
+        -7.2 * sc,
+        0.95 * sc
+      );
+
+      // Signature GTA 6 Gold Hoop Earring (solid even-odd ring — zero strokes!)
+      ctx.fillStyle = goldFill;
+      fillRing(ctx, -facing * 3.85 * sc, -3.1 * sc, 1.75 * sc, 0.95 * sc);
+
+      // Fierce expressive eyes, winged outer lashes & arched brows
+      const exL = (facing > 0 ? -1.1 : -3.7) * sc + lookX * 0.28;
+      const exR = (facing > 0 ? 3.3 : 0.7) * sc + lookX * 0.28;
+      const ey = -4.6 * sc + lookY * 0.25;
+
+      if (cc.colored) {
+        ctx.fillStyle = cc.eyeWhite;
+        fillRoundRect(ctx, exL - 1.25 * sc, ey - 1.2 * sc, 2.5 * sc, 2.35 * sc, 1.0 * sc);
+        fillRoundRect(ctx, exR - 1.25 * sc, ey - 1.2 * sc, 2.5 * sc, 2.35 * sc, 1.0 * sc);
+        ctx.fillStyle = cc.pupil;
+        fillRoundRect(ctx, exL - 0.55 * sc + facing * 0.35 * sc, ey - 0.8 * sc, 1.25 * sc, 1.6 * sc, 0.55 * sc);
+        fillRoundRect(ctx, exR - 0.55 * sc + facing * 0.35 * sc, ey - 0.8 * sc, 1.25 * sc, 1.6 * sc, 0.55 * sc);
+      } else {
+        ctx.fillStyle = eyeFill;
+        fillRoundRect(ctx, exL - 1.05 * sc, ey - 1.15 * sc, 2.15 * sc, 2.35 * sc, 0.95 * sc);
+        fillRoundRect(ctx, exR - 1.05 * sc, ey - 1.15 * sc, 2.15 * sc, 2.35 * sc, 0.95 * sc);
+      }
+
+      // Winged lashes & arched brows
+      ctx.fillStyle = cc.colored ? '#09090b' : eyeFill;
+      fillCapsule(ctx, exL - 1.35 * sc, ey - 1.95 * sc, exL + 1.15 * sc, ey - 2.15 * sc, 0.42 * sc);
+      fillCapsule(ctx, exR - 1.15 * sc, ey - 2.15 * sc, exR + 1.35 * sc, ey - 1.95 * sc, 0.42 * sc);
+
+      // Confident Vice City lip accent
+      ctx.fillStyle = lipFill;
+      fillRoundRect(ctx, facing * 1.1 * sc - 1.35 * sc, -1.25 * sc, 2.7 * sc, 0.9 * sc, 0.45 * sc);
+
+      // Signature V-neck halter straps rising to collar
+      ctx.fillStyle = halterFill;
+      fillCapsule(ctx, -2.8 * sc, 2.4 * sc, -0.7 * sc, 1.0 * sc, 0.65 * sc);
+      fillCapsule(ctx, 2.8 * sc, 2.4 * sc, 0.7 * sc, 1.0 * sc, 0.65 * sc);
+
+      // Denim belt buckle diamond
+      ctx.fillStyle = goldFill;
+      fillDiamond(ctx, facing * 0.6 * sc, 6.5 * sc, 1.3 * sc, 1.0 * sc);
+
+      // Iconic GTA 6 Leonida Ankle Monitor + pulsing status pip on lead ankle
+      const monX = facing > 0 ? 2.8 * sc : -2.8 * sc;
+      ctx.fillStyle = cc.colored ? '#09090b' : eyeFill;
+      fillRoundRect(ctx, monX - 1.7 * sc, 9.5 * sc, 3.4 * sc, 1.45 * sc, 0.55 * sc);
+      ctx.fillStyle = cc.colored ? '#ef4444' : crestFill;
+      ctx.beginPath();
+      addCircleSubpath(ctx, monX + facing * 0.6 * sc, 10.22 * sc, 0.48 * sc);
+      ctx.fill();
+      return;
+    }
 
     if (charId === 'char_scream') {
       const isLightMono = !cc.colored && pal.mode === 'light';

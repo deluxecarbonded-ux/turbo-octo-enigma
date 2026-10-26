@@ -40,6 +40,26 @@
       desc: 'Classic stick figure runner with full procedural multi-jointed running and aerial limbs.'
     },
     {
+      id: 'char_jason',
+      category: 'characters',
+      name: 'Jason',
+      tier: 'Mythic',
+      cost: 115,
+      currency: 'coins',
+      keywords: 'gta 6 gta6 grand theft auto vi vice city leonida outlaw driver',
+      desc: 'Vice City getaway driver sporting a backwards snapback cap, neck bandana, sleeveless tank top, and cargo boots. Full account required.'
+    },
+    {
+      id: 'char_lucia',
+      category: 'characters',
+      name: 'Lucia',
+      tier: 'Mythic',
+      cost: 120,
+      currency: 'coins',
+      keywords: 'gta 6 gta6 grand theft auto vi vice city leonida heroine',
+      desc: 'Fearless Leonida powerhouse featuring a flowing ponytail, hoop earrings, signature halter top, denim stride, and ankle monitor. Full account required.'
+    },
+    {
       id: 'char_scream',
       category: 'characters',
       name: 'Scream',

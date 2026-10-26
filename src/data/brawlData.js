@@ -765,6 +765,8 @@
 
   // Curated CPU Opponent Roster (transparent CPU fighters using authentic Exotic Characters)
   const CPU_ROSTER = [
+    { character: 'char_lucia', skin: 'skin_solid', weapon: 'weapon_blasters', label: 'CPU · Lucia' },
+    { character: 'char_jason', skin: 'skin_solid', weapon: 'weapon_katars', label: 'CPU · Jason' },
     { character: 'char_scream', skin: 'skin_solid', weapon: 'weapon_scythe', label: 'CPU · Scream' },
     { character: 'char_ronin', skin: 'skin_checker', weapon: 'weapon_sword', label: 'CPU · Ronin' },
     { character: 'char_knight', skin: 'skin_tuxedo', weapon: 'weapon_hammer', label: 'CPU · Vanguard' },
