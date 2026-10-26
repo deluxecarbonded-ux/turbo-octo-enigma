@@ -53,6 +53,7 @@ function parsePgValue(rawStr, typeOid) {
       } catch {
         return rawStr;
       }
+    case 2951: // _uuid (uuid[])
     case 1009: { // _text (text[])
       if (rawStr === '{}') return [];
       const inner = rawStr.slice(1, -1);

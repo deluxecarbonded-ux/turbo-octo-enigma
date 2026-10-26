@@ -8,3 +8,11 @@
 /node_modules
 /data
 /supabase
+
+/.config
+/.local
+/test-tools
+/tests
+/artifacts
+/EXCORD_ROADMAP.md
+/EXCORD_RELEASE.md

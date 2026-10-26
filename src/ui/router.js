@@ -12,7 +12,8 @@
     'achievements',
     'leaderboards',
     'settings',
-    'credits'
+    'credits',
+    'excord'
   ];
 
   const TOPBAR_HIDDEN_ROUTES = new Set(['splash', 'signup', 'signin', 'play', 'brawl-play']);

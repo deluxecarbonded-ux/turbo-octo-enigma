@@ -4,11 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>EXOTIC</title>
-  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261025c31" />
-  <link rel="shortcut icon" href="favicon.svg?v=20261025c31" />
-  <link rel="stylesheet" href="styles/tokens.css?v=20261025c31" />
-  <link rel="stylesheet" href="styles/components.css?v=20261025c31" />
-  <link rel="stylesheet" href="styles/views.css?v=20261025c31" />
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="favicon.svg?v=20261026e1" />
+  <link rel="shortcut icon" href="favicon.svg?v=20261026e1" />
+  <link rel="stylesheet" href="styles/tokens.css?v=20261026e1" />
+  <link rel="stylesheet" href="styles/components.css?v=20261026e1" />
+  <link rel="stylesheet" href="styles/views.css?v=20261026e1" />
+  <link rel="stylesheet" href="styles/excord.css?v=20261026e1">
 </head>
 <body>
   <div id="app">
@@ -568,6 +569,8 @@
                 <span data-icon="shop"></span>
                 <span>Shop</span>
               </button>
+
+              <button type="button" id="menu-btn-excord" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="excord"><span data-icon="excord"></span><span id="menu-excord-label">Excord</span></button>
 
               <button type="button" id="menu-btn-achievements" class="ex-pill-btn ex-pill-btn--secondary ex-pill-btn--lg" data-route="achievements">
                 <span data-icon="achievements"></span>
@@ -1578,6 +1581,7 @@
           </div>
         </div>
       </section>
+    <section id="view-excord" class="ex-view" aria-label="Excord"><div id="excord-root"></div></section>
     </main>
 
     <!-- Pause Modal -->
@@ -1830,32 +1834,33 @@
   </div>
 
   <!-- Ordered Modular Scripts -->
-  <script src="src/core/icons.js?v=20261025c31"></script>
-  <script src="src/core/theme.js?v=20261025c31"></script>
-  <script src="src/core/audio.js?v=20261025c31"></script>
-  <script src="src/core/supabaseClient.js?v=20261025c31"></script>
-  <script src="src/core/storage.js?v=20261025c31"></script>
-  <script src="src/core/biometricHardware.js?v=20261025c31"></script>
-  <script src="src/core/auth.js?v=20261025c31"></script>
-  <script src="src/data/shopItems.js?v=20261025c31"></script>
-  <script src="src/data/brawlData.js?v=20261025c31"></script>
-  <script src="src/data/achievements.js?v=20261025c31"></script>
-  <script src="src/data/levels.js?v=20261025c31"></script>
-  <script src="src/core/realtime.js?v=20261025c31"></script>
-  <script src="src/graphics/renderer3d.js?v=20261025c31"></script>
-  <script src="src/graphics/characters.js?v=20261025c31"></script>
-  <script src="src/graphics/auras.js?v=20261025c31"></script>
-  <script src="src/graphics/trails.js?v=20261025c31"></script>
-  <script src="src/graphics/worldDraw.js?v=20261025c31"></script>
-  <script src="src/graphics/brawlRenderer.js?v=20261025c31"></script>
-  <script src="src/graphics/backdrop.js?v=20261025c31"></script>
-  <script src="src/graphics/previewDirector.js?v=20261025c31"></script>
-  <script src="src/game/traps.js?v=20261025c31"></script>
-  <script src="src/game/physics.js?v=20261025c31"></script>
-  <script src="src/game/engine.js?v=20261025c31"></script>
-  <script src="src/game/brawlEngine.js?v=20261025c31"></script>
-  <script src="src/ui/router.js?v=20261025c31"></script>
-  <script src="src/ui/views.js?v=20261025c31"></script>
-  <script src="src/ui/main.js?v=20261025c31"></script>
+  <script src="src/core/icons.js?v=20261026e1"></script>
+  <script src="src/core/theme.js?v=20261026e1"></script>
+  <script src="src/core/audio.js?v=20261026e1"></script>
+  <script src="src/core/supabaseClient.js?v=20261026e1"></script>
+  <script src="src/core/storage.js?v=20261026e1"></script>
+  <script src="src/core/biometricHardware.js?v=20261026e1"></script>
+  <script src="src/core/auth.js?v=20261026e1"></script>
+  <script src="src/data/shopItems.js?v=20261026e1"></script>
+  <script src="src/data/brawlData.js?v=20261026e1"></script>
+  <script src="src/data/achievements.js?v=20261026e1"></script>
+  <script src="src/data/levels.js?v=20261026e1"></script>
+  <script src="src/core/realtime.js?v=20261026e1"></script>
+  <script src="src/graphics/renderer3d.js?v=20261026e1"></script>
+  <script src="src/graphics/characters.js?v=20261026e1"></script>
+  <script src="src/graphics/auras.js?v=20261026e1"></script>
+  <script src="src/graphics/trails.js?v=20261026e1"></script>
+  <script src="src/graphics/worldDraw.js?v=20261026e1"></script>
+  <script src="src/graphics/brawlRenderer.js?v=20261026e1"></script>
+  <script src="src/graphics/backdrop.js?v=20261026e1"></script>
+  <script src="src/graphics/previewDirector.js?v=20261026e1"></script>
+  <script src="src/game/traps.js?v=20261026e1"></script>
+  <script src="src/game/physics.js?v=20261026e1"></script>
+  <script src="src/game/engine.js?v=20261026e1"></script>
+  <script src="src/game/brawlEngine.js?v=20261026e1"></script>
+  <script src="src/ui/router.js?v=20261026e1"></script>
+  <script src="src/ui/views.js?v=20261026e1"></script>
+  <script src="src/excord/excordApp.js?v=20261026e1"></script>
+  <script src="src/ui/main.js?v=20261026e1"></script>
 </body>
 </html>

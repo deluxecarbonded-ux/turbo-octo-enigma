@@ -604,7 +604,7 @@
         }
         if (
           this.isGuest() &&
-          (requestedRoute === 'achievements' || requestedRoute === 'leaderboards')
+          (requestedRoute === 'achievements' || requestedRoute === 'leaderboards' || requestedRoute === 'excord')
         ) {
           return 'menu';
         }

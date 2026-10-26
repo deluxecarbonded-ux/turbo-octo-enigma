@@ -1,0 +1,100 @@
+/* Excord: solid surfaces; shared theme, color and dimension controls. */
+#view-excord { padding: 8px 20px 20px; overflow: hidden; }
+#excord-root { height: 100%; min-height: 0; }
+.ec-shell { display: grid; grid-template-columns: 68px 224px minmax(260px,1fr) 210px; height:100%; overflow:hidden; border-radius:24px; background:var(--bg-surface-1); color:var(--fg-primary); }
+.ec-rail { padding:14px 8px; display:flex; flex-direction:column; gap:12px; align-items:center; background:var(--bg-app); overflow:auto; }
+.ec-rail .ex-pill-btn { flex-shrink:0; width:48px; height:48px; min-height:48px; padding:0; font-size:14px; font-weight:800; }
+.ec-rail svg { width:22px;height:22px; }
+.ec-side { background:var(--bg-surface-2); display:flex; flex-direction:column; min-height:0; padding:18px 12px 12px; gap:12px; }
+.ec-brand { display:flex; align-items:center; gap:9px; font-weight:900; font-size:20px; letter-spacing:-.5px; }
+.ec-brand svg { width:25px; height:25px; }
+.ec-eyebrow { font-size:10px; color:var(--fg-muted); font-weight:800; letter-spacing:1.4px; text-transform:uppercase; }
+.ec-side-title { font-size:16px; font-weight:800; margin:10px 4px 0; overflow-wrap:anywhere; }
+.ec-channel-list { flex:1; min-height:0; overflow:auto; display:flex; flex-direction:column; gap:5px; }
+.ec-channel-list .ex-pill-btn { width:100%; text-align:left; justify-content:flex-start; padding:10px 12px; height:auto; min-height:38px; white-space:normal; overflow-wrap:anywhere; }
+.ec-channel-list .ec-thread { margin-left:14px; width:calc(100% - 14px); font-size:12px; }
+.ec-icon { width:18px; height:18px; display:inline-flex; flex-shrink:0; }
+.ec-icon svg { width:100%; height:100%; }
+.ec-user { display:flex; align-items:center; gap:8px; padding-top:8px; font-size:12px; }
+.ec-avatar { width:36px;height:36px; min-width:36px; display:grid;place-items:center; background:var(--bg-surface-4);border-radius:14px;font-weight:800;font-size:13px; }
+.ec-avatar--large { width:64px;height:64px; border-radius:22px;font-size:24px; }
+.ec-center { min-width:0; min-height:0; display:flex; flex-direction:column; }
+.ec-head { padding:18px 24px; display:flex;align-items:center;gap:12px; background:var(--bg-surface-1);flex-shrink:0; }
+.ec-head h2 { font-size:17px; margin:0; }
+.ec-head small { color:var(--fg-muted); }
+.ec-head-actions { display:flex;gap:6px;margin-left:auto; }
+.ec-topic { padding:0 24px 14px; font-size:12px;color:var(--fg-secondary); }
+.ec-scroll { overflow:auto;flex:1;min-height:0; padding:20px 24px; overscroll-behavior:contain; }
+.ec-welcome { margin:16px 0 28px; }
+.ec-welcome h1 { font-size:clamp(25px,3vw,40px); letter-spacing:-1.5px; line-height:1.12; margin:15px 0; }
+.ec-welcome p { color:var(--fg-secondary);max-width:530px;line-height:1.7;font-size:13px; }
+.ec-welcome .ec-icon { width:44px;height:44px; }
+.ec-chips { display:flex; gap:8px;flex-wrap:wrap; margin:18px 0; }
+.ec-chip { background:var(--bg-surface-3);border-radius:100px;padding:7px 12px;font-size:11px;color:var(--fg-secondary); }
+.ec-empty { padding:30px 4px;color:var(--fg-secondary);font-size:13px;line-height:1.7; }
+.ec-message { display:flex; gap:12px; padding:12px 0; }
+.ec-message-body { min-width:0;flex:1; }
+.ec-message-meta { display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:13px; }
+.ec-message-meta time { font-size:10px;color:var(--fg-muted); }
+.ec-message-content { white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;font-size:13px;margin:5px 0; }
+.ec-message-content code { background:var(--bg-surface-3);padding:2px 5px;border-radius:5px; }
+.ec-message-content .ec-spoiler { background:var(--bg-surface-4);color:transparent;cursor:pointer;border-radius:5px; }
+.ec-message-content .ec-spoiler:focus,.ec-message-content .ec-spoiler:hover { color:var(--fg-primary); }
+.ec-message-tools { display:flex;flex-wrap:wrap;gap:4px; margin-top:6px; }
+.ec-message-tools .ex-pill-btn { font-size:10px;min-height:25px;padding:4px 9px; }
+.ec-reply-note { font-size:11px;color:var(--fg-muted); }
+.ec-poll { padding:15px; background:var(--bg-surface-2);border-radius:16px;max-width:400px;margin-top:10px; }
+.ec-poll .ex-pill-btn { margin-top:7px;width:100%;justify-content:space-between; }
+.ec-composer { padding:12px 20px 18px;flex-shrink:0; }
+.ec-compose-box { background:var(--bg-surface-3);border-radius:20px;padding:12px; }
+.ec-compose-box textarea { resize:vertical;min-height:48px;max-height:140px;background:transparent;width:100%;color:var(--fg-primary);font:inherit;font-size:13px;padding:5px; }
+.ec-compose-bottom { display:flex;align-items:center;gap:6px; }
+.ec-compose-bottom small { margin-right:auto;font-size:10px;color:var(--fg-muted); }
+.ec-status { color:var(--fg-secondary);font-size:12px;padding:8px 24px;min-height:30px; }
+.ec-members { background:var(--bg-surface-2);padding:22px 16px;overflow:auto; }
+.ec-member { display:flex;gap:9px;align-items:center;margin:18px 0; font-size:12px; }
+.ec-member small { display:block;color:var(--fg-muted);font-size:10px;margin-top:4px;overflow-wrap:anywhere; }
+.ec-member-info { min-width:0;overflow-wrap:anywhere; }
+.ec-card { background:var(--bg-surface-2);padding:20px;border-radius:20px;margin:12px 0; }
+.ec-card h3 { font-size:16px;margin:0 0 8px; }
+.ec-card p { font-size:12px;color:var(--fg-secondary);line-height:1.7; }
+.ec-row { display:flex;align-items:center;gap:10px;flex-wrap:wrap; }
+.ec-row .ec-grow { flex:1;min-width:0; }
+.ec-actions { display:flex;gap:6px;flex-wrap:wrap;margin:12px 0; }
+.ec-tabs { display:flex;gap:7px;flex-wrap:wrap;margin:14px 0; }
+.ec-overlay { position:fixed;inset:0;z-index:150;background:var(--bg-modal-scrim);display:flex;align-items:center;justify-content:center;padding:20px; }
+.ec-dialog { width:min(520px,100%);max-height:90vh;overflow:auto;background:var(--bg-surface-1);border-radius:26px;padding:28px; }
+.ec-dialog h2 { margin:0 0 8px;letter-spacing:-.8px; }
+.ec-dialog p { color:var(--fg-secondary);font-size:12px;line-height:1.7; }
+.ec-form { display:flex;flex-direction:column;gap:13px;margin-top:20px; }
+.ec-form label { display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:700; }
+.ec-form input,.ec-form textarea,.ec-form select { border:none;outline:none;box-shadow:none;background:var(--bg-surface-3);color:var(--fg-primary);padding:12px 14px;border-radius:12px;width:100%;font:inherit;min-width:0; }
+.ec-form input[type=checkbox] { width:18px;height:18px;accent-color:var(--fg-primary); }
+.ec-form label:has(input[type=checkbox]) { flex-direction:row;align-items:center; }
+.ec-form textarea { min-height:90px;resize:vertical; }
+.ec-form-footer { display:flex;gap:8px;justify-content:flex-end;margin-top:10px; }
+.ec-dialog-error { color:var(--fg-primary);font-size:12px; }
+.ec-compact-search { display:flex;gap:8px;margin-bottom:18px; }
+.ec-compact-search input { background:var(--bg-surface-3);color:var(--fg-primary);border:none;outline:none;box-shadow:none;border-radius:100px;min-width:0;flex:1;padding:10px 16px;font:inherit;font-size:12px; }
+.ec-mobile-toggle { display:none; }
+html[data-color-mode="colored"] .ec-brand { color:#818cf8; }
+html[data-color-mode="colored"] .ec-avatar { background:#343b6a;color:#e0e7ff; }
+html[data-color-mode="colored"] .ec-chip { color:#a5b4fc; }
+html[data-dimension="3d"] #view-excord.is-active .ec-card { transform:perspective(1200px) rotateX(1.5deg); }
+@media(max-width:1150px) { .ec-shell {grid-template-columns:60px 190px minmax(260px,1fr);} .ec-members{display:none;} }
+@media(max-width:760px) {
+ #view-excord{padding:0 8px 8px;}
+ .ec-shell{grid-template-columns:52px minmax(0,1fr);border-radius:18px;}
+ .ec-side{display:none;}
+ .ec-shell.ec-nav-open .ec-side{display:flex;grid-column:2;grid-row:1;}
+ .ec-shell.ec-nav-open .ec-center{display:none;}
+ .ec-mobile-toggle{display:inline-flex;}
+ .ec-head{padding:14px;flex-wrap:wrap;}
+ .ec-topic{padding:0 14px 8px;}
+ .ec-scroll{padding:14px;}
+ .ec-head-actions{gap:4px;}
+ .ec-rail{padding:12px 4px;}
+ .ec-rail .ex-pill-btn{width:40px;height:40px;min-height:40px;}
+ .ec-composer{padding:8px;}
+ .ec-message-tools .ex-pill-btn{padding:6px 9px;min-height:30px;}
+}

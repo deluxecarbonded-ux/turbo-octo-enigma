@@ -13,3 +13,9 @@ data/storage/
 
 
 .npm/
+
+/.config/
+/.local/
+/test-tools/
+/artifacts/
+/.sudo_as_admin_successful

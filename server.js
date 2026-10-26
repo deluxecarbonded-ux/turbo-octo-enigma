@@ -10,6 +10,8 @@ const {
   verifyFaceDescriptorEnrollment,
   verifyFaceDescriptorMatch
 } = require('./src/server/webauthnVerify');
+const { handleExcordRequest } = require('./src/server/excordApi');
+const { issueSession, revokeSessions } = require('./src/server/excordSession');
 
 const ROOT_DIR = __dirname;
 
@@ -221,7 +223,6 @@ function mapRunRow(r) {
   return {
     id: r.id,
     profileId: r.profile_id || null,
-    clientKey: r.client_key || null,
     callsign: r.callsign,
     levelId: Number(r.level_id),
     levelTitle: r.level_title,
@@ -867,6 +868,12 @@ async function handleRequest(req, res) {
       }
 
       const rpcOut = q.rows[0]?.res || { ok: false };
+      if (rpcOut.ok !== false && ['signup','signin'].includes(action)) {
+        await issueSession(pgPool, req, res, clientKey);
+      }
+      if (rpcOut.ok !== false && ['signout','delete'].includes(action)) {
+        await revokeSessions(pgPool, req, res, clientKey);
+      }
       sendJson(res, rpcOut.ok === false ? 400 : 200, rpcOut);
     } catch (err) {
       sendJson(res, 500, { ok: false, reason: err.message });
@@ -1413,6 +1420,29 @@ async function handleRequest(req, res) {
     } catch (err) {
       sendJson(res, 500, { ok: false, reason: err.message });
     }
+    return;
+  }
+
+  // --------------------------------------------------------------------------
+  // 7b. EXCORD COMMUNITY & VOICE/CHAT GATEWAY (/api/excord)
+  // --------------------------------------------------------------------------
+  if (pathname === '/api/excord' && (req.method === 'GET' || req.method === 'POST')) {
+    await handleExcordRequest({
+      req,
+      res,
+      pgPool,
+      readJsonBody,
+      sendJson,
+      getClientKey,
+      broadcastEvent: (channel, event, payload) => {
+        broadcastSse('broadcast', {
+          channel,
+          event,
+          payload,
+          sentAt: Date.now()
+        });
+      }
+    });
     return;
   }
 
