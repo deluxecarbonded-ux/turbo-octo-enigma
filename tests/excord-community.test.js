@@ -7,7 +7,7 @@ const api=(u,action,b={})=>call(u,'/api/excord',{action,...b});
 async function ok(u,a,b){const r=await api(u,a,b);assert.equal(r.ok,true,`${a}: ${JSON.stringify(r)}`);return r;}
 async function deny(u,a,b){const r=await api(u,a,b);assert.equal(r.ok,false,a);assert.ok(r.status<500,JSON.stringify(r));}
 (async()=>{const [a,b,c]=users;try{
- for(const u of users){const r=await call(u,'/api/auth/signup',{username:u.name,authMethod:'password',credential:'ExcordTest!Safe42'});assert.equal(r.ok,true);u.profile=(await ok(u,'bootstrap')).me;}
+ for(const u of users){const r=await call(u,'/api/auth/signup',{username:u.name,authMethod:'password',credential:'ExcordTest!Safe42'});assert.equal(r.ok,true,r.reason||'Signup failed');u.profile=(await ok(u,'bootstrap')).me;}
  const s=await ok(a,'create_server',{name:'Community Test'});let boot=await ok(a,'bootstrap');const server=boot.servers.find(x=>x.id===s.serverId),general=boot.channels.find(x=>x.server_id===s.serverId);
  await ok(b,'join',{code:server.invite_code});await ok(c,'join',{code:server.invite_code});
  const msg=await ok(a,'send',{channelId:general.id,content:'Searchable community message'});
